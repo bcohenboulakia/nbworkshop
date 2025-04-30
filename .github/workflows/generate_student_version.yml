@@ -1,0 +1,93 @@
+name: Generate Students Branch
+
+on:
+  push:
+    branches: [main]
+    paths: ['**.ipynb']
+  workflow_dispatch:
+  
+permissions:
+  contents: write
+  
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install beautifulsoup4
+
+      - name: Prepare temp directory
+        run: |
+          rm -rf /tmp/processed
+          mkdir -p /tmp/processed
+          for dir in $(jq -r '.notebooks_dir[]' .github/config.json); do
+            cp -r "$dir" /tmp/processed/
+          done
+
+      - name: Initialize summary
+        run: |
+          echo "## Processing Report" > /tmp/processed/summary.md
+          echo "| Notebook | Questions | Code Blocks | ZIP |" >> /tmp/processed/summary.md
+          echo "|----------|-----------|-------------|-----|" >> /tmp/processed/summary.md
+
+      - name: Convert notebooks
+        run: |
+          find /tmp/processed -name '*.ipynb' | while read -r nb; do
+            python .github/scripts/student_version.py "$nb" \
+              --config .github/config.json >> /tmp/processed/summary.md \
+              --hide-header
+            rm "$nb"
+          done
+          
+      - name: Process summary
+        run: |
+          # Display the summary on GitHub's interface
+          sed -i 's|/tmp/processed/||g' /tmp/processed/summary.md
+          cat /tmp/processed/summary.md >> $GITHUB_STEP_SUMMARY
+          rm /tmp/processed/summary.md
+
+      - name: Switch to Students branch
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          if git show-ref --verify --quiet refs/heads/Students; then
+            git checkout Students
+          else
+            git checkout --orphan Students
+            git commit --allow-empty -m "Initial commit"
+          fi
+
+      - name: Clean existing files
+        run: |
+          for dir in $(jq -r '.notebooks_dir[]' .github/config.json); do
+            rm -rf "$dir"
+          done
+
+      - name: Sync processed files
+        run: |
+          cp -a /tmp/processed/* .
+
+      - name: Commit and push
+        run: |
+          git add .
+          git commit -m "Update student materials: $(date +'%Y-%m-%d %H:%M:%S')" || echo "No changes"
+          git push origin Students --force
+          
+      - name: Execute post-command
+        run: |
+            POST_COMMAND=$(jq -r '.post_command // empty' .github/config.json)
+            if [ -n "$POST_COMMAND" ]; then
+            echo "Executing post-command: $POST_COMMAND"
+            eval "$POST_COMMAND"
+            else
+            echo "No post-command to execute"
+            fi
+        shell: bash

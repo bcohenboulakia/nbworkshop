@@ -1,0 +1,15 @@
+{
+    "notebooks_dir": ["notebooks/", "ASSIGNMENTS"],
+    "solution_marker": {
+        "code": "#SOLUTION",
+        "markdown": "blockquote"
+    },
+    "placeholder": {
+        "code": "#TO COMPLETE",
+        "markdown": "<em>TO COMPLETE</em>"
+    },
+    "tutor_postfix": "_Tutor",
+    "student_postfix": "_Student",
+    "generate_zip": true,
+    "post_command": "echo 'Post-processing completed' || true"
+}
