@@ -11,11 +11,23 @@ For users working with GitHub, _nbworkshop_ also provides a workflow that monito
 
 **Key features:**
 - **Targeted Solution Hiding**: Teachers can precisely mark individual lines or blocks in both code and markdown cells as solutions or instructor notes. Only these marked sections are removed or replaced in the student version; all other content remains unchanged.
-- **Customizable Placeholders** : When a solution is removed, it is replaced with a configurable placeholder (e.g., #TO COMPLETE in code, <em>TO COMPLETE</em> in markdown), clearly indicating where students need to provide their answers.
+- **Customizable Placeholders** : When a solution is removed, it is replaced with a configurable placeholder (e.g., `#TO COMPLETE` in code, <em>TO COMPLETE</em> in markdown), clearly indicating where students need to provide their answers.
 - **Automatic Batch Processing**: The tool can process multiple notebooks at once, generating student versions and optional ZIP archives containing all referenced attachments. 
 - **GitHub Integration** : A pre-configured GitHub Actions workflow automatically regenerates the student branch and archives whenever notebooks are updated on the main branch ([manual trigger](https://docs.github.com/en/actions/managing-workflow-runs/manually-running-a-workflow) also possible).
 - **Automation-ready** : Can easily be integrated to other CD/CI chains
 - **Flexible Configuration**: All markers, placeholders, and naming conventions are controlled via a simple JSON configuration file, making adaptation to different teaching styles and environments straightforward.
+
+Summary:
+- [Usage](#usage)
+  - [Configuration](#configuration)
+  - [zip archive and attached files](#zip-archive-and-attached-files)
+  - [Github workflow and branches](#github-workflow-and-branches)
+  - [Conversion script stand-alone usage](#conversion-script-stand-alone-usage-or-integration-in-other-cdci-environments)
+- [Corrections format](#corrections-format)
+  - [Correction in Code cells](#correction-in-code-cells)
+  - [Correction in Markdown cells](#correction-in-markdown-cells)
+  - [Note addressed to the tutor](#note-addressed-to-the-tutor)
+  - [Cell entirely addressed to the tutor](#cell-entirely-addressed-to-the-tutor)
 
 ## Usage
 
@@ -54,15 +66,9 @@ The configuration file is straightforward:
 
 Note: In order to avoid useless conversions, `.ipynb_checkpoints` directories should be added to `.gitignore`.
 
-### Branches
+### zip archive and attached files
 
-Branches are specfic to the Github integration. One can create as many branches as needed, but only two branches are used by _nbworkshop_ for generating student notebooks:
- * The `main` branch is the one that triggers conversions. It contains the corrected versions and the necessary resources. It can also contain other materiels, which is ignored.
- * The `Students` branch is generated automatically. Its content must not be modified, as it is fully rewritten each time a conversion occurs. It contains the same content (including subdirectories structure) as the directories monitored in `main` branch, except that solutions are removed from the Notebooks, whether for code or for questions in the text. If an original Notebook's filename ends with the configured `tutor_postfix`, this postfix is replaced by `student_postfix` in the converted Notebook's filename. If the original name does not end with `tutor_postfix`, the `student_postfix` is simply appended to the base name. No additional characters (such as underscores or spaces) are inserted automatically; the exact format is entirely determined by the postfix values set in the configuration.
-
-For each notebook, a zip archive can be generated automatically and added in the `ZIP` subdirectory of each directory containing converted Notebooks. Each archive contains one Notebook and all embedded files. These files must be referenced directly in the global metadata of the notebook, as a list associated with the key `"attached_files"`. 
-
-Example:
+For each processed notebook, if zip archives are to be generated (see the _Configuration_ section above), they are added in the `ZIP` subdirectory of each directory containing converted Notebooks. Each archive contains one Notebook and all embedded files. These files must be referenced directly in the global metadata of the notebook, as a list associated with the key `"attached_files"`. Example:
 ```json
 "attached_files": [
 	"picture1.png",
@@ -70,20 +76,20 @@ Example:
 ]
 ```
 
-Relative paths can be used, they are replicated in the ZIP archive. Absolute paths are forbidden and generate an error preventing the conversion to complete.
-
-If there is an error (embedded file missing or defined by an absolute path), the conversion is aborted. When used through the Github workflow, subsequent Notebooks are generated, but the workflow execution status is set to failed, and the summary displays the faulty Notebook.
+Relative paths can be used, they are replicated in the ZIP archive. Absolute paths are forbidden and generate an error preventing the conversion to complete. If there is an error (embedded file missing or defined by an absolute path), the conversion is aborted. When used through the Github workflow (see below), subsequent Notebooks are generated, but the workflow execution status is set to failed, and the summary displays the faulty Notebook.
 
 Note: In Jupyter-based environnements, editing the metadata of a notebook is done in the _ADVANCED TOOLS_ area, under _Notebook metadata_. In Jupyter, it can be accessed by enabling _View_ > _Right Sidebar_ > _Show Notebook tools_. In JupyterLab, it's located in the _Property Inspector_ (gear icon) in the right sidebar.
 
+### Github workflow and branches
 
-### Github workflow
+The conversion is managed by a Github workflow called `Students Notebook generation`. This workflow is based on two branches for generating student notebooks (butOne can create as many branches as needed):
+ * The `main` branch is the one that triggers conversions. It contains the corrected versions and the necessary resources. It can also contain other materiels, which is ignored.
+ * The `Students` branch is generated automatically. Its content must not be modified, as it is fully rewritten each time a conversion occurs. It contains the same content (including subdirectories structure) as the directories monitored in `main` branch, except that solutions are removed from the Notebooks, whether for code or for questions in the text. If an original Notebook's filename ends with the configured `tutor_postfix`, this postfix is replaced by `student_postfix` in the converted Notebook's filename. If the original name does not end with `tutor_postfix`, the `student_postfix` is simply appended to the base name. No additional characters (such as underscores or spaces) are inserted automatically; the exact format is entirely determined by the postfix values set in the configuration.
 
-The conversion is managed by a Github workflow called `Students Notebook generation`. This workflow is run every time a Notebook from a monitored directory is pushed on the `main` branch, but it can also be run manually from the workflow page in the `Action` tab on the Github repository web page. This workflow can be overseen on the same page. Every time the workflow is run, a short rundown  of the conversion process is shown in the workflow summary:
+Please note that conversion may take a several dozens of seconds. This total delay includes both the time spent waiting for a GitHub Actions runner to become available (which can be long if no runners are free) and the time required to actually process the job. The execution time depends on how many Notebooks need to be converted and their length. Running other workflows in the repository at the same time may also increase the overall completion time.
+
+The workflow can also be run manually from the workflow page in the `Action` tab on the Github repository web page. This workflow can be overseen on the same page. Every time the workflow is run, a short rundown  of the conversion process is shown in the workflow summary:
 ![summary](https://github.com/user-attachments/assets/545d2bd4-8740-4ebc-8675-a7ac4e952cfb)
-
-
-Please note that updating the  `Students` branch may take a several dozens of seconds. This total delay includes both the time spent waiting for a GitHub Actions runner to become available (which can be long if no runners are free) and the time required to actually process the job. The execution time depends on how many Notebooks need to be converted and their length. Running other workflows in the repository at the same time may also increase the overall completion time.
 
 For more information on how to manage and monitor Github workflow, see the [official GitHub Actions documentation](https://docs.github.com/en/actions/writing-workflows/quickstart).
 
