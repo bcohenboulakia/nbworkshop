@@ -2,20 +2,20 @@
 
 ## Presentation
 
-_nbworkshop_ is a lightweight tool for educators using Jupyter Notebooks, designed to streamline the preparation and sharing of exercises with hidden corrections or answers, without the overhead of a full assignment management system like nbgrader. While nbgrader provides a comprehensive system for assignment distribution, collection, and automated grading, which requires a structured workflow and full-cell tagging for solutions, _nbworkshop_ focuses on offering teachers simple and straightforward control over the visibility of answers and explanations, allowing them to mark specific parts of any cell, whether code or markdown.
-
-When generating the Student version, _nbworkshop_ automatically removes only the indicated corrections or answers, leaving the rest of the content untouched. This approach works seamlessly for both code completion tasks and open-ended or conceptual questions, and does not require any imposed file structure or grading setup.
+_nbworkshop_ is a streamlined tool designed for educators who use Jupyter Notebooks and need to efficiently prepare and distribute exercise notebooks with hidden solutions or instructor-only comments:
 ![example](https://github.com/user-attachments/assets/be557bda-6294-432e-8739-4d19538a341e)
 
+Unlike more comprehensive systems such as nbgrader, nbworkshop prioritizes simplicity and flexibility, allowing teachers to mark specific parts of any cell-whether code or markdown-for removal in student versions, without imposing a rigid file structure or workflow.
 
 For users working with GitHub, _nbworkshop_ also provides a workflow that monitors specific directories and, whenever a Notebook within these monitored directories is updated on the main branch, automatically generates Student versions of those Notebooks that is stored on a specific branch. An archive (ZIP) containing these student versions, along with any necessary attachments, can also be created and stored in the same branch. This makes it easy to distribute up-to-date materials to students while keeping instructor content private and organized. Note that this workflow can be easily adapted to Gitlab or BitBucket using their respective CD/CI tools.
 
 **Key features:**
-- **Precision and clarity** : Easily ark specific lines/blocks in code/markdown cells
-- **Instant conversion** : Generate student versions (and optional self-contained ZIP archive) with one command
-- **GitHub Integrated**: GitHub Actions integration for automatic push-triggered generation ([manual trigger](https://docs.github.com/en/actions/managing-workflow-runs/manually-running-a-workflow) also possible)
+- **Targeted Solution Hiding**: Teachers can precisely mark individual lines or blocks in both code and markdown cells as solutions or instructor notes. Only these marked sections are removed or replaced in the student version; all other content remains unchanged.
+- **Customizable Placeholders** : When a solution is removed, it is replaced with a configurable placeholder (e.g., #TO COMPLETE in code, <em>TO COMPLETE</em> in markdown), clearly indicating where students need to provide their answers.
+- **Automatic Batch Processing**: The tool can process multiple notebooks at once, generating student versions and optional ZIP archives containing all referenced attachments. 
+- **GitHub Integration** : A pre-configured GitHub Actions workflow automatically regenerates the student branch and archives whenever notebooks are updated on the main branch ([manual trigger](https://docs.github.com/en/actions/managing-workflow-runs/manually-running-a-workflow) also possible).
 - **Automation-ready** : Can easily be integrated to other CD/CI chains
-- **Configurable** : Custom markers/placeholders and naming pattern via simple JSON config
+- **Flexible Configuration**: All markers, placeholders, and naming conventions are controlled via a simple JSON configuration file, making adaptation to different teaching styles and environments straightforward.
 
 ## Usage
 
