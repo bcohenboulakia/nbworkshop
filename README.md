@@ -41,13 +41,13 @@ The configuration file is straightforward:
     "tutor_postfix": "_Tutor",
     "student_postfix": "_Student",
     "generate_zip": true,
-	"post_command": "echo 'Post-processing completed' || true"
+    "post_command": "echo 'Post-processing completed' || true"
 }
 ```
 * Workflow options (ignored by the conversion script):
 	* **`notebooks_dir`** (mandatory): List of directories to process
 	* **`post_command`** (optional): Post-processing shell command to be executed by the workflow
-* Conversion options (all mandatory for conversion script):
+* Conversion options (all mandatory for conversion script, ignored by the workflow):
 	* **`solution_marker`**: Dictionary of markers identifying solution content
 	* **`placeholder`**: Dictionary of replacement text for removed solutions
 	* **`generate_zip`**: Boolean enabling ZIP archives to be generated
@@ -56,7 +56,7 @@ Note: In order to avoid useless convertions, `.ipynb_checkpoints` directories sh
 
 ### Branches
 
-You can create as many branches as you want, but only two branches are used by _nbworkshop_ for generating student notebooks:
+Branches are specfic to the Github integration. One can create as many branches as needed, but only two branches are used by _nbworkshop_ for generating student notebooks:
  * The `main` branch is the one that triggers conversions. It contains the corrected versions and the necessary resources. It can also contain other materiels, which is ignored.
  * The `Students` branch is generated automatically. Its content must not be modified, as it is fully rewritten each time a conversion occurs. It contains the same content (including subdirectories structure) as the directories monitored in `main` branch, except that solutions are removed from the Notebooks, whether for code or for questions in the text. If an original Notebook's filename ends with the configured `tutor_postfix`, this postfix is replaced by `student_postfix` in the converted Notebook's filename. If the original name does not end with `tutor_postfix`, the `student_postfix` is simply appended to the base name. No additional characters (such as underscores or spaces) are inserted automatically; the exact format is entirely determined by the postfix values set in the configuration.
 
@@ -83,13 +83,13 @@ The conversion is managed by a Github workflow called `Students Notebook generat
 ![summary](https://github.com/user-attachments/assets/545d2bd4-8740-4ebc-8675-a7ac4e952cfb)
 
 
-Please note that updating the  `Students` branch may take a several dozens of seconds. This total delay includes both the time spent waiting for a GitHub Actions runner to become available (which can be long if no runners are free) and the time required to actually process the job. The execution time depends on how many Notebooks need to be converted and their length. Running other workflows in your repository at the same time may also increase the overall completion time.
+Please note that updating the  `Students` branch may take a several dozens of seconds. This total delay includes both the time spent waiting for a GitHub Actions runner to become available (which can be long if no runners are free) and the time required to actually process the job. The execution time depends on how many Notebooks need to be converted and their length. Running other workflows in the repository at the same time may also increase the overall completion time.
 
 For more information on how to manage and monitor Github workflow, see [official GitHub Actions documentation](https://docs.github.com/en/actions/writing-workflows/quickstart).
 
 ### Conversion script stand-alone usage (or integration in other CD/CI environments)
 
-If you prefer not to use GitHub workflows, you can manually run the Python script that generates student notebooks (in `.github/scripts/student_version.py` but i can be moved anywhere). Here's the command-line interface:
+If one prefers not to use GitHub workflows, it's possible to manually run the Python script that generates student notebooks (in `.github/scripts/student_version.py` but it can be moved anywhere). Here's the command-line interface:
 ```bash
 python student_version.py [NOTEBOOK_PATHS] \
     --config [PATH] \
@@ -109,7 +109,7 @@ Depending on whether batch processing is performed internally by the script or n
 Note that _nbworkshop_ can use any replacement text/tags and placeholder the user defines. In the following explanations, English versions are used.
 
 ### Correction in `Code` cells
-To create a line or block of correction, you need to add the comment `#SOLUTION` at the end of each line of the block. The block is replaced by a single placeholder `#TO COMPLETE`. Example:
+To create a line or block of correction, the comment `#SOLUTION` must be added at the end of each line of the block. The block is replaced by a single placeholder `#TO COMPLETE`. Example:
 
 ```python
 y = x #SOLUTION
@@ -131,19 +131,19 @@ is replaced by:
 y = #TO COMPLETE
 ```
 
-You can add regular comments, placed before `#SOLUTION` on the same line. Example:
+Regular comments can be added, placed before `#SOLUTION` on the same line. Example:
 ```python
 y = x #comment #SOLUTION
 ```
 
-You can also add comments specifically for tutors after `#SOLUTION` on the same line. Example:
+Comments specifically for tutors can also be added after `#SOLUTION` on the same line. Example:
 ```python
 y = x #SOLUTION comment for the tutor
 ```
 
 ### Correction in Markdown cells
 
-Corrections and comments are placed in a <code>&lt;blockquote&gt;&lt;/blockquote&gt;</code> tag. They are replaced by a single placeholder <code>&lt;em&lt;TO COMPLETE&lt;/em&lt;</code>. Sometimes, Jupyter can't interpret Markdown code inside a <code>&lt;blockquote&gt;&lt;/blockquote&gt;</code>. In this case, you need to revert to HTML formatting.
+Corrections and comments are placed in a <code>&lt;blockquote&gt;&lt;/blockquote&gt;</code> tag. They are replaced by a single placeholder <code>&lt;em&lt;TO COMPLETE&lt;/em&lt;</code>. Sometimes, Jupyter can't interpret Markdown code inside a <code>&lt;blockquote&gt;&lt;/blockquote&gt;</code>. In this case, reverting to HTML formatting is required.
 
 The <code>&lt;blockquote&gt;</code> and <code>&lt;/blockquote&gt;</code> tags must be alone on their line, and the closing tag must not be forgotten (errors are not handled; the generated student version is then corrupted).
 
@@ -211,4 +211,4 @@ WS text. Continuation of the WS text.
 
     
 ### Cell entirely addressed to the tutor
-This is a markdown cell that does not appear at all in the Students version. You must create a cell containing only a <code>&lt;blockquote&gt;&lt;/blockquote&gt;</code> block. The cell is then entirely removed when generating the student version.
+This is a markdown cell that does not appear at all in the Students version. It's a cell containing only a <code>&lt;blockquote&gt;&lt;/blockquote&gt;</code> block. The cell is then entirely removed when generating the student version.
