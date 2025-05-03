@@ -41,7 +41,7 @@ The configuration file is straightforward:
     "tutor_postfix": "_Tutor",
     "student_postfix": "_Student",
     "generate_zip": true,
-	"post_command": "echo 'Post-processing completed' || true"
+    "post_command": "echo 'Post-processing completed' || true"
 }
 ```
 * Workflow options (ignored by the conversion script):
