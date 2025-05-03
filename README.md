@@ -31,7 +31,7 @@ The configuration file is straightforward:
 {
     "notebooks_dir": ["notebooks", "ASSIGNMENTS"],
     "solution_marker": {
-        "code": "#SOLUTION",
+        "code": "SOLUTION",
         "markdown": "blockquote"
     },
     "placeholder": {
@@ -47,12 +47,12 @@ The configuration file is straightforward:
 * Workflow options (ignored by the conversion script):
 	* **`notebooks_dir`** (mandatory): List of directories to process
 	* **`post_command`** (optional): Post-processing shell command to be executed by the workflow
-* Conversion options (all mandatory for conversion script, ignored by the workflow):
-	* **`solution_marker`**: Dictionary of markers identifying solution content
+* Conversion options (all mandatory for the conversion script, ignored by the workflow):
+	* **`solution_marker`**: Dictionary of markers identifying solution content, containing only the core text, which is then adapted by the code-wrapped as an HTML tag for Markdown or prefixed with a comment character for Python.
 	* **`placeholder`**: Dictionary of replacement text for removed solutions
 	* **`generate_zip`**: Boolean enabling ZIP archives to be generated
 
-Note: In order to avoid useless convertions, `.ipynb_checkpoints` directories should be added to `.gitignore`.
+Note: In order to avoid useless conversions, `.ipynb_checkpoints` directories should be added to `.gitignore`.
 
 ### Branches
 
@@ -85,7 +85,7 @@ The conversion is managed by a Github workflow called `Students Notebook generat
 
 Please note that updating the  `Students` branch may take a several dozens of seconds. This total delay includes both the time spent waiting for a GitHub Actions runner to become available (which can be long if no runners are free) and the time required to actually process the job. The execution time depends on how many Notebooks need to be converted and their length. Running other workflows in the repository at the same time may also increase the overall completion time.
 
-For more information on how to manage and monitor Github workflow, see [official GitHub Actions documentation](https://docs.github.com/en/actions/writing-workflows/quickstart).
+For more information on how to manage and monitor Github workflow, see the [official GitHub Actions documentation](https://docs.github.com/en/actions/writing-workflows/quickstart).
 
 ### Conversion script stand-alone usage (or integration in other CD/CI environments)
 

@@ -1,7 +1,7 @@
 {
     "notebooks_dir": ["notebooks/", "ASSIGNMENTS"],
     "solution_marker": {
-        "code": "#SOLUTION",
+        "code": "SOLUTION",
         "markdown": "blockquote"
     },
     "placeholder": {
