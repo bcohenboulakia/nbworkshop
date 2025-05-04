@@ -5,13 +5,12 @@
 _nbworkshop_ is a streamlined tool designed for educators who use Jupyter Notebooks and need to efficiently prepare and distribute exercise notebooks with hidden solutions or instructor-only comments:
 ![example](https://github.com/user-attachments/assets/be557bda-6294-432e-8739-4d19538a341e)
 
-Unlike more comprehensive systems such as nbgrader, nbworkshop prioritizes simplicity and flexibility, allowing teachers to mark specific parts of any cell-whether code or markdown-for removal in student versions, without imposing a rigid file structure or workflow.
+Unlike more comprehensive systems such as _nbgrader_, _nbworkshop_ prioritizes simplicity and flexibility, allowing teachers to mark specific parts of any cell-whether code or markdown-for removal in student versions, without imposing a rigid file structure or workflow.
 
 For users working with GitHub, _nbworkshop_ also provides a workflow that monitors specific directories and, whenever a Notebook within these monitored directories is updated on the main branch, automatically generates Student versions of those Notebooks that is stored on a specific branch. An archive (ZIP) containing these student versions, along with any necessary attachments, can also be created and stored in the same branch. This makes it easy to distribute up-to-date materials to students while keeping instructor content private and organized. Note that this workflow can be easily adapted to Gitlab or BitBucket using their respective CD/CI tools.
 
 **Key features:**
-- **Targeted Solution Hiding**: Teachers can precisely mark individual lines or blocks in both code and markdown cells as solutions or instructor notes. Only these marked sections are removed or replaced in the student version; all other content remains unchanged.
-- **Customizable Placeholders** : When a solution is removed, it is replaced with a configurable placeholder (e.g., `#TO COMPLETE` in code, <em>TO COMPLETE</em> in markdown), clearly indicating where students need to provide their answers.
+- **Customizable solution markers and placeholders** : When a part of the notebook is identified as a solution, it is removed and replaced with a placeholder. Both solution marker and placeholder can be defined to tutor's convenience (e.g. `#SOLUTION` to `#TO COMPLETE` in code, `<blockquote>Solution<\blockquote>`to `<em>TO COMPLETE</em>` in markdown), clearly indicating where students need to provide their answers.
 - **Automatic Batch Processing**: The tool can process multiple notebooks at once, generating student versions and optional ZIP archives containing all referenced attachments. 
 - **GitHub Integration** : A pre-configured GitHub Actions workflow automatically regenerates the student branch and archives whenever notebooks are updated on the main branch ([manual trigger](https://docs.github.com/en/actions/managing-workflow-runs/manually-running-a-workflow) also possible).
 - **Automation-ready** : Can easily be integrated to other CD/CI chains
@@ -57,12 +56,12 @@ The configuration file is straightforward:
 }
 ```
 * Workflow options (ignored by the conversion script):
-	* **`notebooks_dir`** (mandatory): List of directories to process
-	* **`post_command`** (optional): Post-processing shell command to be executed by the workflow
+	* `notebooks_dir` (mandatory): List of directories to process
+	* `post_command` (optional): Post-processing shell command to be executed by the workflow
 * Conversion options (all mandatory for the conversion script, ignored by the workflow):
-	* **`solution_marker`**: Dictionary of markers identifying solution content, containing only the core text, which is then adapted by the code-wrapped as an HTML tag for Markdown or prefixed with a comment character for Python.
-	* **`placeholder`**: Dictionary of replacement text for removed solutions
-	* **`generate_zip`**: Boolean enabling ZIP archives to be generated
+	* `solution_marker`: Dictionary of markers identifying solution content, containing only the core text, which is then adapted by the code-wrapped as an HTML tag for Markdown or prefixed with a comment character for Python.
+	* `placeholder`: Dictionary of replacement text for removed solutions
+	* `generate_zip`: Boolean enabling ZIP archives to be generated
 
 Note: In order to avoid useless conversions, `.ipynb_checkpoints` directories should be added to `.gitignore`.
 
@@ -97,14 +96,12 @@ For more information on how to manage and monitor Github workflow, see the [offi
 
 If one prefers not to use GitHub workflows, it's possible to manually run the Python script that generates student notebooks (in `.github/scripts/student_version.py` but it can be moved anywhere). Here's the command-line interface:
 ```bash
-python student_version.py [NOTEBOOK_PATHS] \
-    --config [PATH] \
-    --hide-header
+python student_version.py NOTEBOOK_PATHS [--config PATH] [--hide-header]
 ```
 
  * `NOTEBOOK_PATHS`: Process specific notebooks (supports glob patterns: `*.ipynb`, `**/exercises/*.ipynb`)
- * `--config`: Specify alternative config path (default: `./config.json`)
- * `--hide-header` : Suppress Markdown table headers for embedding in reports
+ * `--config` (optional): Specify alternative config path (default: `./config.json`)
+ * `--hide-header` (optional): Suppress Markdown table headers for embedding in reports
  
 The student version is created in the same directory as the original notebook. The summary is sent to the standard output. Notebooks are refered by absolute path if not in the hierarchy of the current working directry.
 
@@ -112,7 +109,7 @@ Depending on whether batch processing is performed internally by the script or n
 
 ## Corrections format
 
-Note that _nbworkshop_ can use any replacement text/tags and placeholder the user defines. In the following explanations, English versions are used.
+Note that _nbworkshop_ can use any replacement text/tags and placeholder the user defines. In the following explanations, default english versions are used.
 
 ### Correction in `Code` cells
 To create a line or block of correction, the comment `#SOLUTION` must be added at the end of each line of the block. The block is replaced by a single placeholder `#TO COMPLETE`. Example:
