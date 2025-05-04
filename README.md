@@ -10,10 +10,10 @@ Unlike more comprehensive systems such as _nbgrader_, _nbworkshop_ prioritizes s
 For users working with GitHub, _nbworkshop_ also provides a workflow that monitors specific directories and, whenever a Notebook within these monitored directories is updated on the main branch, automatically generates Student versions of those Notebooks that is stored on a specific branch. An archive (ZIP) containing these student versions, along with any necessary attachments, can also be created and stored in the same branch. This makes it easy to distribute up-to-date materials to students while keeping instructor content private and organized. Note that this workflow can be easily adapted to Gitlab or BitBucket using their respective CD/CI tools.
 
 **Key features:**
-- **Customizable solution markers and placeholders** : When a part of the notebook is identified as a solution, it is removed and replaced with a placeholder. Both solution marker and placeholder can be defined to tutor's convenience (e.g. `#SOLUTION` to `#TO COMPLETE` in code, `<blockquote>Solution<\blockquote>`to `<em>TO COMPLETE</em>` in markdown), clearly indicating where students need to provide their answers.
-- **Automatic Batch Processing**: The tool can process multiple notebooks at once, generating student versions and optional ZIP archives containing all referenced attachments. 
-- **GitHub Integration** : A pre-configured GitHub Actions workflow automatically regenerates the student branch and archives whenever notebooks are updated on the main branch ([manual trigger](https://docs.github.com/en/actions/managing-workflow-runs/manually-running-a-workflow) also possible).
-- **Automation-ready** : Can easily be integrated to other CD/CI chains
+- **Targeted Solution and instructions Hiding**: Teachers can precisely mark individual lines or blocks in both code and markdown cells as solutions. They are removed and replaced with placeholders, clearly indicating where students need to provide their answers. Instructor notes can also be provided, they are also removed in the student version. All other content remains unchanged.
+- **Automatic Batch Processing**: The conversion tool can process multiple notebooks at once, generating student versions and optional ZIP archives containing all referenced attachments. 
+- **GitHub Integration**: A pre-configured GitHub Actions workflow automatically regenerates the student versions and archives whenever notebooks are updated on the main branch ([manual trigger](https://docs.github.com/en/actions/managing-workflow-runs/manually-running-a-workflow) also possible). All the generated material is stored in a specific branch.
+- **Automation-ready**: Can easily be integrated to other CD/CI chains
 - **Flexible Configuration**: All markers, placeholders, and naming conventions are controlled via a simple JSON configuration file, making adaptation to different teaching styles and environments straightforward.
 
 Summary:
