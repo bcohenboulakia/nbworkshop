@@ -161,9 +161,9 @@ is replaced by:
 Question ? <em>TO COMPLETE</em>
 ```
     
-If there is a blank line between the question and the answer, the placeholder is placed on the line below the question. Example :
+If there is a blank line between the question and the answer, the placeholder is placed on the line below the question. Example:
 ```HTML
-Question ?
+Question?
 
 <blockquote>
     Expected answer.
@@ -172,7 +172,7 @@ Question ?
     
 is replaced by:
 ```html
-Question ?
+Question?
 <em>TO COMPLETE</em>
 ```
     
