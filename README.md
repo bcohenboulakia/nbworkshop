@@ -164,6 +164,7 @@ Question ? <em>TO COMPLETE</em>
 If there is a blank line between the question and the answer, the placeholder is placed on the line below the question. Example :
 ```HTML
 Question ?
+
 <blockquote>
     Expected answer.
 </blockquote>
