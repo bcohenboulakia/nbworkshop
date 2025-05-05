@@ -89,14 +89,14 @@ The workflow can also be run manually from the workflow page in the `Action` tab
 ![summary](https://github.com/user-attachments/assets/545d2bd4-8740-4ebc-8675-a7ac4e952cfb)
 
 For more information on how to manage and monitor Github workflow, see the [official GitHub Actions documentation](https://docs.github.com/en/actions/writing-workflows/quickstart).
-
+ 
 ### Conversion script stand-alone usage (or integration in other CD/CI environments)
 
 If one prefers not to use GitHub workflows, it's possible to manually run the Python script that generates student notebooks (in `.github/scripts/student_version.py` but it can be moved anywhere). Here's the command-line interface:
 ```bash
 python student_version.py NOTEBOOK_PATHS [--config PATH] [--hide-header]
 ```
-d
+
  * `NOTEBOOK_PATHS`: Process specific notebooks (supports glob patterns: `*.ipynb`, `**/exercises/*.ipynb`)
  * `--config` (optional): Specify alternative config path (default: `./config.json`)
  * `--hide-header` (optional): Suppress Markdown table headers for embedding in reports
