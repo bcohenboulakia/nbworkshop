@@ -12,9 +12,9 @@ For users working with GitHub, _nbworkshop_ also provides a workflow that monito
 **Key features:**
 - **Targeted Solution and instructions Hiding**: Teachers can precisely mark individual lines or blocks in both code and markdown cells as solutions. They are removed and replaced with placeholders, clearly indicating where students need to provide their answers. Instructor notes can also be provided, they are also removed in the student version. All other content remains unchanged.
 - **Automatic Batch Processing**: The conversion tool can process multiple notebooks at once, generating student versions and optional ZIP archives containing all referenced attachments. 
-- **GitHub Integration**: A pre-configured GitHub Actions workflow automatically regenerates the student versions and archives whenever notebooks are updated on the main branch ([manual trigger](https://docs.github.com/en/actions/managing-workflow-runs/manually-running-a-workflow) also possible). All the generated material is stored in a specific branch.
+- **GitHub Integration**: A pre-configured GitHub Actions workflow automatically regenerates the student versions and archives whenever notebooks are updated on the main branch ([manual trigger](https://docs.github.com/en/actions/managing-workflow-runs/manually-running-a-workflow) is also possible). All the generated material is stored in a specific branch.
 - **Automation-ready**: Can easily be integrated to other CD/CI chains
-- **Flexible Configuration**: All markers, placeholders, and naming conventions are controlled via a simple JSON configuration file, making adaptation to different teaching styles and environments straightforward.
+- **Flexible Configuration**: All markers, placeholders, and naming conventions are controlled via a simple JSON configuration file, making adaptation to different teaching styles and environments straightforward. One can for example use a code placeholder that raises a `NotImplementedError`.
 
 Summary:
 - [Usage](#usage)
@@ -63,8 +63,6 @@ The configuration file is straightforward:
 	* `placeholder`: Dictionary of replacement text for removed solutions
 	* `generate_zip`: Boolean enabling ZIP archives to be generated
 
-Note: In order to avoid useless conversions, `.ipynb_checkpoints` directories should be added to `.gitignore`.
-
 ### zip archive and attached files
 
 For each processed notebook, if zip archives are to be generated (see the _Configuration_ section above), they are added in the `ZIP` subdirectory of each directory containing converted Notebooks. Each archive contains one Notebook and all embedded files. These files must be referenced directly in the global metadata of the notebook, as a list associated with the key `"attached_files"`. Example:
@@ -85,10 +83,11 @@ The conversion is managed by a Github workflow called `Students Notebook generat
  * The `main` branch is the one that triggers conversions. It contains the corrected versions and the necessary resources. It can also contain other materiels, which is ignored.
  * The `Students` branch is generated automatically. Its content must not be modified, as it is fully rewritten each time a conversion occurs. It contains the same content (including subdirectories structure) as the directories monitored in `main` branch, except that solutions are removed from the Notebooks, whether for code or for questions in the text. If an original Notebook's filename ends with the configured `tutor_postfix`, this postfix is replaced by `student_postfix` in the converted Notebook's filename. If the original name does not end with `tutor_postfix`, the `student_postfix` is simply appended to the base name. No additional characters (such as underscores or spaces) are inserted automatically; the exact format is entirely determined by the postfix values set in the configuration.
 
-Please note that conversion may take a several dozens of seconds. This total delay includes both the time spent waiting for a GitHub Actions runner to become available (which can be long if no runners are free) and the time required to actually process the job. The execution time depends on how many Notebooks need to be converted and their length. Running other workflows in the repository at the same time may also increase the overall completion time.
+Please note that conversion may take a several dozens of seconds. This total delay includes both the time spent waiting for a GitHub Actions runner to become available (which can be long if no runners are free) and the time required to actually process the job. The execution time depends on how many Notebooks need to be converted and their length. Running other workflows in the repository at the same time may also increase the overall completion time. Mopreover, in order to avoid useless conversions, `.ipynb_checkpoints` directories should be added to `.gitignore`.
 
 The workflow can also be run manually from the workflow page in the `Action` tab on the Github repository web page. This workflow can be overseen on the same page. Every time the workflow is run, a short rundown  of the conversion process is shown in the workflow summary:
 ![summary](https://github.com/user-attachments/assets/545d2bd4-8740-4ebc-8675-a7ac4e952cfb)
+
 
 For more information on how to manage and monitor Github workflow, see the [official GitHub Actions documentation](https://docs.github.com/en/actions/writing-workflows/quickstart).
 
@@ -105,7 +104,7 @@ python student_version.py NOTEBOOK_PATHS [--config PATH] [--hide-header]
  
 The student version is created in the same directory as the original notebook. The summary is sent to the standard output. Notebooks are refered by absolute path if not in the hierarchy of the current working directry.
 
-Depending on whether batch processing is performed internally by the script or not, the `--hide-header` option can be used to generate a summary table without a header, in order to concatenate the report sheet lines successively generated by the script. This can be useful when integrating the script in another CD/CI pipeline (or any batch processing).
+Depending on whether batch processing is performed internally by the script or not, the `--hide-header` option can be used to generate a summary table without a header, in order to concatenate the report sheet lines successively generated by the script. This can be useful when integrating the script in another CD/CI pipeline (or any external batch processing).
 
 ## Corrections format
 
