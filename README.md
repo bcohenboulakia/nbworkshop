@@ -180,7 +180,8 @@ Question?
 
 A note only addressed to the tutor can be added in the notebook. This note is completely removed from the student Notebook. It must be placed in markdown cells, inside a <code>&lt;blockquote&gt;&lt;/blockquote&gt;</code>  block with the class <code>"comment"</code>. Example:
 ```html
-WS text.<br>
+WS text.
+
 <blockquote class="comment">
     Note to the tutor
 </blockquote>
