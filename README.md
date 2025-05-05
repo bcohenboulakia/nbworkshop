@@ -83,11 +83,10 @@ The conversion is managed by a Github workflow called `Students Notebook generat
  * The `main` branch is the one that triggers conversions. It contains the corrected versions and the necessary resources. It can also contain other materiels, which is ignored.
  * The `Students` branch is generated automatically. Its content must not be modified, as it is fully rewritten each time a conversion occurs. It contains the same content (including subdirectories structure) as the directories monitored in `main` branch, except that solutions are removed from the Notebooks, whether for code or for questions in the text. If an original Notebook's filename ends with the configured `tutor_postfix`, this postfix is replaced by `student_postfix` in the converted Notebook's filename. If the original name does not end with `tutor_postfix`, the `student_postfix` is simply appended to the base name. No additional characters (such as underscores or spaces) are inserted automatically; the exact format is entirely determined by the postfix values set in the configuration.
 
-Please note that conversion may take a several dozens of seconds. This total delay includes both the time spent waiting for a GitHub Actions runner to become available (which can be long if no runners are free) and the time required to actually process the job. The execution time depends on how many Notebooks need to be converted and their length. Running other workflows in the repository at the same time may also increase the overall completion time. Mopreover, in order to avoid useless conversions, `.ipynb_checkpoints` directories should be added to `.gitignore`.
+Please note that conversion may take a several dozens of seconds. This total delay includes both the time spent waiting for a GitHub Actions runner to become available (which can be long if no runners are free) and the time required to actually process the job. The execution time depends on how many Notebooks need to be converted and their length. Running other workflows in the repository at the same time may also increase the overall completion time. Moreover, in order to avoid useless conversions, `.ipynb_checkpoints` directories should be added to `.gitignore`.
 
 The workflow can also be run manually from the workflow page in the `Action` tab on the Github repository web page. This workflow can be overseen on the same page. Every time the workflow is run, a short rundown  of the conversion process is shown in the workflow summary:
 ![summary](https://github.com/user-attachments/assets/545d2bd4-8740-4ebc-8675-a7ac4e952cfb)
-
 
 For more information on how to manage and monitor Github workflow, see the [official GitHub Actions documentation](https://docs.github.com/en/actions/writing-workflows/quickstart).
 
@@ -97,7 +96,7 @@ If one prefers not to use GitHub workflows, it's possible to manually run the Py
 ```bash
 python student_version.py NOTEBOOK_PATHS [--config PATH] [--hide-header]
 ```
-
+d
  * `NOTEBOOK_PATHS`: Process specific notebooks (supports glob patterns: `*.ipynb`, `**/exercises/*.ipynb`)
  * `--config` (optional): Specify alternative config path (default: `./config.json`)
  * `--hide-header` (optional): Suppress Markdown table headers for embedding in reports
