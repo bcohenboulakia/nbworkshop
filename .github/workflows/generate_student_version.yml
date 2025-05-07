@@ -43,7 +43,7 @@ jobs:
           rm -rf /tmp/processed
           mkdir -p /tmp/processed
           for dir in $(jq -r '.notebooks_dir[]' .github/config.json); do
-            cp -r "$dir" /tmp/processed/
+            cp -r --parents "$dir" /tmp/processed/
           done
 
       - name: Initialize summary
