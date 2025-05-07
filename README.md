@@ -22,7 +22,7 @@ _nbworkshop_ is a streamlined tool designed for educators who use Jupyter Notebo
 
 Unlike more comprehensive systems such as _nbgrader_, _nbworkshop_ prioritizes simplicity and flexibility, allowing teachers to mark specific parts of any cell-whether code or markdown-for removal in student versions, without imposing a rigid file structure or complex workflow. An archive (ZIP) containing these student versions, along with any necessary attachments, can also be created. This makes it easy to distribute up-to-date materials to students while keeping instructor content private and organized.
 
-For users working with GitHub, _nbworkshop_ also provides a workflow that monitors specific directories and, whenever a Notebook within these monitored directories is updated on the main branch, automatically generates Student versions of those Notebooks that is stored on a specific branch. If zip archives are to be created, they are stored in the same branch. Note that this workflow can be easily adapted to Gitlab or BitBucket using their respective CD/CI tools.
+For users working with GitHub, _nbworkshop_ also provides a workflow that monitors specific directories and, whenever a Notebook within these monitored directories is updated on the main branch, automatically generates Student versions of those Notebooks that is stored on a specific branch. If ZIP archives are to be created, they are stored in the same branch. Note that this workflow can be easily adapted to Gitlab or BitBucket using their respective CD/CI tools.
 
 **Key features:**
 - **Targeted Solution and instructions Hiding**: Teachers can precisely mark individual lines or blocks in both code and markdown cells as solutions. They are removed and replaced with placeholders, clearly indicating where students need to provide their answers. Instructor notes can also be provided, they are also removed in the student version. All other content remains unchanged.
@@ -34,7 +34,7 @@ For users working with GitHub, _nbworkshop_ also provides a workflow that monito
 Summary:
 - [Usage](#usage)
   - [Configuration](#configuration)
-  - [zip archive and attached files](#zip-archive-and-attached-files)
+  - [Zip archive and attached files](#zip-archive-and-attached-files)
   - [GitHub workflow and branches](#github-workflow-and-branches)
   - [Conversion script stand-alone usage](#conversion-script-stand-alone-usage-or-integration-in-other-cdci-environments)
 - [Corrections format](#corrections-format)
@@ -72,15 +72,15 @@ The configuration file is straightforward:
 ```
 * Workflow options (ignored by the conversion script):
 	* `notebooks_dir` (mandatory): List of directories to process
-	* `post_command` (optional): Post-processing shell command to be executed by the workflow
+	* `post_command` (optional): Post-processing shell command to be executed by the workflow, allowing for example to send the generated ZIP archives to a LMS.
 * Conversion options (all mandatory for the conversion script, ignored by the workflow):
-	* `solution_marker`: Dictionary of markers identifying solution content, containing only the core text, which is then adapted by the code-wrapped as an HTML tag for Markdown or prefixed with a comment character for Python.
+	* `solution_marker`: Dictionary of markers identifying solution content, containing only the core text, which is either wrapped as an HTML tag for Markdown or prefixed with a comment character for Python.
 	* `placeholder`: Dictionary of replacement text for removed solutions
 	* `generate_zip`: Boolean enabling ZIP archives to be generated
 
 ### Zip archive and attached files
 
-For each processed notebook, if zip archives are to be generated (see the _Configuration_ section above), they are added in the `ZIP` subdirectory of each directory containing converted Notebooks. Each archive contains one Notebook and all embedded files. These files must be referenced directly in the global metadata of the notebook, as a list associated with the key `"attached_files"`. Example:
+For each processed notebook, if ZIP archives are to be generated (see the _Configuration_ section above), they are added in the `ZIP` subdirectory of each directory containing converted Notebooks. Each archive contains one Notebook and all embedded files. These files must be referenced directly in the global metadata of the notebook, as a list associated with the key `"attached_files"`. Example:
 ```json
 "attached_files": [
 	"picture1.png",
@@ -104,6 +104,21 @@ This workflow can be monitored on the workflow page in the `Action` tab on the G
 ![summary](https://github.com/user-attachments/assets/545d2bd4-8740-4ebc-8675-a7ac4e952cfb)
 
 The workflow can also be run manually from the same tab. For more information on how to manage and monitor GitHub workflow, see the [official GitHub Actions documentation](https://docs.github.com/en/actions/writing-workflows/quickstart).
+
+### Post-conversion command
+
+The `post_command` option in `config.json` allows executing a command after all notebook conversions are completed. This command is executed on the Students branch. It means the post-command only has access to the processed/converted notebooks, not the original versions from the main branch. This allows for example to send all the generated ZIP archives to a LMS using its API.
+
+It is possible to change branches within the post-command using the standard Git checkout command:
+```bash
+git checkout main
+```
+This branch-switching capability can be included at the beginning of your post-command string
+```yaml
+"post_command": "git checkout main && ./your-program"
+```
+It can also be done from the `post_command` program itself through External Command execution.
+
  
 ### Conversion script stand-alone usage (or integration in other CD/CI environments)
 
