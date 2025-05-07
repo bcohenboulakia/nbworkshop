@@ -36,6 +36,7 @@ Summary:
   - [Configuration](#configuration)
   - [Zip archive and attached files](#zip-archive-and-attached-files)
   - [GitHub workflow and branches](#github-workflow-and-branches)
+  - [Post-conversion command](#post-conversion-command)
   - [Conversion script stand-alone usage](#conversion-script-stand-alone-usage-or-integration-in-other-cdci-environments)
 - [Corrections format](#corrections-format)
   - [Correction in Code cells](#correction-in-code-cells)
