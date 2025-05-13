@@ -107,9 +107,7 @@ jobs:
             POST_COMMAND=$(jq -r '.post_command // empty' .github/config.json)
             if [ -n "$POST_COMMAND" ]; then
                 echo "### Executed Command" >> $GITHUB_STEP_SUMMARY
-                echo "```" >> $GITHUB_STEP_SUMMARY
                 echo "$POST_COMMAND" >> $GITHUB_STEP_SUMMARY
-                echo "```" >> $GITHUB_STEP_SUMMARY
                 
                 # Execute the command and capture both stdout and stderr
                 OUTPUT_FILE=$(mktemp)
@@ -124,9 +122,7 @@ jobs:
                     # Add standard output if it exists
                     if [ -s "$OUTPUT_FILE" ]; then
                         echo "### Standard Output" >> $GITHUB_STEP_SUMMARY
-                        echo "```" >> $GITHUB_STEP_SUMMARY
                         cat "$OUTPUT_FILE" >> $GITHUB_STEP_SUMMARY
-                        echo "```" >> $GITHUB_STEP_SUMMARY
                     else
                         echo "### Standard Output" >> $GITHUB_STEP_SUMMARY
                         echo "_No standard output_" >> $GITHUB_STEP_SUMMARY
@@ -140,18 +136,14 @@ jobs:
                     # Add standard output if it exists
                     echo "### Standard Error Output" >> $GITHUB_STEP_SUMMARY
                     if [ -s "$OUTPUT_FILE" ]; then
-                        echo "```" >> $GITHUB_STEP_SUMMARY
                         cat "$OUTPUT_FILE" >> $GITHUB_STEP_SUMMARY
-                        echo "```" >> $GITHUB_STEP_SUMMARY
                     else
                         echo "_No standard output_" >> $GITHUB_STEP_SUMMARY
                     fi
                     
                     # Add error output if it exists
                     if [ -s "$ERROR_FILE" ]; then
-                        echo "```" >> $GITHUB_STEP_SUMMARY
                         cat "$ERROR_FILE" >> $GITHUB_STEP_SUMMARY
-                        echo "```" >> $GITHUB_STEP_SUMMARY
                     fi
                 fi
                 
