@@ -36,8 +36,11 @@ jobs:
           python-version: '3.12'
 
       - name: Install dependencies
+        # For HTML tag manipulation in Markdown cells
         run: pip install beautifulsoup4
 
+      # Every monitored directory is copied structure-wise in order to replace tutor notebooks
+      # without deleting other materials
       - name: Prepare temp directory
         run: |
           rm -rf /tmp/processed
@@ -48,26 +51,26 @@ jobs:
 
       - name: Initialize summary
         run: |
-          echo "## Processing Report" > /tmp/processed/summary.md
-          echo "| Notebook | Questions | Code Blocks | ZIP |" >> /tmp/processed/summary.md
-          echo "|----------|-----------|-------------|-----|" >> /tmp/processed/summary.md
-
+          echo "## Processing Report" >> $GITHUB_STEP_SUMMARY
+          echo "| Notebook | Questions | Code Blocks | ZIP |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-----------|-------------|-----|" >> $GITHUB_STEP_SUMMARY
+      
+      # Conversion is done on the copied notebooks
       - name: Convert notebooks
+        # Standard output of successive conversions are added directly to GitHub step summary
         run: |
+          TEMP_OUTPUT=$(mktemp)
           find /tmp/processed -name '*.ipynb' | while read -r nb; do
             python .github/scripts/student_version.py "$nb" \
-              --config .github/config.json >> /tmp/processed/summary.md \
-              --hide-header
+              --config .github/config.json \
+              --hide-header >> "$TEMP_OUTPUT"
             rm "$nb"
           done
-          
-      - name: Process summary
-        run: |
-          # Display the summary on GitHub's interface
-          sed -i 's|/tmp/processed/||g' /tmp/processed/summary.md
-          cat /tmp/processed/summary.md >> $GITHUB_STEP_SUMMARY
-          rm /tmp/processed/summary.md
+          # Remove "/tmp/processed/" from the paths
+          sed 's|/tmp/processed/||g' "$TEMP_OUTPUT" >> $GITHUB_STEP_SUMMARY
+          rm "$TEMP_OUTPUT"
 
+      # It the Students branche doens't exist, it is created first
       - name: Switch to Students branch
         run: |
           git config --global user.name "GitHub Actions"
@@ -94,14 +97,73 @@ jobs:
           git add .
           git commit -m "Update student materials: $(date +'%Y-%m-%d %H:%M:%S')" || echo "No changes"
           git push origin Students --force
-          
+      
+      # In order to collect standard and error output from the post-command execution,
+      # temporary files are created
       - name: Execute post-command
         run: |
-            POST_COMMAND=$(jq -r '.post_command // empty' .github/config.json)
-            if [ -n "$POST_COMMAND" ]; then
+          echo "## Post-command Results" >> $GITHUB_STEP_SUMMARY
+          
+          POST_COMMAND=$(jq -r '.post_command // empty' .github/config.json)
+          if [ -n "$POST_COMMAND" ]; then
+            echo "### Executed Command" >> $GITHUB_STEP_SUMMARY
+            echo '```
+            echo "$POST_COMMAND" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            
+            # Execute the command and capture both stdout and stderr
+            OUTPUT_FILE=$(mktemp)
+            ERROR_FILE=$(mktemp)
+            
             echo "Executing post-command: $POST_COMMAND"
-            eval "$POST_COMMAND"
+            if eval "$POST_COMMAND" > "$OUTPUT_FILE" 2> "$ERROR_FILE"; then
+              # Command executed successfully
+              echo "### Execution Status" >> $GITHUB_STEP_SUMMARY
+              echo "✅ **Success**" >> $GITHUB_STEP_SUMMARY
+              
+              # Add standard output if it exists
+              if [ -s "$OUTPUT_FILE" ]; then
+                echo "### Standard Output" >> $GITHUB_STEP_SUMMARY
+                echo '```
+                cat "$OUTPUT_FILE" >> $GITHUB_STEP_SUMMARY
+                echo '```' >> $GITHUB_STEP_SUMMARY
+              else
+                echo "### Standard Output" >> $GITHUB_STEP_SUMMARY
+                echo "_No standard output_" >> $GITHUB_STEP_SUMMARY
+              fi
             else
-            echo "No post-command to execute"
+              # Command failed
+              EXIT_CODE=$?
+              echo "### Execution Status" >> $GITHUB_STEP_SUMMARY
+              echo "❌ **Failed** (exit code: $EXIT_CODE)" >> $GITHUB_STEP_SUMMARY
+              
+              # Add standard output if it exists
+              if [ -s "$OUTPUT_FILE" ]; then
+                echo "### Standard Output" >> $GITHUB_STEP_SUMMARY
+                echo '```
+                cat "$OUTPUT_FILE" >> $GITHUB_STEP_SUMMARY
+                echo '```' >> $GITHUB_STEP_SUMMARY
+              else
+                echo "### Standard Output" >> $GITHUB_STEP_SUMMARY
+                echo "_No standard output_" >> $GITHUB_STEP_SUMMARY
+              fi
+              
+              # Add error output if it exists
+              if [ -s "$ERROR_FILE" ]; then
+                echo "### Standard Error Output" >> $GITHUB_STEP_SUMMARY
+                echo '```
+                cat "$ERROR_FILE" >> $GITHUB_STEP_SUMMARY
+                echo '```' >> $GITHUB_STEP_SUMMARY
+              else
+                echo "### Standard Error Output" >> $GITHUB_STEP_SUMMARY
+                echo "_No error output_" >> $GITHUB_STEP_SUMMARY
+              fi
             fi
+            
+            # Clean up temporary files
+            rm "$OUTPUT_FILE" "$ERROR_FILE"
+          else
+            echo "### Information" >> $GITHUB_STEP_SUMMARY
+            echo "_No post-command to execute_" >> $GITHUB_STEP_SUMMARY
+          fi
         shell: bash
