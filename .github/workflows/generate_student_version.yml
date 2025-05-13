@@ -97,11 +97,11 @@ jobs:
           
       - name: Execute post-command
         run: |
-            POST_COMMAND=$(jq -r '.post_command // empty' .github/config.json)
-            if [ -n "$POST_COMMAND" ]; then
+          POST_COMMAND=$(jq -r '.post_command // empty' .github/config.json)
+          if [ -n "$POST_COMMAND" ]; then
             echo "Executing post-command: $POST_COMMAND"
-            eval "$POST_COMMAND"
-            else
+            bash -c "$POST_COMMAND"
+          else
             echo "No post-command to execute"
-            fi
+          fi
         shell: bash
