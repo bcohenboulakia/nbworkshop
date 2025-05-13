@@ -101,7 +101,6 @@ jobs:
       # In order to collect standard and error output from the post-command execution,
       # temporary files are created
       - name: Execute post-command
-        - name: Execute post-command
           run: |
           echo "## Post-command Results" >> $GITHUB_STEP_SUMMARY
           
