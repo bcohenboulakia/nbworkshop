@@ -109,7 +109,7 @@ jobs:
                 echo "### Executed Command" >> $GITHUB_STEP_SUMMARY
                 echo "```" >> $GITHUB_STEP_SUMMARY
                 echo "$POST_COMMAND" >> $GITHUB_STEP_SUMMARY
-                echo "```"
+                echo "```" >> $GITHUB_STEP_SUMMARY
                 
                 # Execute the command and capture both stdout and stderr
                 OUTPUT_FILE=$(mktemp)
@@ -126,7 +126,7 @@ jobs:
                         echo "### Standard Output" >> $GITHUB_STEP_SUMMARY
                         echo "```" >> $GITHUB_STEP_SUMMARY
                         cat "$OUTPUT_FILE" >> $GITHUB_STEP_SUMMARY
-                        echo "```"
+                        echo "```" >> $GITHUB_STEP_SUMMARY
                     else
                         echo "### Standard Output" >> $GITHUB_STEP_SUMMARY
                         echo "_No standard output_" >> $GITHUB_STEP_SUMMARY
@@ -142,7 +142,7 @@ jobs:
                         echo "### Standard Output" >> $GITHUB_STEP_SUMMARY
                         echo "```" >> $GITHUB_STEP_SUMMARY
                         cat "$OUTPUT_FILE" >> $GITHUB_STEP_SUMMARY
-                        echo "```"
+                        echo "```" >> $GITHUB_STEP_SUMMARY
                     else
                         echo "### Standard Output" >> $GITHUB_STEP_SUMMARY
                         echo "_No standard output_" >> $GITHUB_STEP_SUMMARY
@@ -151,9 +151,9 @@ jobs:
                     # Add error output if it exists
                     if [ -s "$ERROR_FILE" ]; then
                         echo "### Standard Error Output" >> $GITHUB_STEP_SUMMARY
-                        echo '```' >> $GITHUB_STEP_SUMMARY
+                        echo "```" >> $GITHUB_STEP_SUMMARY
                         cat "$ERROR_FILE" >> $GITHUB_STEP_SUMMARY
-                        echo "```"
+                        echo "```" >> $GITHUB_STEP_SUMMARY
                     fi
                 fi
                 
