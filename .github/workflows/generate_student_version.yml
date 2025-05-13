@@ -138,19 +138,17 @@ jobs:
                     echo "❌ **Failed** (exit code: $EXIT_CODE)" >> $GITHUB_STEP_SUMMARY
                     
                     # Add standard output if it exists
+                    echo "### Standard Error Output" >> $GITHUB_STEP_SUMMARY
                     if [ -s "$OUTPUT_FILE" ]; then
-                        echo "### Standard Output" >> $GITHUB_STEP_SUMMARY
                         echo "```" >> $GITHUB_STEP_SUMMARY
                         cat "$OUTPUT_FILE" >> $GITHUB_STEP_SUMMARY
                         echo "```" >> $GITHUB_STEP_SUMMARY
                     else
-                        echo "### Standard Output" >> $GITHUB_STEP_SUMMARY
                         echo "_No standard output_" >> $GITHUB_STEP_SUMMARY
                     fi
                     
                     # Add error output if it exists
                     if [ -s "$ERROR_FILE" ]; then
-                        echo "### Standard Error Output" >> $GITHUB_STEP_SUMMARY
                         echo "```" >> $GITHUB_STEP_SUMMARY
                         cat "$ERROR_FILE" >> $GITHUB_STEP_SUMMARY
                         echo "```" >> $GITHUB_STEP_SUMMARY
