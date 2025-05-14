@@ -61,7 +61,7 @@ jobs:
             rm "$nb"
           done
           # Remove "/tmp/processed/" from the paths
-         {
+          {
             printf "## Processing Report\n| Notebook | Questions | Code Blocks | ZIP |\n|----------|-----------|-------------|-----|" 
             
             # Traiter le contenu du fichier temporaire sans ajouter de ligne vide
