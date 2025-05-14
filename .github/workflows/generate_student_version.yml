@@ -63,7 +63,7 @@ jobs:
           
           # Generate summary table in Markdown format
           {
-            printf "## Processing Report\n" >> $GITHUB_STEP_SUMMARY
+            printf "## Notebook processed\n" >> $GITHUB_STEP_SUMMARY
             printf "| Notebook | Questions | Code Blocks | ZIP |\n" >> $GITHUB_STEP_SUMMARY
             printf "|----------|-----------|-------------|-----|\n" >> $GITHUB_STEP_SUMMARY
             sed 's|/tmp/processed/||g' "$TEMP_OUTPUT"
@@ -99,8 +99,10 @@ jobs:
       # In order to collect standard and error output from the post-command execution,
       # temporary files are created
       - name: Execute post-command
-        run: |            
+        run: |
+            # Retrieve post-process command from config file
             POST_COMMAND=$(jq -r '.post_command // empty' .github/config.json)
+            
             if [ -n "$POST_COMMAND" ]; then                
                 # Execute the command and capture both stdout and stderr
                 OUTPUT_FILE=$(mktemp)
