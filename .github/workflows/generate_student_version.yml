@@ -48,12 +48,11 @@ jobs:
           for dir in $(jq -r '.notebooks_dir[]' .github/config.json); do
             cp -r --parents "$dir" /tmp/processed/
           done
-
       - name: Initialize summary
         run: |
-          echo "## Processing Report" >> $GITHUB_STEP_SUMMARY
-          echo "| Notebook | Questions | Code Blocks | ZIP |" >> $GITHUB_STEP_SUMMARY
-          echo "|----------|-----------|-------------|-----|" >> $GITHUB_STEP_SUMMARY
+          echo    "## Processing Report" >> $GITHUB_STEP_SUMMARY
+          echo    "| Notebook | Questions | Code Blocks | ZIP |" >> $GITHUB_STEP_SUMMARY
+          echo -n "|----------|-----------|-------------|-----|" >> $GITHUB_STEP_SUMMARY
       
       # Conversion is done on the copied notebooks
       - name: Convert notebooks
@@ -69,7 +68,6 @@ jobs:
           # Remove "/tmp/processed/" from the paths
           sed 's|/tmp/processed/||g' "$TEMP_OUTPUT" >> $GITHUB_STEP_SUMMARY
           rm "$TEMP_OUTPUT"
-
       # It the Students branche doens't exist, it is created first
       - name: Switch to Students branch
         run: |
@@ -81,17 +79,14 @@ jobs:
             git checkout --orphan Students
             git commit --allow-empty -m "Initial commit"
           fi
-
       - name: Clean existing files
         run: |
           for dir in $(jq -r '.notebooks_dir[]' .github/config.json); do
             rm -rf "$dir"
           done
-
       - name: Sync processed files
         run: |
           cp -a /tmp/processed/* .
-
       - name: Commit and push
         run: |
           git add .
