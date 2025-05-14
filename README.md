@@ -35,7 +35,7 @@ Summary:
 - [Basic usage](#basic-usage)
   - [Configuration](#configuration)
   - [Zip archive and attached files](#zip-archive-and-attached-files)
-- [GitHub Workflow](#github_workflow)
+- [GitHub workflow](#github-workflow)
   - [Conversion and branches](#conversion-and-branches)
   - [Post-processing command](#post-processing-command)
   - [Conversion script stand-alone usage](#conversion-script-stand-alone-usage-or-integration-in-other-cdci-environments)
@@ -94,7 +94,7 @@ Relative paths can be used, they are replicated in the ZIP archive. Absolute pat
 
 Note: In Jupyter-based environnements, editing the metadata of a notebook is done in the _ADVANCED TOOLS_ area, under _Notebook metadata_. In Jupyter, it can be accessed by enabling _View_ > _Right Sidebar_ > _Show Notebook tools_. In JupyterLab, it's located in the _Property Inspector_ (gear icon) in the right sidebar.
 
-## Github workflow
+## GitHub workflow
 
 The conversion can be automated by a GitHub workflow called `Students Notebook generation`. This workflow can be monitored on the workflow page in the `Action` tab on the GitHub repository web page. Every time the workflow is run, a short overview of the conversion process is shown in the workflow summary:
 ![summary](https://github.com/user-attachments/assets/545d2bd4-8740-4ebc-8675-a7ac4e952cfb)
