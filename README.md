@@ -146,7 +146,7 @@ Depending on whether batch processing is performed internally by the script or n
 
 ## Solution formatting
 
-Note that _nbworkshop_ can use any replacement text/tags and placeholder the user defines. In the following explanations, default english versions are used.
+Note that _nbworkshop_ can use any replacement text/tags and placeholder the user defines. In the following explanations, default versions are used.
 
 ### solution in `Code` cells
 To create a line or block of solution, the comment `#SOLUTION` must be added at the end of each line of the block. The block is replaced by a single placeholder `#TO COMPLETE`. Example:
