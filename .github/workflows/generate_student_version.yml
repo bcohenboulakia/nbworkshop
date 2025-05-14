@@ -60,14 +60,16 @@ jobs:
               --hide-header >> "$TEMP_OUTPUT"
             rm "$nb"
           done
-          # Remove "/tmp/processed/" from the paths
+          
+          # Generate summary table in Markdown format
           {
             printf "## Processing Report\n" >> $GITHUB_STEP_SUMMARY
             printf "| Notebook | Questions | Code Blocks | ZIP |\n" >> $GITHUB_STEP_SUMMARY
-            printf "|----------|-----------|-------------|-----|" >> $GITHUB_STEP_SUMMARY
+            printf "|----------|-----------|-------------|-----|\n" >> $GITHUB_STEP_SUMMARY
             sed 's|/tmp/processed/||g' "$TEMP_OUTPUT"
           } >> $GITHUB_STEP_SUMMARY
 
+          # Remove "/tmp/processed/" from the paths
           rm "$TEMP_OUTPUT"
       # It the Students branche doens't exist, it is created first
       - name: Switch to Students branch
