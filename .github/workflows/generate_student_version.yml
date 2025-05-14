@@ -26,6 +26,8 @@ permissions:
 jobs:
   process:
     runs-on: ubuntu-latest
+    env:
+      CONFIG_PATH: .github/conversion.json
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -45,7 +47,7 @@ jobs:
         run: |
           rm -rf /tmp/processed
           mkdir -p /tmp/processed
-          for dir in $(jq -r '.notebooks_dir[]' .github/config.json); do
+          for dir in $(jq -r '.notebooks_dir[]' "$CONFIG_PATH"); do
             cp -r --parents "$dir" /tmp/processed/
           done
           
@@ -56,7 +58,7 @@ jobs:
           TEMP_OUTPUT=$(mktemp)
           find /tmp/processed -name '*.ipynb' | while read -r nb; do
             python .github/scripts/student_version.py "$nb" \
-              --config .github/config.json \
+              --config "$CONFIG_PATH" \
               --hide-header >> "$TEMP_OUTPUT"
             rm "$nb"
           done
@@ -84,7 +86,7 @@ jobs:
           fi
       - name: Clean existing files
         run: |
-          for dir in $(jq -r '.notebooks_dir[]' .github/config.json); do
+          for dir in $(jq -r '.notebooks_dir[]' "$CONFIG_PATH"); do
             rm -rf "$dir"
           done
       - name: Sync processed files
@@ -101,14 +103,14 @@ jobs:
       - name: Execute post-command
         run: |
             # Retrieve post-process command from config file
-            POST_COMMAND=$(jq -r '.post_command // empty' .github/config.json)
+            POST_PROCESSING=$(jq -r '.post_processing // empty' "$CONFIG_PATH")
             
-            if [ -n "$POST_COMMAND" ]; then                
+            if [ -n "$POST_PROCESSING" ]; then                
                 # Execute the command and capture both stdout and stderr
                 OUTPUT_FILE=$(mktemp)
                 ERROR_FILE=$(mktemp)
 
-                if bash -c "$POST_COMMAND" > "$OUTPUT_FILE" 2> "$ERROR_FILE"; then
+                if bash -c "$POST_PROCESSING" > "$OUTPUT_FILE" 2> "$ERROR_FILE"; then
                     # Command executed successfully
                     echo "## Post-processing executed successfull ✅" >> $GITHUB_STEP_SUMMARY
                     
