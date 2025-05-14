@@ -13,7 +13,26 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with nbworkshop. If not, see <https://www.gnu.org/licenses/>.
 -->
-# nbworkshop
+
+<p align="center">
+<img width=400 src="https://github.com/user-attachments/assets/ff3b559f-8b90-4b5b-8de1-e6df03ce8504">
+</p>
+
+## Content:
+- [Presentation](#presentation)
+- [Basic usage](#basic-usage)
+  - [Configuration](#configuration)
+  - [Zip archive and attached files](#zip-archive-and-attached-files)
+- [GitHub workflow](#github-workflow)
+  - [Conversion and branches](#conversion-and-branches)
+  - [Post-processing command](#post-processing-command)
+  - [Conversion script stand-alone usage](#conversion-script-stand-alone-usage-or-integration-in-other-cdci-environments)
+- [Corrections format](#corrections-format)
+  - [Correction in Code cells](#correction-in-code-cells)
+  - [Correction in Markdown cells](#correction-in-markdown-cells)
+  - [Note addressed to the tutor](#note-addressed-to-the-tutor)
+  - [Cell entirely addressed to the tutor](#cell-entirely-addressed-to-the-tutor)
+</p>
 
 ## Presentation
 
@@ -30,21 +49,7 @@ For users working with GitHub, _nbworkshop_ also provides a workflow that monito
 - **GitHub Integration**: A pre-configured GitHub Actions workflow automatically regenerates the student versions and archives whenever Notebooks are updated on the main branch ([manual trigger](https://docs.github.com/en/actions/managing-workflow-runs/manually-running-a-workflow) is also possible). All the generated material is stored in a specific branch.
 - **Automation-ready**: Can easily be integrated to other CD/CI chains
 - **Flexible Configuration**: All markers, placeholders, and naming conventions are controlled via a simple JSON configuration file, making adaptation to different teaching styles and environments straightforward. One can for example use a code placeholder that raises a `NotImplementedError`.
-
-Summary:
-- [Basic usage](#basic-usage)
-  - [Configuration](#configuration)
-  - [Zip archive and attached files](#zip-archive-and-attached-files)
-- [GitHub workflow](#github-workflow)
-  - [Conversion and branches](#conversion-and-branches)
-  - [Post-processing command](#post-processing-command)
-  - [Conversion script stand-alone usage](#conversion-script-stand-alone-usage-or-integration-in-other-cdci-environments)
-- [Corrections format](#corrections-format)
-  - [Correction in Code cells](#correction-in-code-cells)
-  - [Correction in Markdown cells](#correction-in-markdown-cells)
-  - [Note addressed to the tutor](#note-addressed-to-the-tutor)
-  - [Cell entirely addressed to the tutor](#cell-entirely-addressed-to-the-tutor)
-
+- 
 ## Basic usage
 
 ### Configuration
