@@ -69,7 +69,7 @@ jobs:
           # Remove "/tmp/processed/" from the paths
           sed 's|/tmp/processed/||g' "$TEMP_OUTPUT" >> $GITHUB_STEP_SUMMARY
           printf "resultat :"
-          cat /tmp/processed/
+          cat $TEMP_OUTPUT
           rm "$TEMP_OUTPUT"
       # It the Students branche doens't exist, it is created first
       - name: Switch to Students branch
