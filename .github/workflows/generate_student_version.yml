@@ -50,9 +50,10 @@ jobs:
           done
       - name: Initialize summary
         run: |
-          echo    "## Processing Report" >> $GITHUB_STEP_SUMMARY
-          echo    "| Notebook | Questions | Code Blocks | ZIP |" >> $GITHUB_STEP_SUMMARY
-          echo -n "|----------|-----------|-------------|-----|" >> $GITHUB_STEP_SUMMARY
+          printf "## Processing Report\n" >> $GITHUB_STEP_SUMMARY
+          printf "| Notebook | Questions | Code Blocks | ZIP |\n" >> $GITHUB_STEP_SUMMARY
+          printf "|----------|-----------|-------------|-----|" >> $GITHUB_STEP_SUMMARY
+
       
       # Conversion is done on the copied notebooks
       - name: Convert notebooks
