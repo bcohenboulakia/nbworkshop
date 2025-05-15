@@ -183,7 +183,7 @@ if __name__ == '__main__':
     """Main entry point for notebook conversion"""
     parser = argparse.ArgumentParser(description="Convert Jupyter notebooks to student versions")
     parser.add_argument("inputs", nargs="+", help="Input notebook path(s)")
-    parser.add_argument("--config", default="config.json", help="Configuration file path")
+    parser.add_argument("--config", default="conversion.json", help="Configuration file path")
     parser.add_argument("--hide-header", action="store_true", 
                         help="Suppress summary header in output")
     args = parser.parse_args()
