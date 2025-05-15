@@ -15,7 +15,7 @@ along with nbworkshop. If not, see <https://www.gnu.org/licenses/>.
 -->
 
 <p align="center">
-<img width=400 src="https://github.com/user-attachments/assets/ff3b559f-8b90-4b5b-8de1-e6df03ce8504">
+<img width=400 src="https://github.com/user-attachments/assets/10e381e7-4365-48f7-bcf7-6476cdd0a240">
 </p>
 
 ## Content:
