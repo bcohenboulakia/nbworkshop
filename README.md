@@ -132,7 +132,7 @@ This workflow uses two branches to generate student Notebooks (but as many branc
 
 Please note that conversion may take several dozens of seconds. This total delay includes both the time spent waiting for a GitHub Actions runner to become available (which can be long if no runners are free) and the time required to actually process the job. The execution time depends on how many Notebooks need to be converted and their length. Running other workflows in the repository at the same time may also increase the overall completion time. Moreover, in order to avoid useless conversions, `.ipynb_checkpoints` directories should be added to `.gitignore`.
 
-### Post_processing command
+### Post-processing command
 
 The `post_processing` option in `conversion.json` allows executing a command after all Notebook conversions are completed. This command is executed on the Students branch. It means the post-command only has access to the processed/converted Notebooks, not the original versions from the main branch. This allows for example to send all the generated ZIP archives to a LMS using its API. The standard output of the command execution is added to the process summary. Markdown can be used to format this output. If the execution failed, the execution error output is also displayed.
 
