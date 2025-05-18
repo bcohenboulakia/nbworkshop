@@ -149,4 +149,6 @@ jobs:
                       printf "\`\`\`\n" >> $GITHUB_STEP_SUMMARY
                   fi
               fi
+          else
+            printf "Pas de commande"
           fi
