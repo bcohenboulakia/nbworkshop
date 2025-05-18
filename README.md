@@ -26,7 +26,7 @@ along with nbworkshop. If not, see <https://www.gnu.org/licenses/>.
   - [Configuration](#configuration)
 - [GitHub workflow](#github-workflow)
   - [Conversion and branches](#conversion-and-branches)
-  - [Post-processing command](#post-processing-command)
+  - [Pre and post-processing command](#pre-and-post-processing-command)
 - [Solution formatting](#solution-formatting)
   - [Solution in Code cells](#solution-in-code-cells)
   - [Solution in Markdown cells](#solution-in-markdown-cells)
@@ -103,6 +103,7 @@ The configuration file can include options for both conversion and GitHub automa
     "tutor_postfix": "_Tutor",
     "student_postfix": "_Student",
     "generate_zip": true,
+    "pre_processing": "echo 'Pre-processing completed' || true"
     "post_processing": "echo 'Post-processing completed' || true"
 }
 ```
@@ -113,7 +114,7 @@ The configuration file can include options for both conversion and GitHub automa
 	* `generate_zip`: Boolean enabling ZIP archives to be generated
 * Workflow options (ignored by the conversion script):
 	* `notebooks_dir` (mandatory): List of directories to process
-	* `post_processing` (optional): Post-processing shell command to be executed by the workflow, allowing for example to send the generated ZIP archives to a LMS.
+	* `pre_processing` and `post_processing` (optional): Pre and Post-processing shell commands to be executed by the workflow, allowing for example to modify the notebooks before conversion, and send the generated ZIP archives to a LMS.
 
 ## GitHub workflow
 
@@ -132,11 +133,11 @@ This workflow uses two branches to generate student Notebooks (but as many branc
 
 Please note that conversion may take several dozens of seconds. This total delay includes both the time spent waiting for a GitHub Actions runner to become available (which can be long if no runners are free) and the time required to actually process the job. The execution time depends on how many Notebooks need to be converted and their length. Running other workflows in the repository at the same time may also increase the overall completion time. Moreover, in order to avoid useless conversions, `.ipynb_checkpoints` directories should be added to `.gitignore`.
 
-### Post-processing command
+### Pre and post-processing command
 
-The `post_processing` option in `conversion.json` allows executing a command after all Notebook conversions are completed. This command is executed on the Students branch. It means the post-command only has access to the processed/converted Notebooks, not the original versions from the main branch. This allows for example to send all the generated ZIP archives to a LMS using its API. The standard output of the command execution is added to the process summary. Markdown can be used to format this output. If the execution failed, the execution error output is also displayed.
+The `pre_processing` and `post_processing` options in `conversion.json` allow executing a command before or after all Notebook conversions are completed. These command are executed on the Students branch. It means they only have access to the processed/converted Notebooks, not the original versions from the main branch. This allows for example to modify notebooks before conversion (removing for example changelogs or adding dates), and send all the generated ZIP archives to a LMS using its API. The standard output of the command execution is added to the process summary. Markdown can be used to format this output. If the execution failed, the execution error output is also displayed.
 
-The post-processing command can execute any shell command that is available in the GitHub Actions runner environment (see [Adding scripts to your workflow](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/adding-scripts-to-your-workflow) and [Workflow commands for GitHub Actions](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/workflow-commands-for-github-actions)). Notably, It is possible to switch branches within the post-processing command using the standard Git checkout command:
+The pre and post-processing commands can execute any shell command that is available in the GitHub Actions runner environment (see [Adding scripts to your workflow](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/adding-scripts-to-your-workflow) and [Workflow commands for GitHub Actions](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/workflow-commands-for-github-actions)). Notably, It is possible to switch branches within the post-processing command using the standard Git checkout command:
 ```bash
 git checkout main
 ```
@@ -144,7 +145,9 @@ This branch-switching capability can be included at the beginning of your post-c
 ```yaml
 "post_processing": "git checkout main && ./your-program"
 ```
-It can also be done from the `post_processing` program itself through external Command execution.
+It can also be done from the called program itself through external command execution.
+
+Also note that the `actions: write` permission has been enabled, allowing commands to trigger other workflows using GitHub CLI (`gh workflow run`) without requiring additional personal access tokens. This requires target workflows to declare a `workflow_dispatch` trigger. Just be careful with trigger rules, as overlapping triggers can cause multiple executions.
 
 ## Solution formatting
 

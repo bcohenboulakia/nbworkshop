@@ -22,7 +22,10 @@ on:
   
 permissions:
   contents: write
-  
+  actions: write   # Permission to trigger other workflows. Not used by the workflow,
+                   # but could useful if the user defined post-processing command must
+                   # run another workflow
+
 jobs:
   process:
     runs-on: ubuntu-latest
@@ -46,6 +49,58 @@ jobs:
           enable-cache: true
           cache-dependency-glob: ".github/scripts/student_version.py"
 
+      # Retrieve the pre and post-process command from the config file. This must be done
+      # at the beginning of the workflow specifically for the post-processing command, because
+      # the Students branch is cleaned after notebook generation, which also makes conversion.json unavailable
+      - name: Store pre and post-processing command for future execution
+        run: |
+          echo "PRE_PROCESSING=$(jq -r '.pre_processing // empty' "$CONFIG_PATH")" >> $GITHUB_ENV
+          echo "POST_PROCESSING=$(jq -r '.post_processing // empty' "$CONFIG_PATH")" >> $GITHUB_ENV
+          
+      # Execution of the pre-processing command, if defined, with summary update
+      - name: Execute post-processing command
+        run: |
+          if [ -n "$PRE_PROCESSING" ]; then  
+              # Basic validation to prevent command injection
+              if echo "$PRE_PROCESSING" | grep -qE '^(rm -rf|sudo|chmod -R|chown -R) '; then
+                  printf "## Post-processing failed ❌\n" >> $GITHUB_STEP_SUMMARY
+                  printf "Potentially dangerous command detected: \`%s\`\n" "$PRE_PROCESSING" >> $GITHUB_STEP_SUMMARY
+                  printf "For security reasons, certain commands are not allowed in post-processing.\n" >> $GITHUB_STEP_SUMMARY
+                  exit 1
+              fi
+                  
+              # Execute the command and capture output (stdout and stderr combined)
+              OUTPUT=$(bash -c "$PRE_PROCESSING" 2>&1)
+              EXIT_CODE=$?
+              
+              if [ $EXIT_CODE -eq 0 ]; then
+                  # Command executed successfully
+                  printf "## Pre-processing executed successfully ✅\n" >> $GITHUB_STEP_SUMMARY
+                  
+                  # Add output if it exists
+                  if [ -n "$OUTPUT" ]; then
+                      printf "%s\n" "$OUTPUT" >> $GITHUB_STEP_SUMMARY
+                  else
+                      printf "\n" >> $GITHUB_STEP_SUMMARY
+                  fi
+              else
+                  # Command failed
+                  printf "## Post-processing failed ❌\n" >> $GITHUB_STEP_SUMMARY
+                  printf "Code de sortie: %d\n" "$EXIT_CODE" >> $GITHUB_STEP_SUMMARY
+                  
+                  # Add output if it exists (will contain both stdout and stderr)
+                  if [ -n "$OUTPUT" ]; then
+                      printf "\n" >> $GITHUB_STEP_SUMMARY
+                      printf "Sortie de commande (incluant les erreurs):\n" >> $GITHUB_STEP_SUMMARY
+                      printf "\`\`\`bash\n" >> $GITHUB_STEP_SUMMARY
+                      printf "%s\n" "$OUTPUT" >> $GITHUB_STEP_SUMMARY
+                      printf "\`\`\`\n" >> $GITHUB_STEP_SUMMARY
+                  fi
+              fi
+          else
+            printf "Pas de commande"
+          fi
+          
       # Every monitored directory is copied structure-wise in order to replace tutor notebooks
       # without deleting other materials
       - name: Prepare temp directory used for notebooks conversion
@@ -56,13 +111,6 @@ jobs:
             cp -r --parents "$dir" /tmp/processed/
           done
       
-      # Retrieve the post-process command from the config file. This must be done
-      # at the beginning of the workflow because the Students branch is cleaned after
-      # notebook generation, which also makes conversion.json unavailable
-      - name: Store post-processing command for future execution
-        run: |
-          echo "POST_PROCESSING=$(jq -r '.post_processing // empty' "$CONFIG_PATH")" >> $GITHUB_ENV
-          
       # Conversion is done on the copied notebooks
       - name: Convert notebooks
         run: |
