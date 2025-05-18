@@ -55,6 +55,13 @@ jobs:
           jq -r '.notebooks_dir[]' "$CONFIG_PATH" | while IFS= read -r dir; do
             cp -r --parents "$dir" /tmp/processed/
           done
+      
+      # Retrieve post-process command from config file. Must be done at the beginning of the workflow
+      # because the Students branch is cleaned after notebooks generation, which also makes conversion.json
+      # unavailable
+      - name: Store post-processing command for future execution
+        run: |
+          POST_PROCESSING=$(jq -r '.post_processing // empty' "$CONFIG_PATH")
           
       # Conversion is done on the copied notebooks
       - name: Convert notebooks
@@ -101,9 +108,6 @@ jobs:
       # Execution of the post-processing command, if defined, with summary update
       - name: Execute post-processing command
         run: |
-          # Retrieve post-process command from config file
-          POST_PROCESSING=$(jq -r '.post_processing // empty' "$CONFIG_PATH")
-          
           if [ -n "$POST_PROCESSING" ]; then  
               # Basic validation to prevent command injection
               if echo "$POST_PROCESSING" | grep -qE '^(rm -rf|sudo|chmod -R|chown -R) '; then
