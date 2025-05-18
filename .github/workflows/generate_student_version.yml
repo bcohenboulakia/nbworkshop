@@ -61,7 +61,7 @@ jobs:
       # notebook generation, which also makes conversion.json unavailable
       - name: Store post-processing command for future execution
         run: |
-          POST_PROCESSING=$(jq -r '.post_processing // empty' "$CONFIG_PATH")
+          echo "POST_PROCESSING=$(jq -r '.post_processing // empty' "$CONFIG_PATH")" >> $GITHUB_ENV
           
       # Conversion is done on the copied notebooks
       - name: Convert notebooks
