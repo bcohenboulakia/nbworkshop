@@ -56,18 +56,22 @@ jobs:
       
       - name: Validate JSON with custom error message
         run: |
-          # Installer AJV
-          npm install -g ajv-cli
+          # Installer la version améliorée d'AJV CLI avec un format d'erreur plus lisible
+          npm install -g @jirutka/ajv-cli
           
-          # Valider avec message personnalisé
-          if ! ajv validate -s /tmp/schema.json -d "$CONFIG_PATH" --all-errors; then
+          # Capturer la sortie d'erreur dans une variable
+          ERROR_OUTPUT=$(ajv validate -s /tmp/schema.json -d "$CONFIG_PATH" --all-errors --errors=pretty 2>&1) || {
             printf "## Configuration file errors\n\n" >> $GITHUB_STEP_SUMMARY
-            printf "Error in %s:\n" "$CONFIG_PATH" >> $GITHUB_STEP_SUMMARY
-            ajv validate -s /tmp/schema.json -d "$CONFIG_PATH" --all-errors 2>&1 >> $GITHUB_STEP_SUMMARY
+            printf "Error in %s:\n\n" "$CONFIG_PATH" >> $GITHUB_STEP_SUMMARY
+            printf "``````\n" >> $GITHUB_STEP_SUMMARY
+            echo "$ERROR_OUTPUT" >> $GITHUB_STEP_SUMMARY
+            printf "``````\n\n" >> $GITHUB_STEP_SUMMARY
             rm /tmp/schema.json
             exit 1
-          fi
-          rm /tmp/schema.json
+          }
+    
+    rm /tmp/schema.json
+
           
       - name: Setup Python
         uses: actions/setup-python@v4
