@@ -38,21 +38,21 @@ jobs:
         with:
           python-version: '3.12'
 
-      # Uses uv for Python packages management, in order to extract dependencies
-      # and leverage cache between workflow executions (following PEP 723)
+      # Uses uv in order to extract dependencies and leverage cache
+      # between workflow executions (following PEP 723)
       - name: Setup uv
         uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
-          cache-dependency-glob: "*.py"
+          cache-dependency-glob: ".github/scripts/student_version.py"
 
       # Every monitored directory is copied structure-wise in order to replace tutor notebooks
       # without deleting other materials
-      - name: Prepare temp directory
+      - name: Prepare temp directory used for notebooks conversion
         run: |
           rm -rf /tmp/processed
           mkdir -p /tmp/processed
-          for dir in $(jq -r '.notebooks_dir[]' "$CONFIG_PATH"); do
+          jq -r '.notebooks_dir[]' "$CONFIG_PATH" | while IFS= read -r dir; do
             cp -r --parents "$dir" /tmp/processed/
           done
           
@@ -64,10 +64,10 @@ jobs:
           printf "| Notebook | Questions | Code Blocks | ZIP |\n" >> $GITHUB_STEP_SUMMARY
           printf "|----------|-----------|-------------|-----|\n" >> $GITHUB_STEP_SUMMARY
 
-          # Run python conversion script pn each notebook to be converted through uv in order
+          # Run python conversion script on each notebook to be converted through uv in order
           # to manage packages automatically. Standard output of successive conversions are
           # added directly to GitHub step summary
-          find /tmp/processed -name '*.ipynb' | while read -r nb; do
+          find /tmp/processed -name "*.ipynb" -print0 | while IFS= read -d '' -r nb; do
             uv run .github/scripts/student_version.py "$nb" \
               --config "$CONFIG_PATH" \
               --hide-header | sed 's|/tmp/processed/||g' >> $GITHUB_STEP_SUMMARY
@@ -75,35 +75,31 @@ jobs:
           done
 
 
-      # If the Students branche doesn't exist, it is created first
-      - name: Switch to Students branch
+      # Reset the whole Students branch
+      - name: Reset Students branch
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           if git show-ref --verify --quiet refs/heads/Students; then
-            git checkout Students
-          else
-            git checkout --orphan Students
-            git commit --allow-empty -m "Initial commit"
+            git branch -D Students
           fi
-
-      - name: Clean existing files
-        run: |
-          for dir in $(jq -r '.notebooks_dir[]' "$CONFIG_PATH"); do
-            rm -rf "$dir"
-          done
-          
+          git checkout --orphan Students
+          git reset --hard
+      
+      # Syncing processed files in Students branch
       - name: Sync processed files
         run: |
-          cp -a /tmp/processed/* .
-          
+          cp -a /tmp/processed/. .
+      
+      # The Students branch update is overwritten with the new content
       - name: Commit and push
         run: |
           git add .
           git commit -m "Update student materials: $(date +'%Y-%m-%d %H:%M:%S')" || printf "No changes\n"
           git push origin Students --force
       
-      - name: Execute post-command
+      # Execution of the post-processing command, if defined, with summary update
+      - name: Execute post-processing command
         run: |
           # Retrieve post-process command from config file
           POST_PROCESSING=$(jq -r '.post_processing // empty' "$CONFIG_PATH")
@@ -134,7 +130,6 @@ jobs:
                       printf "\`\`\`\n" >> $GITHUB_STEP_SUMMARY
                   else
                       printf "\n" >> $GITHUB_STEP_SUMMARY
-                      printf "Aucune sortie produite.\n" >> $GITHUB_STEP_SUMMARY
                   fi
               else
                   # Command failed
