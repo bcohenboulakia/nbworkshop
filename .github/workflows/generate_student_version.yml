@@ -54,27 +54,21 @@ jobs:
           }
           EOF
       
-      - name: Validate configuration JSON
-        id: validate-json
-        uses: ammarlakis/action-ajv@master
-        with:
-          schema: /tmp/schema.json
-          data: ${{ env.CONFIG_PATH }}
-          allErrors: true
-          fail-on-invalid: false  # In order to post-process the error
-      
-      - name: Update GitHub Step Summary on Validation Error
-        if: ${{ steps.validate-json.outputs.valid == 'false' }}
+      - name: Validate JSON with custom error message
         run: |
-          printf "## Configuration file errors\n\n" >> $GITHUB_STEP_SUMMARY
-          printf "%s" "${{ steps.validate-json.outputs.errors }}" >> $GITHUB_STEP_SUMMARY
-          printf "Please fix %s.\n" "$CONFIG_PATH" >> $GITHUB_STEP_SUMMARY
-          exit 1
-      
-      - name: Clean up temporary files
-        if: always()
-        run: rm -f /tmp/schema.json
-
+          # Installer AJV
+          npm install -g ajv-cli
+          
+          # Valider avec message personnalisé
+          if ! ajv validate -s /tmp/schema.json -d "$CONFIG_PATH" --all-errors; then
+            printf "## Configuration file errors\n\n" >> $GITHUB_STEP_SUMMARY
+            printf "Error in %s:\n" "$CONFIG_PATH" >> $GITHUB_STEP_SUMMARY
+            ajv validate -s /tmp/schema.json -d "$CONFIG_PATH" --all-errors 2>&1 >> $GITHUB_STEP_SUMMARY
+            rm /tmp/schema.json
+            exit 1
+          fi
+          rm /tmp/schema.json
+          
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
