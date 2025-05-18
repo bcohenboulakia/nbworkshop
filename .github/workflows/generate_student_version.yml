@@ -41,9 +41,9 @@ jobs:
         uses: GrantBirki/json-yaml-validate@v2.2.0
         continue-on-error: true
         with:
-          base_dir: ".github"
+          base_dir: "."
           files: |
-            conversion.json
+            ${{ env.CONFIG_PATH }}
           json_schema: |
             {
               "type": "object",
@@ -79,6 +79,7 @@ jobs:
             }
           comment: "true"
           mode: "warn"
+          use_gitignore: "false"  # Désactive l'utilisation du .gitignore
 
       - name: Capture errors
         id: capture-errors
