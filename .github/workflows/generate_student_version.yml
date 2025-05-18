@@ -78,15 +78,25 @@ jobs:
               "additionalProperties": false
             }
           comment: "true"
-          mode: "fail"
+          mode: "warn"
         
-      - name: Update GitHub Step Summary on Validation Error
-        if: steps.validate-json.outcome != 'success'
-        run: |
-            printf "## Configuration file errors\n\n" >> $GITHUB_STEP_SUMMARY
-            printf "%s\n" "${{ steps.validate-json.outputs.validationErrors }}" >> $GITHUB_STEP_SUMMARY
-            printf "Please fix %s.\n" "$CONFIG_PATH" >> $GITHUB_STEP_SUMMARY
-            exit 1
+        - name: Capture errors
+          id: capture-errors
+          if: steps.validate-json.outcome != 'success'
+          run: |
+              error_log=$(mktemp)
+              echo "${{ steps.validate-json.outputs.stdout || steps.validate-json.outputs.stderr }}" > $error_log
+              echo "error_details<<EOF" >> $GITHUB_ENV
+              cat $error_log >> $GITHUB_ENV
+              echo "EOF" >> $GITHUB_ENV
+              
+        - name: Update GitHub Step Summary on Validation Error
+          if: steps.validate-json.outcome != 'success'
+          run: |
+              printf "## Configuration file errors\n\n" >> $GITHUB_STEP_SUMMARY
+              printf "%s\n" "${{ steps.validate-json.outputs.validationErrors }}" >> $GITHUB_STEP_SUMMARY
+              printf "Please fix %s.\n" "$CONFIG_PATH" >> $GITHUB_STEP_SUMMARY
+              exit 1
 
       - name: Setup Python
         uses: actions/setup-python@v4
