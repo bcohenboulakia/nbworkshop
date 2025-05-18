@@ -46,7 +46,6 @@ jobs:
           enable-cache: true
           cache-dependency-glob: "*.py"
 
-
       # Every monitored directory is copied structure-wise in order to replace tutor notebooks
       # without deleting other materials
       - name: Prepare temp directory
@@ -152,4 +151,4 @@ jobs:
                   fi
               fi
           fi
-      shell: bash
+    shell: bash
