@@ -37,9 +37,14 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install dependencies
-        # For HTML tag manipulation in Markdown cells
-        run: pip install beautifulsoup4
+      # Uses uv for Python packages management, in order to extract dependencies
+      # and leverage cache between workflow executions (following PEP 723)
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: "*.py"
+
 
       # Every monitored directory is copied structure-wise in order to replace tutor notebooks
       # without deleting other materials
@@ -53,27 +58,24 @@ jobs:
           
       # Conversion is done on the copied notebooks
       - name: Convert notebooks
-        # Standard output of successive conversions are added directly to GitHub step summary
         run: |
-          TEMP_OUTPUT=$(mktemp)
+          # Generate summary table in Markdown format
+          printf "## Notebook processed\n" >> $GITHUB_STEP_SUMMARY
+          printf "| Notebook | Questions | Code Blocks | ZIP |\n" >> $GITHUB_STEP_SUMMARY
+          printf "|----------|-----------|-------------|-----|\n" >> $GITHUB_STEP_SUMMARY
+
+          # Run python conversion script pn each notebook to be converted through uv in order
+          # to manage packages automatically. Standard output of successive conversions are
+          # added directly to GitHub step summary
           find /tmp/processed -name '*.ipynb' | while read -r nb; do
-            python .github/scripts/student_version.py "$nb" \
+            uv run .github/scripts/student_version.py "$nb" \
               --config "$CONFIG_PATH" \
-              --hide-header >> "$TEMP_OUTPUT"
+              --hide-header | sed 's|/tmp/processed/||g' >> $GITHUB_STEP_SUMMARY
             rm "$nb"
           done
-          
-          # Generate summary table in Markdown format
-          {
-            printf "## Notebook processed\n" >> $GITHUB_STEP_SUMMARY
-            printf "| Notebook | Questions | Code Blocks | ZIP |\n" >> $GITHUB_STEP_SUMMARY
-            printf "|----------|-----------|-------------|-----|\n" >> $GITHUB_STEP_SUMMARY
-            sed 's|/tmp/processed/||g' "$TEMP_OUTPUT"
-          } >> $GITHUB_STEP_SUMMARY
 
-          # Remove "/tmp/processed/" from the paths
-          rm "$TEMP_OUTPUT"
-      # It the Students branche doens't exist, it is created first
+
+      # If the Students branche doesn't exist, it is created first
       - name: Switch to Students branch
         run: |
           git config --global user.name "GitHub Actions"
@@ -84,62 +86,69 @@ jobs:
             git checkout --orphan Students
             git commit --allow-empty -m "Initial commit"
           fi
+
       - name: Clean existing files
         run: |
           for dir in $(jq -r '.notebooks_dir[]' "$CONFIG_PATH"); do
             rm -rf "$dir"
           done
+          
       - name: Sync processed files
         run: |
           cp -a /tmp/processed/* .
+          
       - name: Commit and push
         run: |
           git add .
-          git commit -m "Update student materials: $(date +'%Y-%m-%d %H:%M:%S')" || echo "No changes"
+          git commit -m "Update student materials: $(date +'%Y-%m-%d %H:%M:%S')" || printf "No changes\n"
           git push origin Students --force
       
-      # In order to collect standard and error output from the post-command execution,
-      # temporary files are created
       - name: Execute post-command
         run: |
-            # Retrieve post-process command from config file
-            POST_PROCESSING=$(jq -r '.post_processing // empty' "$CONFIG_PATH")
-            
-            if [ -n "$POST_PROCESSING" ]; then                
-                # Execute the command and capture both stdout and stderr
-                OUTPUT_FILE=$(mktemp)
-                ERROR_FILE=$(mktemp)
-
-                if bash -c "$POST_PROCESSING" > "$OUTPUT_FILE" 2> "$ERROR_FILE"; then
-                    # Command executed successfully
-                    echo "## Post-processing executed successfull ✅" >> $GITHUB_STEP_SUMMARY
-                    
-                    # Add standard output if it exists
-                    if [ -s "$OUTPUT_FILE" ]; then
-                        cat "$OUTPUT_FILE" >> $GITHUB_STEP_SUMMARY
-                        
-                    fi
-                else
-                    # Command failed
-                    echo "## Post-processing failed ❌" >> $GITHUB_STEP_SUMMARY
-                    
-                    # Add standard output if it exists
-                    if [ -s "$OUTPUT_FILE" ]; then
-                        cat "$OUTPUT_FILE" >> $GITHUB_STEP_SUMMARY
-                        
-                    fi
-                    
-                    # Add error output if it exists
-                    if [ -s "$ERROR_FILE" ]; then
-                        echo "Error output:"
-                        echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-                        cat "$ERROR_FILE" >> $GITHUB_STEP_SUMMARY
-                        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-                    fi
-                fi
-                
-                # Clean up temporary files
-                rm "$OUTPUT_FILE" "$ERROR_FILE"
-            fi
-        shell: bash
-        
+          # Retrieve post-process command from config file
+          POST_PROCESSING=$(jq -r '.post_processing // empty' "$CONFIG_PATH")
+          
+          if [ -n "$POST_PROCESSING" ]; then  
+              # Basic validation to prevent command injection
+              if echo "$POST_PROCESSING" | grep -qE '^(rm -rf|sudo|chmod -R|chown -R) '; then
+                  printf "## Post-processing failed ❌\n" >> $GITHUB_STEP_SUMMARY
+                  printf "Potentially dangerous command detected: \`%s\`\n" "$POST_PROCESSING" >> $GITHUB_STEP_SUMMARY
+                  printf "For security reasons, certain commands are not allowed in post-processing.\n" >> $GITHUB_STEP_SUMMARY
+                  exit 1
+              fi
+                  
+              # Execute the command and capture output (stdout and stderr combined)
+              OUTPUT=$(bash -c "$POST_PROCESSING" 2>&1)
+              EXIT_CODE=$?
+              
+              if [ $EXIT_CODE -eq 0 ]; then
+                  # Command executed successfully
+                  printf "## Post-processing executed successfully ✅\n" >> $GITHUB_STEP_SUMMARY
+                  
+                  # Add output if it exists
+                  if [ -n "$OUTPUT" ]; then
+                      printf "\n" >> $GITHUB_STEP_SUMMARY
+                      printf "Command output:\n" >> $GITHUB_STEP_SUMMARY
+                      printf "\`\`\`\n" >> $GITHUB_STEP_SUMMARY
+                      printf "%s\n" "$OUTPUT" >> $GITHUB_STEP_SUMMARY
+                      printf "\`\`\`\n" >> $GITHUB_STEP_SUMMARY
+                  else
+                      printf "\n" >> $GITHUB_STEP_SUMMARY
+                      printf "Aucune sortie produite.\n" >> $GITHUB_STEP_SUMMARY
+                  fi
+              else
+                  # Command failed
+                  printf "## Post-processing failed ❌\n" >> $GITHUB_STEP_SUMMARY
+                  printf "Code de sortie: %d\n" "$EXIT_CODE" >> $GITHUB_STEP_SUMMARY
+                  
+                  # Add output if it exists (will contain both stdout and stderr)
+                  if [ -n "$OUTPUT" ]; then
+                      printf "\n" >> $GITHUB_STEP_SUMMARY
+                      printf "Sortie de commande (incluant les erreurs):\n" >> $GITHUB_STEP_SUMMARY
+                      printf "\`\`\`bash\n" >> $GITHUB_STEP_SUMMARY
+                      printf "%s\n" "$OUTPUT" >> $GITHUB_STEP_SUMMARY
+                      printf "\`\`\`\n" >> $GITHUB_STEP_SUMMARY
+                  fi
+              fi
+          fi
+      shell: bash

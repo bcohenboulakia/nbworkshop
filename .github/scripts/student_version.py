@@ -14,6 +14,13 @@ You should have received a copy of the GNU General Public License
 along with nbworkshop. If not, see <https://www.gnu.org/licenses/>.
 """
 
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#   "beautifulsoup4>=4.9.0",  # For HTML processing in Markdown cells
+# ]
+# ///
+
 import argparse
 import json
 import os
