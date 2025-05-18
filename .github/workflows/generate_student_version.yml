@@ -56,9 +56,9 @@ jobs:
             cp -r --parents "$dir" /tmp/processed/
           done
       
-      # Retrieve post-process command from config file. Must be done at the beginning of the workflow
-      # because the Students branch is cleaned after notebooks generation, which also makes conversion.json
-      # unavailable
+      # Retrieve the post-process command from the config file. This must be done
+      # at the beginning of the workflow because the Students branch is cleaned after
+      # notebook generation, which also makes conversion.json unavailable
       - name: Store post-processing command for future execution
         run: |
           POST_PROCESSING=$(jq -r '.post_processing // empty' "$CONFIG_PATH")
