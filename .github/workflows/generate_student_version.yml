@@ -66,10 +66,8 @@ jobs:
             printf "``````\n" >> $GITHUB_STEP_SUMMARY
             echo "$ERROR_OUTPUT" >> $GITHUB_STEP_SUMMARY
             printf "``````\n\n" >> $GITHUB_STEP_SUMMARY
-            rm /tmp/schema.json
             exit 1
           }
-          rm /tmp/schema.json
 
           
       - name: Setup Python
