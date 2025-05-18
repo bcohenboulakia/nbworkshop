@@ -127,11 +127,7 @@ jobs:
                   
                   # Add output if it exists
                   if [ -n "$OUTPUT" ]; then
-                      printf "\n" >> $GITHUB_STEP_SUMMARY
-                      printf "Command output:\n" >> $GITHUB_STEP_SUMMARY
-                      printf "\`\`\`\n" >> $GITHUB_STEP_SUMMARY
                       printf "%s\n" "$OUTPUT" >> $GITHUB_STEP_SUMMARY
-                      printf "\`\`\`\n" >> $GITHUB_STEP_SUMMARY
                   else
                       printf "\n" >> $GITHUB_STEP_SUMMARY
                   fi
