@@ -35,24 +35,30 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-
+      - name: Create temporary schema file
+        run: |
+          cat > /tmp/schema.json << 'EOF'
+          {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "required": ["solution_marker", "placeholder", "generate_zip", "notebooks_dir"],
+            "properties": {
+              "solution_marker": {"type": "object"},
+              "placeholder": {"type": "object"},
+              "generate_zip": {"type": "boolean"},
+              "notebooks_dir": {"type": "array", "items": {"type": "string"}},
+              "pre_processing": {"type": "string"},
+              "post_processing": {"type": "string"}
+            },
+            "additionalProperties": false
+          }
+          EOF
+      
       - name: Validate configuration JSON
         id: validate-json
         uses: ammarlakis/action-ajv@master
         with:
-          schema: |
-            {
-              "type": "object",
-              "required": ["solution_marker", "placeholder", "generate_zip", "notebooks_dir"],
-              "properties": {
-                "solution_marker": {"type": "object"},
-                "placeholder": {"type": "object"},
-                "generate_zip": {"type": "boolean"},
-                "notebooks_dir": {"type": "array", "items": {"type": "string"}},
-                "pre_processing": {"type": "string"},
-                "post_processing": {"type": "string"}
-              }
-            }
+          schema: /tmp/schema.json
           data: ${{ env.CONFIG_PATH }}
           allErrors: true
       
@@ -60,9 +66,13 @@ jobs:
         if: ${{ steps.validate-json.outputs.valid == 'false' }}
         run: |
           printf "## Configuration file errors\n\n" >> $GITHUB_STEP_SUMMARY
-          printf "%ss\n" "${{ steps.validate-json.outputs.errors }}" >> $GITHUB_STEP_SUMMARY
+          printf "%s" "${{ steps.validate-json.outputs.errors }}" >> $GITHUB_STEP_SUMMARY
           printf "Please fix %s.\n" "$CONFIG_PATH" >> $GITHUB_STEP_SUMMARY
           exit 1
+      
+      - name: Clean up temporary files
+        if: always()
+        run: rm -f /tmp/schema.json
 
       - name: Setup Python
         uses: actions/setup-python@v4
