@@ -61,6 +61,7 @@ jobs:
           schema: /tmp/schema.json
           data: ${{ env.CONFIG_PATH }}
           allErrors: true
+          fail-on-invalid: false  # In order to post-process the error
       
       - name: Update GitHub Step Summary on Validation Error
         if: ${{ steps.validate-json.outputs.valid == 'false' }}
