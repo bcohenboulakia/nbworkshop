@@ -36,6 +36,58 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      - name: Validate configuration JSON
+        id: validate-json
+        uses: GrantBirki/json-yaml-validate@v2.2.0
+        continue-on-error: true
+        with:
+          base_dir: ".github"
+          files: |
+            conversion.json
+          json_schema: |
+            {
+              "type": "object",
+              "required": ["solution_marker", "placeholder", "generate_zip", "notebooks_dir"],
+              "properties": {
+                "solution_marker": {
+                  "type": "object",
+                  "description": "Dictionary of markers identifying solution content"
+                },
+                "placeholder": {
+                  "type": "object", 
+                  "description": "Dictionary of replacement text for removed solutions"
+                },
+                "generate_zip": {
+                  "type": "boolean",
+                  "description": "Boolean enabling ZIP archives generation"
+                },
+                "notebooks_dir": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "description": "List of directories to process"
+                },
+                "pre_processing": {
+                  "type": "string",
+                  "description": "Optional pre-processing shell command"
+                },
+                "post_processing": {
+                  "type": "string",
+                  "description": "Optional post-processing shell command"
+                }
+              },
+              "additionalProperties": false
+            }
+          comment: "true"
+          mode: "fail"
+        
+      - name: Update GitHub Step Summary on Validation Error
+        if: steps.validate-json.outcome != 'success'
+        run: |
+            printf "## Configuration file errors\n\n" >> $GITHUB_STEP_SUMMARY
+            printf "%s\n" "${{ steps.validate-json.outputs.validationErrors }}" >> $GITHUB_STEP_SUMMARY
+            printf "Please fix %s.\n" "$CONFIG_PATH" >> $GITHUB_STEP_SUMMARY
+            exit 1
+
       - name: Setup Python
         uses: actions/setup-python@v4
         with:

@@ -118,7 +118,7 @@ The configuration file can include options for both conversion and GitHub automa
 
 ## GitHub workflow
 
-The conversion can be automated by a GitHub Actions workflow called `Generate Students Branch ` which calls the conversion script on every update of a Notebook in a monitored directory. Note that the GitHub workflow uses `.github/conversion.json` as configuration file.
+The conversion can be automated by a GitHub Actions workflow called `Generate Students Branch ` which calls the conversion script on every update of a Notebook in a monitored directory. Note that the GitHub workflow uses `.github/conversion.json` as configuration file, and provides detailed error log in case this file is invalid (or missing).
 
 This workflow can be supervised on the workflow page in the `Action` tab on the GitHub repository web page. Every time the workflow is run, a short overview of the conversion process is shown in the workflow summary:
 ![summary](https://github.com/user-attachments/assets/545d2bd4-8740-4ebc-8675-a7ac4e952cfb)
