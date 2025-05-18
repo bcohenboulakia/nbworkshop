@@ -69,8 +69,7 @@ jobs:
             rm /tmp/schema.json
             exit 1
           }
-    
-    rm /tmp/schema.json
+          rm /tmp/schema.json
 
           
       - name: Setup Python
