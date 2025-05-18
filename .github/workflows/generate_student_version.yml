@@ -95,7 +95,7 @@ jobs:
             
             # Afficher les résultats dans le résumé
             printf "## Configuration file errors\n\n" >> $GITHUB_STEP_SUMMARY
-            printf '$s\n' "$error_output" >> $GITHUB_STEP_SUMMARY
+            printf '%s\n' "$error_output" >> $GITHUB_STEP_SUMMARY
             printf "Please fix %s.\n" "$CONFIG_PATH" >> $GITHUB_STEP_SUMMARY
             exit 1
         
