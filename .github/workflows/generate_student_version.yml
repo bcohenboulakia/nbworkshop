@@ -44,6 +44,9 @@ jobs:
           base_dir: "."
           files: |
             ${{ env.CONFIG_PATH }}
+          comment: "true"
+          mode: "warn"
+          use_gitignore: "false"  # Désactive l'utilisation du .gitignore
           json_schema: |
             {
               "type": "object",
@@ -77,12 +80,9 @@ jobs:
               },
               "additionalProperties": false
             }
-          comment: "true"
-          mode: "warn"
-          use_gitignore: "false"  # Désactive l'utilisation du .gitignore
 
       - name: Update GitHub Step Summary on Validation Error
-        if: steps.validate-json.outcome != 'success'
+        if:  steps.validate-json.outcome == 'failure'
         env:
           STDOUT: ${{ steps.validate-json.outputs.stdout }}
           STDERR: ${{ steps.validate-json.outputs.stderr }}
