@@ -60,7 +60,7 @@ jobs:
           npm install -g @jirutka/ajv-cli
           
           # Capturer la sortie d'erreur dans une variable
-          ERROR_OUTPUT=$(ajv validate -s /tmp/schema.json "$CONFIG_PATH" --all-errors  --errors=json 2>&1) || {
+          ERROR_OUTPUT=$(ajv validate -s /tmp/schema.json "$CONFIG_PATH" --all-errors  --errors=jsonpath 2>&1) || {
             printf "## Configuration file errors\n\n" >> $GITHUB_STEP_SUMMARY
             printf "Error in %s:\n\n" "$CONFIG_PATH" >> $GITHUB_STEP_SUMMARY
             echo "$ERROR_OUTPUT" >> $GITHUB_STEP_SUMMARY
