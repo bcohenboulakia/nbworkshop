@@ -10,7 +10,6 @@
     },
     "tutor_postfix": "_Tutor",
     "student_postfix": "_Student",
-    "generate_zip": true,
-    "post_processing": "echo 'Post-processing complété' || true"
+    "post_processing": "echo 'Post-processing complété' || true",
     "pre_processing": "echo 'Pré-processing complété' || true"
 }

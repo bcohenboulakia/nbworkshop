@@ -55,26 +55,21 @@ jobs:
           EOF
       - name: Validate JSON with custom error message
         run: |
-          # Vérifier d'abord la syntaxe JSON basique
+          # Check basic JSON syntax
           if ! jq empty "$CONFIG_PATH" 2>/tmp/json_error; then
-            echo "## ❌ Erreur de syntaxe JSON" >> $GITHUB_STEP_SUMMARY
-            echo "**Fichier:** $CONFIG_PATH" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
+            printf "## ❌ Error in JSON configuration file\n" >> $GITHUB_STEP_SUMMARY
+            printf "Please fix $CONFIG_PATH error:\n" >> $GITHUB_STEP_SUMMARY
             cat /tmp/json_error | sed 's/^jq: //' >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
         
-          # Ensuite valider contre le schéma
+          # check against configuration schema 
           npm install -g @jirutka/ajv-cli
         
           SCHEMA_ERROR=$(ajv validate -s /tmp/schema.json -d "$CONFIG_PATH" --all-errors 2>&1 | sed 's/\\n/\n/g')
           if [ $? -ne 0 ]; then
-            echo "## ❌ Erreur de validation du schéma" >> $GITHUB_STEP_SUMMARY
-            echo "**Fichier:** $CONFIG_PATH" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            echo "$SCHEMA_ERROR" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
+            printf "## ❌ Error in JSON configuration file\n" >> $GITHUB_STEP_SUMMARY
+            echo "$SCHEMA_ERROR" | sed 's/^ajv: //' >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
 
