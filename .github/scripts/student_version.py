@@ -104,8 +104,9 @@ def process_code_cell(cell, config):
 
     cell["source"] = new_source
     
-    # Clear cell outputs
+    # Clear cell outputs and execution count
     cell["outputs"] = []
+    cell.pop('execution_count', None)
     return cell, stats
 
 
