@@ -56,7 +56,7 @@ jobs:
       - name: Validate JSON with custom error message
         run: |
           # Vérifier d'abord la syntaxe JSON basique
-          if ! jq empty "$CONFIG_PATH" 2>/tmp/json_error; then
+          if ! jq empty "$CONFIG_PATH" 2>/tmp/json_error && cat /tmp/json_error | sed 's/^jq: //'; then
             echo "## ❌ Erreur de syntaxe JSON" >> $GITHUB_STEP_SUMMARY
             echo "**Fichier:** $CONFIG_PATH" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
