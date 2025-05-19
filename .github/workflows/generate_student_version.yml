@@ -114,17 +114,8 @@ jobs:
           echo "POST_PROCESSING=$(jq -r '.post_processing // empty' "$CONFIG_PATH")" >> $GITHUB_ENV
           
       # Execution of the pre-processing command, if defined, with summary update
-      - name: Execute post-processing command
+      - name: Execute pre-processing command
         run: |
-          if [ -n "$PRE_PROCESSING" ]; then  
-              # Basic validation to prevent command injection
-              if echo "$PRE_PROCESSING" | grep -qE '^(rm -rf|sudo|chmod -R|chown -R) '; then
-                  printf "## Post-processing failed ❌\n" >> $GITHUB_STEP_SUMMARY
-                  printf "Potentially dangerous command detected: \`%s\`\n" "$PRE_PROCESSING" >> $GITHUB_STEP_SUMMARY
-                  printf "For security reasons, certain commands are not allowed in post-processing.\n" >> $GITHUB_STEP_SUMMARY
-                  exit 1
-              fi
-                  
               # Execute the command and capture output (stdout and stderr combined)
               OUTPUT=$(bash -c "$PRE_PROCESSING" 2>&1)
               EXIT_CODE=$?
@@ -212,15 +203,7 @@ jobs:
       # Execution of the post-processing command, if defined, with summary update
       - name: Execute post-processing command
         run: |
-          if [ -n "$POST_PROCESSING" ]; then  
-              # Basic validation to prevent command injection
-              if echo "$POST_PROCESSING" | grep -qE '^(rm -rf|sudo|chmod -R|chown -R) '; then
-                  printf "## Post-processing failed ❌\n" >> $GITHUB_STEP_SUMMARY
-                  printf "Potentially dangerous command detected: \`%s\`\n" "$POST_PROCESSING" >> $GITHUB_STEP_SUMMARY
-                  printf "For security reasons, certain commands are not allowed in post-processing.\n" >> $GITHUB_STEP_SUMMARY
-                  exit 1
-              fi
-                  
+          if [ -n "$POST_PROCESSING" ]; then
               # Execute the command and capture output (stdout and stderr combined)
               OUTPUT=$(bash -c "$POST_PROCESSING" 2>&1)
               EXIT_CODE=$?
