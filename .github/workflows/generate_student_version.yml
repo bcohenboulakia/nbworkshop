@@ -60,7 +60,7 @@ jobs:
             echo "## ❌ Erreur de syntaxe JSON" >> $GITHUB_STEP_SUMMARY
             echo "**Fichier:** $CONFIG_PATH" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
-            cat /tmp/json_error >> $GITHUB_STEP_SUMMARY
+            cat /tmp/json_error | sed 's/^jq: //' >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
