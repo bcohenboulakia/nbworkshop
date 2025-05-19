@@ -66,13 +66,13 @@ jobs:
         
           # check against configuration schema 
           npm install -g @jirutka/ajv-cli
-          set -o pipefail
           SCHEMA_ERROR=$(ajv validate -s /tmp/schema.json -d "$CONFIG_PATH" --all-errors 2>&1 | sed 's/\\n/\n/g')
           if [ $? -ne 0 ]; then
             printf "## ❌ Error in JSON configuration file\n" >> $GITHUB_STEP_SUMMARY
             echo "$SCHEMA_ERROR" | sed 's/^ajv: //' >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
+
 
       - name: Setup Python
         uses: actions/setup-python@v4
