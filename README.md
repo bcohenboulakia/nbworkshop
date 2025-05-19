@@ -112,6 +112,8 @@ The configuration file can include options for both conversion and GitHub automa
 	* `solution_marker`: Dictionary of markers identifying solution content, containing only the core text, which is either wrapped as an HTML tag for Markdown or prefixed with a comment character for Python.
 	* `placeholder`: Dictionary of replacement text for removed solutions
 	* `generate_zip`: Boolean enabling ZIP archives to be generated
+	* "tutor_postfix" (mandatory): String replaced by the value of "student_postfix" for the Notebook filename.
+	* "student_postfix" (mandatory): String replacing the value of "tutor_postfix" for the Notebook filename.
 * Workflow options (ignored by the conversion script):
 	* `notebooks_dir` (mandatory): List of directories to process
 	* `pre_processing` and `post_processing` (optional): Pre and Post-processing shell commands to be executed by the workflow, allowing for example to modify the notebooks before conversion, and send the generated ZIP archives to a LMS.

@@ -42,17 +42,35 @@ jobs:
           {
             "$schema": "http://json-schema.org/draft-07/schema#",
             "type": "object",
-            "required": ["solution_marker", "placeholder", "generate_zip", "notebooks_dir"],
+            "required": ["solution_marker", "placeholder", "generate_zip", "notebooks_dir", "student_postfix", "tutor_postfix"],
             "properties": {
-              "solution_marker": {"type": "object"},
-              "placeholder": {"type": "object"},
+              "solution_marker": {
+                "type": "object",
+                "required": ["code", "markdown"],
+                "properties": {
+                  "code": {"type": "string"},
+                  "markdown": {"type": "string"}
+                },
+                "additionalProperties": false
+              },
+              "placeholder": {
+                "type": "object",
+                "required": ["code", "markdown"],
+                "properties": {
+                  "code": {"type": "string"},
+                  "markdown": {"type": "string"}
+                },
+                "additionalProperties": false
+              },
               "generate_zip": {"type": "boolean"},
               "notebooks_dir": {"type": "array", "items": {"type": "string"}},
               "pre_processing": {"type": "string"},
-              "post_processing": {"type": "string"}
-            },
-            "additionalProperties": false
+              "post_processing": {"type": "string"},
+              "tutor_postfix": {"type": "string"},
+              "student_postfix": {"type": "string"}
+            }
           }
+
           EOF
       - name: Validate JSON with custom error message
         run: |
