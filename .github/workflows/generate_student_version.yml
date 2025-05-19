@@ -53,29 +53,30 @@ jobs:
             "additionalProperties": false
           }
           EOF
-      
       - name: Validate JSON with custom error message
         run: |
-          # Install AJV CLI for JSON validating
+          # Vérifier d'abord la syntaxe JSON basique
+          if ! jq empty "$CONFIG_PATH" 2>/tmp/json_error; then
+            echo "## ❌ Erreur de syntaxe JSON" >> $GITHUB_STEP_SUMMARY
+            echo "**Fichier:** $CONFIG_PATH" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat /tmp/json_error >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+        
+          # Ensuite valider contre le schéma
           npm install -g @jirutka/ajv-cli
-          
-          ajv validate -s /tmp/schema.json "$CONFIG_PATH" --all-errors --errors=pretty --verbose > /tmp/stdout.log 2> /tmp/stderr.log
-          EXIT_CODE=$?
-          
-          echo "---- Sortie standard ----"
-          cat /tmp/stdout.log
-          
-          echo "---- Sortie d'erreur ----"
-          cat /tmp/stderr.log
-          
-          # Combinaison des deux pour le rapport
-          ERROR_OUTPUT=$(cat /tmp/stdout.log /tmp/stderr.log)
-          
-          if [ $EXIT_CODE -ne 0 ]; then
-            printf "## Configuration file errors\n\n" >> $GITHUB_STEP_SUMMARY
-            printf "Error in %s:\n\n" "$CONFIG_PATH" >> $GITHUB_STEP_SUMMARY
-            printf "``````\n%s\n``````\n\n" "$ERROR_OUTPUT" >> $GITHUB_STEP_SUMMARY
-            
+        
+          SCHEMA_ERROR=$(ajv validate -s /tmp/schema.json -d "$CONFIG_PATH" --all-errors 2>&1 | sed 's/\\n/\n/g')
+          if [ $? -ne 0 ]; then
+            echo "## ❌ Erreur de validation du schéma" >> $GITHUB_STEP_SUMMARY
+            echo "**Fichier:** $CONFIG_PATH" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "$SCHEMA_ERROR" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
 
       - name: Setup Python
         uses: actions/setup-python@v4
