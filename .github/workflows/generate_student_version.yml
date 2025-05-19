@@ -22,9 +22,9 @@ on:
   
 permissions:
   contents: write
-  actions: write   # Permission to trigger other workflows. Not used by the workflow,
-                   # but could useful if the user defined post-processing command must
-                   # run another workflow
+  actions: write # Permission to trigger other workflows. Not used by the workflow,
+                 # but could useful if the user defined post-processing command must
+                 # run another workflow
 
 jobs:
   process:
