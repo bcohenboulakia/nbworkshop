@@ -36,7 +36,18 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
         
-      - name: Create temporary schema file
+          EOF
+      - name: Validate JSON config file syntax
+        run: |
+          # Check basic JSON syntax
+          if ! jq empty "$CONFIG_PATH" 2>/tmp/json_error; then
+            printf "## ❌ Error in JSON configuration file\n" >> $GITHUB_STEP_SUMMARY
+            printf "Please fix $CONFIG_PATH error:\n" >> $GITHUB_STEP_SUMMARY
+            cat /tmp/json_error | sed 's/^jq: //' >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+      - name: Validate JSON config file against config schema
         run: |
           cat > /tmp/schema.json << 'EOF'
           {
@@ -70,17 +81,7 @@ jobs:
               "student_postfix": {"type": "string"}
             }
           }
-
           EOF
-      - name: Validate JSON with custom error message
-        run: |
-          # Check basic JSON syntax
-          if ! jq empty "$CONFIG_PATH" 2>/tmp/json_error; then
-            printf "## ❌ Error in JSON configuration file\n" >> $GITHUB_STEP_SUMMARY
-            printf "Please fix $CONFIG_PATH error:\n" >> $GITHUB_STEP_SUMMARY
-            cat /tmp/json_error | sed 's/^jq: //' >> $GITHUB_STEP_SUMMARY
-            exit 1
-          fi
         
           # check against configuration schema 
           npm install -g @jirutka/ajv-cli
@@ -248,6 +249,4 @@ jobs:
                       printf "\`\`\`\n" >> $GITHUB_STEP_SUMMARY
                   fi
               fi
-          else
-            printf "Pas de commande"
           fi
