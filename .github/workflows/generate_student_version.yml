@@ -55,11 +55,8 @@ jobs:
           EOF
       - name: Validate JSON with custom error message
         run: |
-          if ! jq empty "$CONFIG_PATH" 2>/dev/null; then
-            # Capturer l'erreur jq dans une variable
-            ERROR=$(jq empty "$CONFIG_PATH" 2>&1)
-              
-            # Filtrer pour enlever le préfixe "jq: " ajouté par GitHub Actions
+          ERROR=$(jq 'try empty catch . as $error | $error' "$CONFIG_PATH" 2>&1)
+          if [[ "$ERROR" != "" ]]; then
             ERROR_CLEAN=$(echo "$ERROR" | sed 's/^jq: //')
             echo "## ❌ Erreur de syntaxe JSON" >> $GITHUB_STEP_SUMMARY
             echo "$ERROR_CLEAN" >> $GITHUB_STEP_SUMMARY
