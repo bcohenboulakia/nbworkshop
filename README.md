@@ -47,7 +47,7 @@ For users working with GitHub, _nbworkshop_ also provides a workflow that monito
 - **Targeted Solution and instructions Hiding**: Teachers can precisely mark individual lines or blocks in both code and markdown cells as solutions. They are removed and replaced with placeholders, clearly indicating where students need to provide their answers. Instructor notes can also be provided, they are removed in the student version. All other content remains unchanged.
 - **Automatic Batch Processing**: The conversion tool can process multiple Notebooks at once, generating student versions and optional ZIP archives containing all referenced attachments. 
 - **GitHub Integration**: A pre-configured GitHub Actions workflow automatically regenerates the student versions and archives whenever Notebooks are updated on the main branch ([manual trigger](https://docs.github.com/en/actions/managing-workflow-runs/manually-running-a-workflow) is also possible). All the generated material is stored in a specific branch.
-- **Automation-ready**: Can easily be integrated to other CD/CI chains
+- **Automation-ready and extensible**: Offers complete adaptability, allowing to either extend the existing workflow with custom processing steps or integrate the conversion script to an entirely new workflow tailored to specific environment and requirements (using other CD/CI chains if needed).
 - **Flexible Configuration**: All markers, placeholders, and naming conventions are controlled via a simple JSON configuration file, making adaptation to different teaching styles and environments straightforward. One can for example use a code placeholder that raises a `NotImplementedError`.
 - 
 ## Basic usage
@@ -137,7 +137,11 @@ Please note that conversion may take several dozens of seconds. This total delay
 
 ### Pre and post-processing command
 
-The `pre_processing` and `post_processing` options in `conversion.json` allow executing a command before or after all Notebook conversions are completed. These command are executed on the Students branch. It means they only have access to the processed/converted Notebooks, not the original versions from the main branch. This allows for example to modify notebooks before conversion (removing for example changelogs or adding dates), and send all the generated ZIP archives to a LMS using its API. The standard output of the command execution is added to the process summary. Markdown can be used to format this output. If the execution failed, the execution error output is also displayed.
+The `pre_processing` and `post_processing` options in `conversion.json` allow executing a command before or after all Notebook conversions are completed:
+ - The pre-processing command is run just after setting up the workflow and validating the configuration file
+ - The post-processing command is run the Students branch has been commited and pushed
+
+These command are executed on the Students branch. It means they only have access to the processed/converted Notebooks, not the original versions from the main branch. This allows for example to modify notebooks before conversion (removing for example changelogs or adding dates), and send all the generated ZIP archives to a LMS using its API. The standard output of the command execution is added to the process summary. Markdown can be used to format this output. If the execution failed, the execution error output is also displayed.
 
 The pre and post-processing commands can execute any shell command that is available in the GitHub Actions runner environment (see [Adding scripts to your workflow](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/adding-scripts-to-your-workflow) and [Workflow commands for GitHub Actions](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/workflow-commands-for-github-actions)). Notably, It is possible to switch branches within the post-processing command using the standard Git checkout command:
 ```bash
