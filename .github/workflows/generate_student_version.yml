@@ -59,15 +59,23 @@ jobs:
           # Install AJV CLI for JSON validating
           npm install -g @jirutka/ajv-cli
           
-          # Capturer la sortie d'erreur dans une variable
-          ajv --help validate 
+          ajv validate -s /tmp/schema.json "$CONFIG_PATH" --all-errors --errors=pretty --verbose > /tmp/stdout.log 2> /tmp/stderr.log
+          EXIT_CODE=$?
           
-          ERROR_OUTPUT=$(ajv validate -s /tmp/schema.json "$CONFIG_PATH" --all-errors 2>&1) || {
+          echo "---- Sortie standard ----"
+          cat /tmp/stdout.log
+          
+          echo "---- Sortie d'erreur ----"
+          cat /tmp/stderr.log
+          
+          # Combinaison des deux pour le rapport
+          ERROR_OUTPUT=$(cat /tmp/stdout.log /tmp/stderr.log)
+          
+          if [ $EXIT_CODE -ne 0 ]; then
             printf "## Configuration file errors\n\n" >> $GITHUB_STEP_SUMMARY
             printf "Error in %s:\n\n" "$CONFIG_PATH" >> $GITHUB_STEP_SUMMARY
-            echo "$ERROR_OUTPUT" >> $GITHUB_STEP_SUMMARY
-            exit 1
-          }
+            printf "``````\n%s\n``````\n\n" "$ERROR_OUTPUT" >> $GITHUB_STEP_SUMMARY
+            
 
       - name: Setup Python
         uses: actions/setup-python@v4
