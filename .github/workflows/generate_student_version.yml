@@ -55,16 +55,17 @@ jobs:
           EOF
       - name: Validate JSON with custom error message
         run: |
-          # Vérifier d'abord la syntaxe JSON basique
-          if ! jq empty "$CONFIG_PATH" 2>/tmp/json_error && cat /tmp/json_error | sed 's/^jq: //'; then
+          if ! jq empty "$CONFIG_PATH" 2>/dev/null; then
+            # Capturer l'erreur jq dans une variable
+            ERROR=$(jq empty "$CONFIG_PATH" 2>&1)
+              
+            # Filtrer pour enlever le préfixe "jq: " ajouté par GitHub Actions
+            ERROR_CLEAN=$(echo "$ERROR" | sed 's/^jq: //')
             echo "## ❌ Erreur de syntaxe JSON" >> $GITHUB_STEP_SUMMARY
-            echo "**Fichier:** $CONFIG_PATH" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            cat /tmp/json_error >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "$ERROR_CLEAN" >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
-        
+                    
           # Ensuite valider contre le schéma
           npm install -g @jirutka/ajv-cli
         
