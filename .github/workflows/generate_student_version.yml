@@ -35,6 +35,7 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        
       - name: Create temporary schema file
         run: |
           cat > /tmp/schema.json << 'EOF'
@@ -65,7 +66,7 @@ jobs:
         
           # check against configuration schema 
           npm install -g @jirutka/ajv-cli
-        
+          set -o pipefail
           SCHEMA_ERROR=$(ajv validate -s /tmp/schema.json -d "$CONFIG_PATH" --all-errors 2>&1 | sed 's/\\n/\n/g')
           if [ $? -ne 0 ]; then
             printf "## ❌ Error in JSON configuration file\n" >> $GITHUB_STEP_SUMMARY
