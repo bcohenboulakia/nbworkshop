@@ -114,7 +114,7 @@ jobs:
           
           # If error found, close the code block and exit with error
           if [ "$EXIT_WITH_ERROR" = true ]; then
-            printf "Please create these directories or update the configuration file.\n" >> $GITHUB_STEP_SUMMARY
+            printf "\nPlease create these directories or update the configuration file.\n" >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
       
