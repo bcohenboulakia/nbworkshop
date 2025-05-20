@@ -52,7 +52,7 @@ For users working with GitHub, _nbworkshop_ also provides a workflow that monito
 
 ## Quick start
 
-Clone this repository, and add you Notebooks to the repository you created. Edit `.github/conversion.json` to insert in `"notebooks_dir"` the directory containing your Notebooks. Edit them to add the comment `#SOLUTION` to each line of code cells that you want the students to figure out by themselves. In Markdown cells, add answers to the questions inside `<blockquote>`tags. Be sure to leave the HTML tags alone on their lines.
+Clone this repository, and add your Notebooks to the repository you created. Edit `.github/conversion.json` to insert in `"notebooks_dir"` the directory containing your Notebooks. Edit them to add the comment `#SOLUTION` to each line of code cells that you want the students to figure out by themselves. In Markdown cells, add answers to the questions inside `<blockquote>`tags. Be sure to leave the HTML tags alone on their lines.
 
 When you're done, all you have to do is commit your Notebooks on the main branch, push them to your GitHub repository, and take a look at the newly created `Students`branch!
 
