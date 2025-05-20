@@ -103,19 +103,17 @@ jobs:
               if [ "$ERROR_HEADER_CREATED" = false ]; then
                 printf "## ❌ Error: Missing notebook directories\n" >> $GITHUB_STEP_SUMMARY
                 printf "The following directories specified in $CONFIG_PATH don't exist:\n" >> $GITHUB_STEP_SUMMARY
-                printf "\`\`\`\n" >> $GITHUB_STEP_SUMMARY
                 ERROR_HEADER_CREATED=true
               fi
               
               # List the missing directory in the error message
-              printf -- "- %s\n" "$dir" >> $GITHUB_STEP_SUMMARY
+              printf -- "* \`\`\`%s\`\`\`\n" "$dir" >> $GITHUB_STEP_SUMMARY
               EXIT_WITH_ERROR=true
             fi
           done < <(jq -r '.notebooks_dir[]' "$CONFIG_PATH")
           
           # If error found, close the code block and exit with error
           if [ "$EXIT_WITH_ERROR" = true ]; then
-            printf "\`\`\`\n" >> $GITHUB_STEP_SUMMARY
             printf "Please create these directories or update the configuration file.\n" >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
