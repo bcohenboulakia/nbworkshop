@@ -108,7 +108,7 @@ jobs:
               fi
               
               # List the missing directory in the error message
-              printf "- %s\n" "$dir" >> $GITHUB_STEP_SUMMARY
+              printf -- "- %s\n" "$dir" >> $GITHUB_STEP_SUMMARY
               EXIT_WITH_ERROR=true
             fi
           done < <(jq -r '.notebooks_dir[]' "$CONFIG_PATH")
