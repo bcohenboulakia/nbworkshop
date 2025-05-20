@@ -117,7 +117,43 @@ jobs:
             printf "\nPlease create these directories or update the configuration file.\n" >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
-      
+          
+      - name: Check pre/post-processing commands syntax
+        run: |
+          # Verify pre-processing command syntax if defined
+          if [ -n "$PRE_PROCESSING" ]; then
+            ERROR_OUTPUT=$(echo "$PRE_PROCESSING" | bash -n 2>&1) || {
+              # Syntax error found
+              printf "## ❌ Error: Pre-processing command syntax error\n" >> $GITHUB_STEP_SUMMARY
+              printf "Please fix your pre-processing command syntax:\n" >> $GITHUB_STEP_SUMMARY
+              printf "\`\`\`\n" >> $GITHUB_STEP_SUMMARY
+              printf "%s\n" "$PRE_PROCESSING" >> $GITHUB_STEP_SUMMARY
+              printf "\`\`\`\n\n" >> $GITHUB_STEP_SUMMARY
+              printf "**Error details:**\n" >> $GITHUB_STEP_SUMMARY
+              printf "\`\`\`\n" >> $GITHUB_STEP_SUMMARY
+              printf "%s\n" "$ERROR_OUTPUT" >> $GITHUB_STEP_SUMMARY
+              printf "\`\`\`\n" >> $GITHUB_STEP_SUMMARY
+              exit 1
+            }
+          fi
+          
+          # Verify post-processing command syntax if defined
+          if [ -n "$POST_PROCESSING" ]; then
+            ERROR_OUTPUT=$(echo "$POST_PROCESSING" | bash -n 2>&1) || {
+              # Syntax error found
+              printf "## ❌ Error: Post-processing command syntax error\n" >> $GITHUB_STEP_SUMMARY
+              printf "Please fix your post-processing command syntax:\n" >> $GITHUB_STEP_SUMMARY
+              printf "\`\`\`\n" >> $GITHUB_STEP_SUMMARY
+              printf "%s\n" "$POST_PROCESSING" >> $GITHUB_STEP_SUMMARY
+              printf "\`\`\`\n\n" >> $GITHUB_STEP_SUMMARY
+              printf "**Error details:**\n" >> $GITHUB_STEP_SUMMARY
+              printf "\`\`\`\n" >> $GITHUB_STEP_SUMMARY
+              printf "%s\n" "$ERROR_OUTPUT" >> $GITHUB_STEP_SUMMARY
+              printf "\`\`\`\n" >> $GITHUB_STEP_SUMMARY
+              exit 1
+            }
+          fi
+
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
