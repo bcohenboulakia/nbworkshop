@@ -1,5 +1,5 @@
 {
-    "notebooks_dir": ["Examples/Notebooks/", "Examples/ASSIGNMENTS"],
+    "notebooks_dir": ["Examples/notebooks/", "Examples/ASSIGNMENTS"],
     "solution_marker": {
         "code": "SOLUTION",
         "markdown": "blockquote"
