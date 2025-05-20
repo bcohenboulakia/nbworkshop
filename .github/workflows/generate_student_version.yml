@@ -118,6 +118,14 @@ jobs:
             exit 1
           fi
           
+      # Retrieve the pre and post-process command from the config file. This must be done
+      # at the beginning of the workflow specifically for the post-processing command, because
+      # the Students branch is cleaned after notebook generation, which also makes conversion.json unavailable
+      - name: Store pre and post-processing command for future execution
+        run: |
+          echo "PRE_PROCESSING=$(jq -r '.pre_processing // empty' "$CONFIG_PATH")" >> $GITHUB_ENV
+          echo "POST_PROCESSING=$(jq -r '.post_processing // empty' "$CONFIG_PATH")" >> $GITHUB_ENV
+          
       - name: Check pre/post-processing commands syntax
         run: |
           # Verify pre-processing command syntax if defined
@@ -167,14 +175,6 @@ jobs:
           enable-cache: true
           cache-dependency-glob: ".github/scripts/student_version.py"
 
-      # Retrieve the pre and post-process command from the config file. This must be done
-      # at the beginning of the workflow specifically for the post-processing command, because
-      # the Students branch is cleaned after notebook generation, which also makes conversion.json unavailable
-      - name: Store pre and post-processing command for future execution
-        run: |
-          echo "PRE_PROCESSING=$(jq -r '.pre_processing // empty' "$CONFIG_PATH")" >> $GITHUB_ENV
-          echo "POST_PROCESSING=$(jq -r '.post_processing // empty' "$CONFIG_PATH")" >> $GITHUB_ENV
-          
       # Execution of the pre-processing command, if defined, with summary update
       - name: Execute pre-processing command
         run: |
