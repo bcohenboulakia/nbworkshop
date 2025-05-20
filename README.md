@@ -61,7 +61,7 @@ Then all you have to do is commit your Notebooks on the main branch, push them t
 All _nbworkshop_ code is in the `.github` directory. It contains:
  * `.github/scripts/student_version.py`: the Python script that converts Tutor Notebooks to Students Notebooks, and creates ZIP archives with all the attached files. If used alone, this script can be moved anywhere, provided it still has access to the configuration file
  * `.github/workflows/generate_student_version.yml`: The GitHub workflow that calls the aforementioned Python script every time a Notebook is pushed on the repository's `main` branch.
- * `.github/conversion.json`: The configuration file. This is where Notebook directories, text replacement, and placeholders must be defined.
+ * `.github/conversion.json`: The configuration file. This is where parameters such as Notebook directories, text replacement, placeholders etc. are defined.
 
 ### Conversion
 
