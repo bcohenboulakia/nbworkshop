@@ -20,6 +20,7 @@ along with nbworkshop. If not, see <https://www.gnu.org/licenses/>.
 
 ## Content:
 - [Presentation](#presentation)
+- [Quick start](#quick-start)
 - [Basic usage](#basic-usage)
   - [Conversion](#conversion)
   - [Zip archive and attached files](#zip-archive-and-attached-files)
@@ -50,6 +51,12 @@ For users working with GitHub, _nbworkshop_ also provides a workflow that monito
 - **Automation-ready and extensible**: Offers complete adaptability, allowing to either extend the existing workflow with custom processing steps or integrate the conversion script to an entirely new workflow tailored to specific environment and requirements (using other CD/CI chains if needed).
 - **Flexible Configuration**: All markers, placeholders, and naming conventions are controlled via a simple JSON configuration file, making adaptation to different teaching styles and environments straightforward. One can for example use a code placeholder that raises a `NotImplementedError`.
 - 
+## Quick start
+
+Clone this repository, and add you Notebooks to the repository you created. Edit `.github/conversion.json` to insert into `"notebooks_dir"` the directory containing your Notebooks. Edit them to add the comment `#SOLUTION` to each line of code cells that you want the students to figure out by themselves. In Markdown cells, add answers to the questions inside `<blockquote>`tags. Be sure to leave the HTML tags alone on their lines.
+
+Then all you have to do is commit your Notebooks, push them to your GitHub repository, and take a look at the newly created `Students`branch!
+
 ## Basic usage
 
 All _nbworkshop_ code is in the `.github` directory. It contains:
