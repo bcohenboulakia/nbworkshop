@@ -33,7 +33,6 @@ along with nbworkshop. If not, see <https://www.gnu.org/licenses/>.
   - [Solution in Markdown cells](#solution-in-markdown-cells)
   - [Note addressed to the tutor](#note-addressed-to-the-tutor)
   - [Cell entirely addressed to the tutor](#cell-entirely-addressed-to-the-tutor)
-</p>
 
 ## Presentation
 
@@ -55,7 +54,7 @@ For users working with GitHub, _nbworkshop_ also provides a workflow that monito
 
 Clone this repository, and add you Notebooks to the repository you created. Edit `.github/conversion.json` to insert into `"notebooks_dir"` the directory containing your Notebooks. Edit them to add the comment `#SOLUTION` to each line of code cells that you want the students to figure out by themselves. In Markdown cells, add answers to the questions inside `<blockquote>`tags. Be sure to leave the HTML tags alone on their lines.
 
-Then all you have to do is commit your Notebooks, push them to your GitHub repository, and take a look at the newly created `Students`branch!
+Then all you have to do is commit your Notebooks on the main branch, push them to your GitHub repository, and take a look at the newly created `Students`branch!
 
 ## Basic usage
 
