@@ -72,7 +72,7 @@ All _nbworkshop_ code is in the `.github` directory. It contains:
 
 
 ## Quick start
-In its workflow mode, _nbworkshop_ is entirely hosted on GutHub and requires no prerequisites (aside a GitHub account). To get started using this workflow:
+In workflow mode, _nbworkshop_ is entirely hosted on GutHub and requires no prerequisites (aside a GitHub account). To get started using this workflow:
 1. Clone this repository
 2. Add Notebooks to the clone repository
 3. Edit `.github/conversion.json` to insert in `"notebooks_dir"` the directory containing Notebooks (see [Configuration file](#configuration-file) for a detailed explanation)
