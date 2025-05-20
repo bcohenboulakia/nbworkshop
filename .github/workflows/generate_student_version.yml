@@ -36,7 +36,6 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
         
-          EOF
       - name: Validate JSON config file syntax
         run: |
           # Check basic JSON syntax
