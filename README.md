@@ -47,14 +47,14 @@ For users working with GitHub, _nbworkshop_ also provides a workflow that monito
 - **Targeted Solution and instructions Hiding**: Teachers can precisely mark individual lines or blocks in both code and markdown cells as solutions. They are removed and replaced with placeholders, clearly indicating where students need to provide their answers. Instructor notes can also be provided, they are removed in the student version. All other content remains unchanged.
 - **Automatic Batch Processing**: The conversion tool can process multiple Notebooks at once, generating student versions and optional ZIP archives containing all referenced attachments. 
 - **GitHub Integration**: A pre-configured GitHub Actions workflow automatically regenerates the student versions and archives whenever Notebooks are updated on the main branch ([manual trigger](https://docs.github.com/en/actions/managing-workflow-runs/manually-running-a-workflow) is also possible). All the generated material is stored in a specific branch.
-- **Automation-ready and extensible**: Offers complete adaptability, allowing to either extend the existing workflow with custom processing steps or integrate the conversion script to an entirely new workflow tailored to specific environment and requirements (using other CD/CI chains if needed).
+- **Automation-ready and extensible**: Offers complete adaptability, allowing to either extend the existing workflow with custom processing steps or integrate the conversion script to an entirely new workflow tailored to specific environment and requirements (using other CI/CD chains if needed).
 - **Flexible Configuration**: All markers, placeholders, and naming conventions are controlled via a simple JSON configuration file, making adaptation to different teaching styles and environments straightforward. One can for example use a code placeholder that raises a `NotImplementedError`.
-- 
+
 ## Quick start
 
 Clone this repository, and add you Notebooks to the repository you created. Edit `.github/conversion.json` to insert in `"notebooks_dir"` the directory containing your Notebooks. Edit them to add the comment `#SOLUTION` to each line of code cells that you want the students to figure out by themselves. In Markdown cells, add answers to the questions inside `<blockquote>`tags. Be sure to leave the HTML tags alone on their lines.
 
-Then all you have to do is commit your Notebooks on the main branch, push them to your GitHub repository, and take a look at the newly created `Students`branch!
+When you're done, all you have to do is commit your Notebooks on the main branch, push them to your GitHub repository, and take a look at the newly created `Students`branch!
 
 ## Basic usage
 
