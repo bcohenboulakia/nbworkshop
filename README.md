@@ -79,7 +79,7 @@ In workflow mode, _nbworkshop_ is entirely hosted on GutHub and requires no prer
 4. Edit the Notebooks (see [Solution formatting](#solution-formatting) for more detailed explanation):
 	- In code cells, add `#SOLUTION` to each line of code cells that the students have to figure out by themselves.
 	- In Markdown cells, add answers to the questions inside `<blockquote>`tags. Be sure to leave the HTML tags alone on their lines.  
-5. Commit the  Notebooks on the main branch, push them to the GitHub repository
+5. Commit the  Notebooks on the main branch, and push them to the GitHub repository
 
 The newly created `Students` branch contains the Students versions of the Notebooks (and ZIP archives), with solutions replaced by placeholders and all execution traces (including calculation results and cell execution counters) removed. If an original Notebook's filename ends with the configured `tutor_postfix` parameter (see [Configuration](#configuration)), this postfix is replaced by the `student_postfix` parameter in the converted Notebook's filename. If the original name does not end with `tutor_postfix`, the `student_postfix` value is simply appended to the base name. No additional characters (such as underscores or spaces) are inserted automatically; the exact format is entirely determined by the postfix values set in the configuration.
 
