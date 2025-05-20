@@ -120,7 +120,7 @@ The configuration file can include options for both conversion and GitHub automa
 
 ## GitHub workflow
 
-The conversion can be automated by a GitHub Actions workflow called `Generate Students Branch ` which calls the conversion script on every update of a Notebook in a monitored directory. Note that the GitHub workflow uses `.github/conversion.json` as configuration file, and provides detailed error log in case this file is invalid (or missing).
+The conversion can be automated by a GitHub Actions workflow called `Generate Students Notebooks branch` which calls the conversion script on every update of a Notebook in a monitored directory. Note that the GitHub workflow shares the `.github/conversion.json` as configuration file (including for calling the conversion script), and provides detailed error log in case this file is invalid (or missing).
 
 This workflow can be supervised on the workflow page in the `Action` tab on the GitHub repository web page. Every time the workflow is run, a short overview of the conversion process is shown in the workflow summary:
 ![summary](https://github.com/user-attachments/assets/545d2bd4-8740-4ebc-8675-a7ac4e952cfb)
@@ -141,7 +141,7 @@ The `pre_processing` and `post_processing` options in `conversion.json` allow ex
  - The pre-processing command is run just after setting up the workflow and validating the configuration file
  - The post-processing command is run the Students branch has been commited and pushed
 
-These command are executed on the Students branch. It means they only have access to the processed/converted Notebooks, not the original versions from the main branch. This allows for example to modify notebooks before conversion (removing for example changelogs or adding dates), and send all the generated ZIP archives to a LMS using its API. The standard output of the command execution is added to the process summary. Markdown can be used to format this output. If the execution failed, the execution error output is also displayed.
+These command are executed on the Students branch. It means they only have access to the processed/converted Notebooks, not the original versions from the main branch. This allows for example to modify notebooks before conversion (removing for example changelogs or adding dates), and send all the generated ZIP archives to a LMS using its API (which could be considered as _TeachOps_...). The standard output of the command execution is added to the process summary. Markdown can be used to format this output. If the execution failed, the execution error output is also displayed.
 
 The pre and post-processing commands can execute any shell command that is available in the GitHub Actions runner environment (see [Adding scripts to your workflow](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/adding-scripts-to-your-workflow) and [Workflow commands for GitHub Actions](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/workflow-commands-for-github-actions)). Notably, It is possible to switch branches within the post-processing command using the standard Git checkout command:
 ```bash
