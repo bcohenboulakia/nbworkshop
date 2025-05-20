@@ -144,9 +144,6 @@ jobs:
                       printf "\`\`\`\n" >> $GITHUB_STEP_SUMMARY
                   fi
               fi
-          else
-            printf "Pas de commande"
-          fi
           
       # Every monitored directory is copied structure-wise in order to replace tutor notebooks
       # without deleting other materials
