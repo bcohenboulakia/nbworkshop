@@ -76,8 +76,8 @@ All _nbworkshop_ code is in the `.github` directory. It contains:
 In workflow mode, _nbworkshop_ is entirely hosted on GutHub and requires no prerequisites (aside a GitHub account). To get started using this workflow:
 1. Clone this repository
 2. Add Notebooks to the clone repository
-3. Edit `.github/conversion.json` to insert in `"notebooks_dir"` the directory containing Notebooks (see [Configuration file](#configuration-file) for a detailed explanation)
-4. Edit the Notebooks (see [Solution formatting](#solution-formatting) for more detailed explanation):
+3. Edit `.github/conversion.json` to insert in `"notebooks_dir"` the directory containing the Notebooks you created (see [Configuration file](#configuration-file) for a detailed explanation)
+4. Edit the Notebooks (see [Solution formatting](#solution-formatting) for more detailed explanation on formatting solutions):
 	- In code cells, add `#SOLUTION` to each line of code cells that the students have to figure out by themselves.
 	- In Markdown cells, add answers to the questions inside `<blockquote>`tags. Be sure to leave the HTML tags alone on their lines.  
 5. Commit the  Notebooks on the main branch, and push them to the GitHub repository
@@ -123,7 +123,7 @@ y = x #SOLUTION comment for the tutor
 
 ### Solution in Markdown cells
 
-Solutions and comments are placed in a <code>&lt;blockquote&gt;&lt;/blockquote&gt;</code> tag. They are replaced by a single placeholder <code>&lt;em&lt;TO COMPLETE&lt;/em&lt;</code>. Sometimes, Jupyter can't interpret Markdown code inside a <code>&lt;blockquote&gt;&lt;/blockquote&gt;</code>. In this case, reverting to HTML formatting is required.
+Solutions and comments are placed in a <code>&lt;blockquote&gt;&lt;/blockquote&gt;</code> tag. They are replaced by a single placeholder <code>&lt;em&gt;TO COMPLETE&lt;/em&gt;</code>. Sometimes, Jupyter can't interpret Markdown code inside a <code>&lt;blockquote&gt;&lt;/blockquote&gt;</code>. In this case, reverting to HTML formatting is required.
 
 The <code>&lt;blockquote&gt;</code> and <code>&lt;/blockquote&gt;</code> tags must be alone on their line, and the closing tag must not be forgotten (errors are not handled; the generated student version is then corrupted).
 
@@ -296,7 +296,7 @@ The pre and post-processing commands can execute any shell command that is avail
 ```bash
 git checkout main
 ```
-This branch-switching capability can be included at the beginning of your post-command string
+This branch-switching capability can be included at the beginning of your post-command string:
 ```yaml
 "post_processing": "git checkout main && ./your-program"
 ```
