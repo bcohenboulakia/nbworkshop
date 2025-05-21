@@ -62,12 +62,12 @@ def process_markdown_cell(cell, config):
         solution = soup.find(config["solution_marker"]["markdown"])
         
         if solution:
+            in_solution = True
             if "comment" in solution.get("class", []):
                 stats["remarks"] += 1
-                continue
-            stats["questions"] += 1
-            new_source.append(f"<em>{config["placeholder"]["markdown"]}</em>\n")
-            in_solution = True
+            else:
+                stats["questions"] += 1
+                new_source.append(f"<em>{config["placeholder"]["markdown"]}</em>\n")
         elif in_solution:
             if f"</{config["solution_marker"]["markdown"]}>" in line:
                 in_solution = False
