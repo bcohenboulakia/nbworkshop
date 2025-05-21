@@ -67,7 +67,7 @@ def process_markdown_cell(cell, config):
                 stats["remarks"] += 1
             else:
                 stats["questions"] += 1
-                new_source.append(f"<em>{config["placeholder"]["markdown"]}</em>\n")
+                new_source.append(f"{config["placeholder"]["markdown"]}\n")
         elif in_solution:
             if f"</{config["solution_marker"]["markdown"]}>" in line:
                 in_solution = False
