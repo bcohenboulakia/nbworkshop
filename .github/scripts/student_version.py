@@ -74,7 +74,7 @@ def process_markdown_cell(cell, config):
         else:
             new_source.append(line)
     
-    cell["source"] = [line for line in new_source if line.strip()]
+    cell["source"] = new_source
     return cell, stats
 
 def process_code_cell(cell, config):
