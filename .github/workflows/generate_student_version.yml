@@ -34,6 +34,12 @@ jobs:
       SUMMARY_FILE: /tmp/processed/README.md
     
     steps:
+      - name: Initialize summary file
+        run: |
+          # Prepare README.md to be commited on Students branch
+          rm -f "$SUMMARY_FILE"
+          mkdir -p "$(dirname "$SUMMARY_FILE")"
+          
       - name: Checkout repo
         uses: actions/checkout@v4
         
