@@ -293,7 +293,11 @@ jobs:
                   fi
               fi
           fi
-      
+
+      - name: manage summary
+        run: |
+          cp -a $SUMMARY_FILE .
+          cat README.md >> $GITHUB_STEP_SUMMARY      
       # The Students branch update is overwritten with the new content
       - name: Commit and push
         run: |
@@ -301,7 +305,3 @@ jobs:
           git commit -m "Update student materials: $(date +'%Y-%m-%d %H:%M:%S')" || printf "No changes\n"
           git push origin Students --force
     
-      - name: manage summary
-        run: |
-          cp -a $SUMMARY_FILE .
-          cat README.md >> $GITHUB_STEP_SUMMARY
