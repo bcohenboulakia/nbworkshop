@@ -40,7 +40,7 @@ along with nbworkshop. If not, see <https://www.gnu.org/licenses/>.
 
 ## Presentation
 
-_nbworkshop_ is a streamlined tool designed for educators who use Jupyter Notebooks and need to efficiently prepare and distribute exercise Notebooks with hidden solutions or instructor-only comments:
+_nbworkshop_ is a streamlined tool designed for educators who use Jupyter Notebooks to tech Python and need to efficiently prepare and distribute exercise Notebooks with hidden solutions or instructor-only comments:
 ![example](https://github.com/user-attachments/assets/be557bda-6294-432e-8739-4d19538a341e)
 
 Unlike more comprehensive systems such as _nbgrader_, _nbworkshop_ prioritizes simplicity and flexibility, allowing teachers to mark specific parts of any cell-whether code or markdown-for removal in student versions, without imposing a rigid file structure or complex workflow. An archive (ZIP) containing these student versions, along with any necessary attachments, can also be created. This makes it easy to distribute up-to-date materials to students while keeping instructor content private and organized.
