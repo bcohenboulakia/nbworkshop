@@ -259,14 +259,7 @@ jobs:
         run: |
           cp -a /tmp/processed/. .
           cp -a $SUMMARY_FILE .
-      
-      # The Students branch update is overwritten with the new content
-      - name: Commit and push
-        run: |
-          git add .
-          git commit -m "Update student materials: $(date +'%Y-%m-%d %H:%M:%S')" || printf "No changes\n"
-          git push origin Students --force
-      
+           
       # Execution of the post-processing command, if defined, with summary update
       - name: Execute post-processing command
         run: |
@@ -300,7 +293,15 @@ jobs:
                   fi
               fi
           fi
-          
-      - name: Inject README.md into GitHub Step Summary
+      
+      # The Students branch update is overwritten with the new content
+      - name: Commit and push
         run: |
+          git add .
+          git commit -m "Update student materials: $(date +'%Y-%m-%d %H:%M:%S')" || printf "No changes\n"
+          git push origin Students --force
+    
+      - name: manage summary
+        run: |
+          cp -a $SUMMARY_FILE .
           cat README.md >> $GITHUB_STEP_SUMMARY
