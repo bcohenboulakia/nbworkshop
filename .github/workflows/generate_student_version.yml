@@ -31,6 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CONFIG_PATH: .github/conversion.json
+      SUMMARY_FILE: /tmp/processed/README.md
     
     steps:
       - name: Checkout repo
@@ -40,9 +41,9 @@ jobs:
         run: |
           # Check basic JSON syntax
           if ! jq empty "$CONFIG_PATH" 2>/tmp/json_error; then
-            printf "## ❌ Error in JSON configuration file\n" >> $GITHUB_STEP_SUMMARY
-            printf "Please fix $CONFIG_PATH error:\n" >> $GITHUB_STEP_SUMMARY
-            cat /tmp/json_error | sed 's/^jq: //' >> $GITHUB_STEP_SUMMARY
+            printf "## ❌ Error in JSON configuration file\n" >> $SUMMARY_FILE
+            printf "Please fix $CONFIG_PATH error:\n" >> $SUMMARY_FILE
+            cat /tmp/json_error | sed 's/^jq: //' >> $SUMMARY_FILE
             exit 1
           fi
 
@@ -85,8 +86,8 @@ jobs:
           # Check against configuration schema 
           npm install -g @jirutka/ajv-cli
           if ! ajv validate -s /tmp/schema.json "$CONFIG_PATH" --strict=true --all-errors > /tmp/json_error 2>&1 ; then
-            printf "## ❌ Error in JSON configuration file\n" >> $GITHUB_STEP_SUMMARY
-            cat /tmp/json_error | sed 's/^ajv: //' >> $GITHUB_STEP_SUMMARY
+            printf "## ❌ Error in JSON configuration file\n" >> $SUMMARY_FILE
+            cat /tmp/json_error | sed 's/^ajv: //' >> $SUMMARY_FILE
             exit 1
           fi
 
@@ -101,20 +102,20 @@ jobs:
             if [ ! -d "$dir" ]; then
               # First error needs to create the header
               if [ "$ERROR_HEADER_CREATED" = false ]; then
-                printf "## ❌ Error: Missing notebook directories\n" >> $GITHUB_STEP_SUMMARY
-                printf "The following directories specified in $CONFIG_PATH don't exist:\n" >> $GITHUB_STEP_SUMMARY
+                printf "## ❌ Error: Missing notebook directories\n" >> $SUMMARY_FILE
+                printf "The following directories specified in $CONFIG_PATH don't exist:\n" >> $SUMMARY_FILE
                 ERROR_HEADER_CREATED=true
               fi
               
               # List the missing directory in the error message
-              printf -- "* \`\`\`%s\`\`\`\n" "$dir" >> $GITHUB_STEP_SUMMARY
+              printf -- "* \`\`\`%s\`\`\`\n" "$dir" >> $SUMMARY_FILE
               EXIT_WITH_ERROR=true
             fi
           done < <(jq -r '.notebooks_dir[]' "$CONFIG_PATH")
           
           # If error found, close the code block and exit with error
           if [ "$EXIT_WITH_ERROR" = true ]; then
-            printf "\nPlease create these directories or update the configuration file.\n" >> $GITHUB_STEP_SUMMARY
+            printf "\nPlease create these directories or update the configuration file.\n" >> $SUMMARY_FILE
             exit 1
           fi
           
@@ -132,15 +133,15 @@ jobs:
           if [ -n "$PRE_PROCESSING" ]; then
             ERROR_OUTPUT=$(echo "$PRE_PROCESSING" | bash -n 2>&1) || {
               # Syntax error found
-              printf "## ❌ Error: Pre-processing command syntax error\n" >> $GITHUB_STEP_SUMMARY
-              printf "Please fix your pre-processing command syntax:\n" >> $GITHUB_STEP_SUMMARY
-              printf "\`\`\`\n" >> $GITHUB_STEP_SUMMARY
-              printf "%s\n" "$PRE_PROCESSING" >> $GITHUB_STEP_SUMMARY
-              printf "\`\`\`\n\n" >> $GITHUB_STEP_SUMMARY
-              printf "**Error details:**\n" >> $GITHUB_STEP_SUMMARY
-              printf "\`\`\`\n" >> $GITHUB_STEP_SUMMARY
-              printf "%s\n" "$ERROR_OUTPUT" >> $GITHUB_STEP_SUMMARY
-              printf "\`\`\`\n" >> $GITHUB_STEP_SUMMARY
+              printf "## ❌ Error: Pre-processing command syntax error\n" >> $SUMMARY_FILE
+              printf "Please fix your pre-processing command syntax:\n" >> $SUMMARY_FILE
+              printf "\`\`\`\n" >> $SUMMARY_FILE
+              printf "%s\n" "$PRE_PROCESSING" >> $SUMMARY_FILE
+              printf "\`\`\`\n\n" >> $SUMMARY_FILE
+              printf "**Error details:**\n" >> $SUMMARY_FILE
+              printf "\`\`\`\n" >> $SUMMARY_FILE
+              printf "%s\n" "$ERROR_OUTPUT" >> $SUMMARY_FILE
+              printf "\`\`\`\n" >> $SUMMARY_FILE
               exit 1
             }
           fi
@@ -149,15 +150,15 @@ jobs:
           if [ -n "$POST_PROCESSING" ]; then
             ERROR_OUTPUT=$(echo "$POST_PROCESSING" | bash -n 2>&1) || {
               # Syntax error found
-              printf "## ❌ Error: Post-processing command syntax error\n" >> $GITHUB_STEP_SUMMARY
-              printf "Please fix your post-processing command syntax:\n" >> $GITHUB_STEP_SUMMARY
-              printf "\`\`\`\n" >> $GITHUB_STEP_SUMMARY
-              printf "%s\n" "$POST_PROCESSING" >> $GITHUB_STEP_SUMMARY
-              printf "\`\`\`\n\n" >> $GITHUB_STEP_SUMMARY
-              printf "**Error details:**\n" >> $GITHUB_STEP_SUMMARY
-              printf "\`\`\`\n" >> $GITHUB_STEP_SUMMARY
-              printf "%s\n" "$ERROR_OUTPUT" >> $GITHUB_STEP_SUMMARY
-              printf "\`\`\`\n" >> $GITHUB_STEP_SUMMARY
+              printf "## ❌ Error: Post-processing command syntax error\n" >> $SUMMARY_FILE
+              printf "Please fix your post-processing command syntax:\n" >> $SUMMARY_FILE
+              printf "\`\`\`\n" >> $SUMMARY_FILE
+              printf "%s\n" "$POST_PROCESSING" >> $SUMMARY_FILE
+              printf "\`\`\`\n\n" >> $SUMMARY_FILE
+              printf "**Error details:**\n" >> $SUMMARY_FILE
+              printf "\`\`\`\n" >> $SUMMARY_FILE
+              printf "%s\n" "$ERROR_OUTPUT" >> $SUMMARY_FILE
+              printf "\`\`\`\n" >> $SUMMARY_FILE
               exit 1
             }
           fi
@@ -184,26 +185,26 @@ jobs:
               
               if [ $EXIT_CODE -eq 0 ]; then
                   # Command executed successfully
-                  printf "## Pre-processing executed successfully ✅\n" >> $GITHUB_STEP_SUMMARY
+                  printf "## Pre-processing executed successfully ✅\n" >> $SUMMARY_FILE
                   
                   # Add output if it exists
                   if [ -n "$OUTPUT" ]; then
-                      printf "%s\n" "$OUTPUT" >> $GITHUB_STEP_SUMMARY
+                      printf "%s\n" "$OUTPUT" >> $SUMMARY_FILE
                   else
-                      printf "\n" >> $GITHUB_STEP_SUMMARY
+                      printf "\n" >> $SUMMARY_FILE
                   fi
               else
                   # Command failed
-                  printf "## Post-processing failed ❌\n" >> $GITHUB_STEP_SUMMARY
-                  printf "Code de sortie: %d\n" "$EXIT_CODE" >> $GITHUB_STEP_SUMMARY
+                  printf "## Post-processing failed ❌\n" >> $SUMMARY_FILE
+                  printf "Code de sortie: %d\n" "$EXIT_CODE" >> $SUMMARY_FILE
                   
                   # Add output if it exists (will contain both stdout and stderr)
                   if [ -n "$OUTPUT" ]; then
-                      printf "\n" >> $GITHUB_STEP_SUMMARY
-                      printf "Sortie de commande (incluant les erreurs):\n" >> $GITHUB_STEP_SUMMARY
-                      printf "\`\`\`bash\n" >> $GITHUB_STEP_SUMMARY
-                      printf "%s\n" "$OUTPUT" >> $GITHUB_STEP_SUMMARY
-                      printf "\`\`\`\n" >> $GITHUB_STEP_SUMMARY
+                      printf "\n" >> $SUMMARY_FILE
+                      printf "Sortie de commande (incluant les erreurs):\n" >> $SUMMARY_FILE
+                      printf "\`\`\`bash\n" >> $SUMMARY_FILE
+                      printf "%s\n" "$OUTPUT" >> $SUMMARY_FILE
+                      printf "\`\`\`\n" >> $SUMMARY_FILE
                   fi
               fi
           
@@ -221,9 +222,9 @@ jobs:
       - name: Convert notebooks
         run: |
           # Generate summary table in Markdown format
-          printf "## Notebook processed\n" >> $GITHUB_STEP_SUMMARY
-          printf "| Notebook | Questions | Code Blocks | ZIP |\n" >> $GITHUB_STEP_SUMMARY
-          printf "|----------|-----------|-------------|-----|\n" >> $GITHUB_STEP_SUMMARY
+          printf "## Notebook processed\n" >> $SUMMARY_FILE
+          printf "| Notebook | Questions | Code Blocks | ZIP |\n" >> $SUMMARY_FILE
+          printf "|----------|-----------|-------------|-----|\n" >> $SUMMARY_FILE
 
           # Run python conversion script on each notebook to be converted through uv in order
           # to manage packages automatically. Standard output of successive conversions are
@@ -231,7 +232,7 @@ jobs:
           find /tmp/processed -name "*.ipynb" -print0 | while IFS= read -d '' -r nb; do
             uv run .github/scripts/student_version.py "$nb" \
               --config "$CONFIG_PATH" \
-              --hide-header | sed 's|/tmp/processed/||g' >> $GITHUB_STEP_SUMMARY
+              --hide-header | sed 's|/tmp/processed/||g' >> $SUMMARY_FILE
             rm "$nb"
           done
 
@@ -269,26 +270,30 @@ jobs:
               
               if [ $EXIT_CODE -eq 0 ]; then
                   # Command executed successfully
-                  printf "## Post-processing executed successfully ✅\n" >> $GITHUB_STEP_SUMMARY
+                  printf "## Post-processing executed successfully ✅\n" >> $SUMMARY_FILE
                   
                   # Add output if it exists
                   if [ -n "$OUTPUT" ]; then
-                      printf "%s\n" "$OUTPUT" >> $GITHUB_STEP_SUMMARY
+                      printf "%s\n" "$OUTPUT" >> $SUMMARY_FILE
                   else
-                      printf "\n" >> $GITHUB_STEP_SUMMARY
+                      printf "\n" >> $SUMMARY_FILE
                   fi
               else
                   # Command failed
-                  printf "## Post-processing failed ❌\n" >> $GITHUB_STEP_SUMMARY
-                  printf "Code de sortie: %d\n" "$EXIT_CODE" >> $GITHUB_STEP_SUMMARY
+                  printf "## Post-processing failed ❌\n" >> $SUMMARY_FILE
+                  printf "Code de sortie: %d\n" "$EXIT_CODE" >> $SUMMARY_FILE
                   
                   # Add output if it exists (will contain both stdout and stderr)
                   if [ -n "$OUTPUT" ]; then
-                      printf "\n" >> $GITHUB_STEP_SUMMARY
-                      printf "Sortie de commande (incluant les erreurs):\n" >> $GITHUB_STEP_SUMMARY
-                      printf "\`\`\`bash\n" >> $GITHUB_STEP_SUMMARY
-                      printf "%s\n" "$OUTPUT" >> $GITHUB_STEP_SUMMARY
-                      printf "\`\`\`\n" >> $GITHUB_STEP_SUMMARY
+                      printf "\n" >> $SUMMARY_FILE
+                      printf "Sortie de commande (incluant les erreurs):\n" >> $SUMMARY_FILE
+                      printf "\`\`\`bash\n" >> $SUMMARY_FILE
+                      printf "%s\n" "$OUTPUT" >> $SUMMARY_FILE
+                      printf "\`\`\`\n" >> $SUMMARY_FILE
                   fi
               fi
           fi
+          
+      - name: Inject README.md into GitHub Step Summary
+        run: |
+          cat README.md >> $GITHUB_STEP_SUMMARY

@@ -253,6 +253,17 @@ The summary of the conversion process is sent to the standard output. In this su
 
 Every solution marker in processed Notebooks is replaced by the corresponding placeholder (both can be set in the [Configuration file](#configuration-file)). If an original Notebook's filename ends with the configured `tutor_postfix` parameter (see [Configuration](#configuration)), this postfix is replaced by the `student_postfix` parameter in the converted Notebook's filename. If the original name does not end with `tutor_postfix`, the `student_postfix` value is simply appended to the base name. No additional characters (such as underscores or spaces) are inserted automatically; the exact format is entirely determined by the postfix values set in the configuration.
 
+## GitHub workflow
+
+The conversion can be automated by a GitHub Actions workflow called `Generate Students Notebooks branch` which calls the conversion script on every update of a Notebook in a monitored directory. Note that the GitHub workflow shares the `.github/conversion.json` as configuration file (including for calling the conversion script), and provides detailed error log in case this file is invalid (or missing).
+
+The result of the workflow execution can be reviewed on the README.md of the Students branch which contains a short overview of the conversion process :
+
+A copy of this review appears on the workflow page in the `Action` tab on the GitHub repository web page;
+![summary](https://github.com/user-attachments/assets/545d2bd4-8740-4ebc-8675-a7ac4e952cfb)
+
+The workflow can also be run manually from the same tab. For more information on how to manage and monitor GitHub workflow, see the [official GitHub Actions documentation](https://docs.github.com/en/actions/writing-workflows/quickstart).
+
 ### Zip archive and attached files
 
 For each processed Notebook, if ZIP archives are to be generated (see the _Configuration_ section below), they are added in the `ZIP` subdirectory of each directory containing converted Notebooks. Each archive contains one Notebook and all embedded files. These files must be referenced directly in the global metadata of the Notebook, as a list associated with the key `"attached_files"`. Example:
@@ -263,18 +274,9 @@ For each processed Notebook, if ZIP archives are to be generated (see the _Confi
 ]
 ```
 
-Relative paths can be used, they are replicated in the ZIP archive. Absolute paths are forbidden and generate an error preventing the conversion to complete. If there is an error (embedded file missing or defined by an absolute path), the conversion is aborted. When used through the GitHub workflow (see below), subsequent Notebooks are generated, but the workflow execution status is set to failed, and the summary displays the faulty Notebook.
+Relative paths can be used, they are replicated in the ZIP archive. Absolute paths are forbidden and generate an error preventing the conversion to complete. If there is an error (embedded file missing or defined by an absolute path), the conversion is aborted. When used through the GitHub workflow (see below), subsequent Notebooks are generated, but the workflow execution status is set to failed, and the summary displays the faulty Notebook (see [GitHub workflow](#github-workflow)).
 
 Note: In Jupyter-based environnements, editing the metadata of a Notebook is done in the _ADVANCED TOOLS_ area, under _Notebook metadata_. In Jupyter, it can be accessed by enabling _View_ > _Right Sidebar_ > _Show Notebook tools_. In JupyterLab, it's located in the _Property Inspector_ (gear icon) in the right sidebar.
-
-## GitHub workflow
-
-The conversion can be automated by a GitHub Actions workflow called `Generate Students Notebooks branch` which calls the conversion script on every update of a Notebook in a monitored directory. Note that the GitHub workflow shares the `.github/conversion.json` as configuration file (including for calling the conversion script), and provides detailed error log in case this file is invalid (or missing).
-
-This workflow can be supervised on the workflow page in the `Action` tab on the GitHub repository web page. Every time the workflow is run, a short overview of the conversion process is shown in the workflow summary:
-![summary](https://github.com/user-attachments/assets/545d2bd4-8740-4ebc-8675-a7ac4e952cfb)
-
-The workflow can also be run manually from the same tab. For more information on how to manage and monitor GitHub workflow, see the [official GitHub Actions documentation](https://docs.github.com/en/actions/writing-workflows/quickstart).
 
 ### Conversion triggering and branches
 
