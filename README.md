@@ -258,9 +258,11 @@ Every solution marker in processed Notebooks is replaced by the corresponding pl
 The conversion can be automated by a GitHub Actions workflow called `Generate Students Notebooks branch` which calls the conversion script on every update of a Notebook in a monitored directory. Note that the GitHub workflow shares the `.github/conversion.json` as configuration file (including for calling the conversion script), and provides detailed error log in case this file is invalid (or missing).
 
 The result of the workflow execution can be reviewed on the README.md of the Students branch which contains a short overview of the conversion process :
+![image](https://github.com/user-attachments/assets/bc132feb-5f43-40e7-aa64-962154bc15b1)
 
 A copy of this review appears on the workflow page in the `Action` tab on the GitHub repository web page;
-![summary](https://github.com/user-attachments/assets/545d2bd4-8740-4ebc-8675-a7ac4e952cfb)
+![image](https://github.com/user-attachments/assets/07fa8b7b-c3b1-4c0f-8769-d32ed6a5c311)
+
 
 The workflow can also be run manually from the same tab. For more information on how to manage and monitor GitHub workflow, see the [official GitHub Actions documentation](https://docs.github.com/en/actions/writing-workflows/quickstart).
 
