@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CONFIG_PATH: .github/conversion.json
-      SUMMARY_FILE: /tmp/processed/README.md
+      SUMMARY_FILE: /tmp/README.md
     
     steps:
       - name: Initialize summary file
@@ -258,6 +258,7 @@ jobs:
       - name: Sync processed files
         run: |
           cp -a /tmp/processed/. .
+          cp -a $SUMMARY_FILE .
       
       # The Students branch update is overwritten with the new content
       - name: Commit and push
