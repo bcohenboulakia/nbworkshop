@@ -111,7 +111,7 @@ def process_code_cell(cell, config):
 
 
 def process_notebook(input_path, config):
-    """Convert a notebook to student version in-place"""
+    """Convert a notebook to student version"""
 
     input_path = Path(input_path).resolve()
     
@@ -140,7 +140,7 @@ def process_notebook(input_path, config):
             processed_cells.append(processed_cell)
             for k in stats: stats[k] += cell_stats.get(k, 0)
 
-    # Save student version next to original
+    # Save student version
     notebook["cells"] = processed_cells
     input_path = Path(input_path)
     
@@ -149,8 +149,8 @@ def process_notebook(input_path, config):
     tutor_postfix = config["tutor_postfix"]
     student_postfix = config["student_postfix"]
 
+        # Replace tutor_postfix with student_postfix at the endZ
     if stem.endswith(tutor_postfix):
-        # Replace tutor_postfix with student_postfix at the end
         student_stem = stem[: -len(tutor_postfix)] + student_postfix
     else:
         # Just append student_postfix
