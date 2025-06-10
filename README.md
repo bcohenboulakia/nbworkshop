@@ -18,6 +18,15 @@ along with nbworkshop. If not, see <https://www.gnu.org/licenses/>.
 <img width=400 src="https://github.com/user-attachments/assets/db55c14a-c1f1-4731-a9cb-569d3129a371">
 </p>
 
+<details>
+  <summary>Version française</summary>
+  
+  Voici le contenu en français.
+</details>
+
+<details>
+  <summary>English version</summary>
+
 ## Content:
 - [Presentation](#presentation)
 - [Installation and Prerequisites](#installation-and-prerequisites)
@@ -259,7 +268,7 @@ The conversion can be automated by a GitHub Actions workflow called `Generate St
 
 The result of the workflow execution can be reviewed on the README.md of the Students branch which contains a short overview of the conversion process :
 
-A copy of this review appears on the workflow page in the `Action` tab on the GitHub repository web page;
+A copy of this review appears on the workflow page in the `Action` tab on the GitHub repository web page:
 ![summary](https://github.com/user-attachments/assets/545d2bd4-8740-4ebc-8675-a7ac4e952cfb)
 
 The workflow can also be run manually from the same tab. For more information on how to manage and monitor GitHub workflow, see the [official GitHub Actions documentation](https://docs.github.com/en/actions/writing-workflows/quickstart).
@@ -305,3 +314,5 @@ This branch-switching capability can be included at the beginning of your post-c
 It can also be done from the called program itself through external command execution.
 
 Also note that the `actions: write` permission has been enabled, allowing commands to trigger other workflows using GitHub CLI (`gh workflow run`) without requiring additional personal access tokens. This requires target workflows to declare a `workflow_dispatch` trigger. Just be careful with trigger rules, as overlapping triggers can cause multiple executions.
+
+</details>
