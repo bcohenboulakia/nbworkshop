@@ -18,7 +18,7 @@ along with nbworkshop. If not, see <https://www.gnu.org/licenses/>.
 <img width=400 src="https://github.com/user-attachments/assets/db55c14a-c1f1-4731-a9cb-569d3129a371">
 </p>
 
-[🇫🇷 Version française ci-dessous 🇫🇷](#-version-française-)
+[🇫🇷 Aller à la version française 🇫🇷](#-version-française-)
 
 ## Content:
 - [Presentation](#presentation)
