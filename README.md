@@ -19,13 +19,300 @@ along with nbworkshop. If not, see <https://www.gnu.org/licenses/>.
 </p>
 
 <details>
-  <summary>Version française</summary>
+  <summary>🇫🇷 Version française 🇫🇷</summary>
   
-  Voici le contenu en français.
+
+## Contenu :
+- [Présentation](#présentation)
+- [Installation et Prérequis](#installation-et-prérequis)
+- [Démarrage rapide](#démarrage-rapide)
+- [Formatage des solutions](#formatage-des-solutions)
+   * [Solution dans les cellules de code](#solution-dans-les-cellules-de-code)
+   * [Solution dans les cellules Markdown](#solution-dans-les-cellules-markdown)
+   * [Note destinée au tuteur](#note-destinée-au-tuteur)
+   * [Cellule entièrement destinée au tuteur](#cellule-entièrement-destinée-au-tuteur)
+- [Fichier de configuration](#fichier-de-configuration)
+- [Processus de conversion](#processus-de-conversion)
+   * [Script de conversion](#script-de-conversion)
+   * [Nom des fichiers des Notebooks](#nom-des-fichiers-des-notebooks)
+   * [Archive Zip et fichiers joints](#archive-zip-et-fichiers-joints)
+- [Workflow GitHub](#workflow-github)
+   * [Déclenchement de la conversion et branches](#déclenchement-de-la-conversion-et-branches)
+   * [Commandes de pré et post-traitement](#commandes-de-pré-et-post-traitement)
+
+## Présentation
+
+_nbworkshop_ est un outil simplifié conçu pour les enseignants utilisant des Notebooks Jupyter pour enseigner Python, qui ont besoin de préparer et distribuer efficacement des Notebooks d'exercices avec des solutions cachées ou des commentaires réservés aux instructeurs :
+![exemple](https://github.com/user-attachments/assets/be557bda-6294-432e-8739-4d19538a341e)
+
+Contrairement à des systèmes plus complets comme _nbgrader_, _nbworkshop_ privilégie la simplicité et la flexibilité, permettant aux enseignants de marquer des parties spécifiques de n'importe quelle cellule - code ou markdown - pour suppression dans les versions étudiantes, sans imposer de structure de fichiers rigide ou de workflow complexe. Une archive (ZIP) contenant ces versions étudiantes, ainsi que toutes les pièces jointes nécessaires, peut également être créée. Cela facilite la distribution de matériel actualisé aux étudiants tout en gardant le contenu enseignant privé et organisé.
+
+Pour les utilisateurs travaillant avec GitHub, _nbworkshop_ fournit également un workflow qui surveille des répertoires spécifiques et, à chaque mise à jour d'un Notebook dans ces répertoires surveillés sur la branche principale, génère automatiquement les versions étudiantes de ces Notebooks stockées sur une branche dédiée. Si des archives ZIP doivent être créées, elles sont stockées dans cette même branche. Notez que ce workflow peut être facilement adapté à GitLab ou BitBucket en utilisant leurs outils CD/CI respectifs.
+
+**Fonctionnalités clés :**
+- **Masquage ciblé des solutions et instructions** : Les enseignants peuvent marquer précisément des lignes ou blocs individuels dans les cellules de code et markdown comme solutions. Ils sont supprimés et remplacés par des espaces réservés, indiquant clairement où les étudiants doivent fournir leurs réponses. Des notes pour l'instructeur peuvent également être fournies, elles sont supprimées dans la version étudiante. Tout autre contenu reste inchangé.
+- **Traitement par lots automatique** : L'outil de conversion peut traiter plusieurs Notebooks simultanément, générant des versions étudiantes et des archives ZIP optionnelles contenant toutes les pièces jointes référencées.
+- **Intégration GitHub** : Un workflow GitHub Actions préconfiguré régénère automatiquement les versions étudiantes et archives à chaque mise à jour des Notebooks sur la branche principale ([déclenchement manuel](https://docs.github.com/en/actions/managing-workflow-runs/manually-running-a-workflow) également possible). Tout le matériel généré est stocké dans une branche spécifique.
+- **Prêt pour l'automatisation et extensible** : Offre une adaptabilité complète, permettant soit d'étendre le workflow existant avec des étapes de traitement personnalisées, soit d'intégrer le script de conversion dans un workflow entièrement nouveau adapté à des environnements et besoins spécifiques (utilisation d'autres chaînes CI/CD si nécessaire).
+- **Configuration flexible** : Tous les marqueurs, espaces réservés et conventions de nommage sont contrôlés via un simple fichier de configuration JSON, rendant l'adaptation à différents styles d'enseignement et environnements directe. On peut par exemple utiliser un espace réservé de code qui lève une `NotImplementedError`.
+
+## Installation et Prérequis
+
+_nbworkshop_ peut être utilisé de deux manières différentes :
+ * Utilisation du workflow GitHub (aucun prérequis)<br>
+ Le projet est entièrement autonome lorsqu'il est utilisé avec le workflow GitHub intégré. Dans ce cas, aucun prérequis ou étape d'installation supplémentaire n'est nécessaire. Clonez simplement le dépôt pour commencer (voir [Démarrage rapide](#démarrage-rapide)).
+ * Utilisation directe du script de conversion<br>
+   Si vous souhaitez exécuter le script de conversion directement sur votre machine, vous aurez besoin de :
+	* Python (version 3.12 ou ultérieure)
+	*  BeautifulSoup pour traiter les cellules Markdown (le script a été testé avec BeautifulSoup 4.9.0).
+	
+   Dans ce cas, le script peut être déplacé n'importe où, à condition qu'il puisse accéder au fichier de configuration. Consultez [Script de conversion](#script-de-conversion) ci-dessous pour plus de détails.
+
+Tout le code de _nbworkshop_ se trouve dans le répertoire `.github`. Il contient :
+ * `.github/scripts/student_version.py` : le script Python qui convertit les Notebooks Tuteur en Notebooks Étudiants, et crée des archives ZIP avec tous les fichiers joints. S'il est utilisé seul, ce script peut être déplacé n'importe où, à condition d'avoir toujours accès au fichier de configuration
+ * `.github/workflows/generate_student_version.yml` : Le workflow GitHub qui appelle le script Python susmentionné à chaque fois qu'un Notebook est poussé sur la branche `main` du dépôt.
+ * `.github/conversion.json` : Le fichier de configuration. C'est ici que sont définis les paramètres tels que les répertoires des Notebooks, les remplacements de texte, les espaces réservés, etc.
+
+## Démarrage rapide
+En mode workflow, _nbworkshop_ est entièrement hébergé sur GitHub et ne nécessite aucun prérequis (à part un compte GitHub). Pour commencer à utiliser ce workflow :
+1. Clonez ce dépôt
+2. Ajoutez des Notebooks au dépôt cloné
+3. Modifiez `.github/conversion.json` pour insérer dans `"notebooks_dir"` le répertoire contenant les Notebooks que vous avez créés (voir [Fichier de configuration](#fichier-de-configuration) pour une explication détaillée)
+4. Modifiez les Notebooks (voir [Formatage des solutions](#formatage-des-solutions) pour des explications plus détaillées sur le formatage des solutions) :
+	- Dans les cellules de code, ajoutez `#SOLUTION` à chaque ligne des cellules de code que les étudiants doivent trouver par eux-mêmes.
+	- Dans les cellules Markdown, ajoutez les réponses aux questions entre des balises `<blockquote>`. Veillez à laisser les balises HTML seules sur leurs lignes.  
+5. Committez les Notebooks sur la branche principale et poussez-les vers le dépôt GitHub
+
+La nouvelle branche `Students` contient les versions étudiantes des Notebooks (et archives ZIP), avec les solutions remplacées par des espaces réservés et toutes les traces d'exécution (y compris les résultats de calcul et les compteurs d'exécution de cellules) supprimées. Ces Notebooks convertis sont mis à jour à chaque poussée sur la branche principale.
+
+## Formatage des solutions
+
+Notez que _nbworkshop_ peut utiliser n'importe quel texte de remplacement/balises et espace réservé défini par l'utilisateur (voir [Fichier de configuration](#fichier-de-configuration)). Dans les explications suivantes, les versions par défaut sont utilisées.
+
+### Solution dans les cellules de code
+Pour créer une ligne ou un bloc de solution, le commentaire `#SOLUTION` doit être ajouté à la fin de chaque ligne du bloc. Le bloc est remplacé par un seul espace réservé `#TO COMPLETE`. Exemple :
+
+```python
+y = x #SOLUTION
+```
+
+est remplacé par :
+```python
+#TO COMPLETE
+```
+
+
+Pour créer le début d'une instruction à compléter, l'instruction doit être multi-ligne en utilisant le caractère `\`, avec la partie solution sur la deuxième ligne et le commentaire `#SOLUTION` à la fin. Exemple&nbsp;:
+```python
+y =\
+    x #SOLUTION
+```
+
+est remplacé par&nbsp;:
+```python
+y = #TO COMPLETE
+```
+
+Des commentaires réguliers peuvent être ajoutés, placés avant `#SOLUTION` sur la même ligne. Exemple&nbsp;:
+```python
+y = x #commentaire #SOLUTION
+```
+
+Des commentaires spécifiquement pour les tuteurs peuvent également être ajoutés après `#SOLUTION` sur la même ligne. Exemple&nbsp;:
+```python
+y = x #SOLUTION commentaire pour le tuteur
+```
+
+### Solution dans les cellules Markdown
+
+Les solutions et commentaires sont placés dans une balise <code>&lt;blockquote&gt;&lt;/blockquote&gt;</code>. Ils sont remplacés par un seul espace réservé <code>&lt;em&gt;TO COMPLETE&lt;/em&gt;</code>. Parfois, Jupyter ne peut pas interpréter le code Markdown à l'intérieur d'un <code>&lt;blockquote&gt;&lt;/blockquote&gt;</code>. Dans ce cas, il faut revenir au formatage HTML.
+
+Les balises  <code>&lt;blockquote&gt;</code> et <code>&lt;/blockquote&gt;</code> doivent être seules sur leur ligne, et la balise de fermeture ne doit pas être oubliée (les erreurs ne sont pas gérées&nbsp;; la version étudiante générée est alors corrompue).
+
+S'il n'y a pas de ligne vide entre la question et la réponse, l'espace réservé est placé sur la même ligne que la question. Exemple&nbsp;:
+```html
+Question?
+<blockquote>
+    Réponse attendue.
+</blockquote>
+```
+    
+est remplacé par&nbsp;:
+```html
+Question ? <em>TO COMPLETE</em>
+```
+    
+S'il y a une ligne vide entre la question et la réponse, l'espace réservé est placé sur la ligne en dessous de la question. Exemple&nbsp;:
+```HTML
+Question?
+
+<blockquote>
+    Réponse attendue.
+</blockquote>
+```
+    
+est remplacé par&nbsp;:
+```html
+Question?
+<em>TO COMPLETE</em>
+```
+
+### Note destinée au tuteur
+
+Une note uniquement destinée au tuteur peut être ajoutée dans le Notebook. Cette note est complètement supprimée du Notebook étudiant. Elle doit être placée dans des cellules markdown, à l'intérieur d'un bloc <code>&lt;blockquote&gt;&lt;/blockquote&gt;</code>avec la classe <code>"comment"</code>. Exemple&nbsp;:
+```html
+Texte du WS.
+
+<blockquote class="comment">
+    Note pour le tuteur
+</blockquote>
+
+Suite du WS.
+```
+
+est remplacé par&nbsp;:
+```html
+Texte du WS.
+Suite du WS.
+```
+
+Pour placer cette note à l'intérieur d'un seul paragraphe dans la version étudiante, enchaînez le texte et les notes sans saut de ligne au-dessus ou en dessous du commentaire. Exemple&nbsp;:
+```html
+Texte du WS.
+<blockquote class="comment">
+    Note pour le tuteur
+</blockquote>
+Suite du WS.
+```
+
+est remplacé par&nbsp;:
+
+```html
+Texte du WS. Suite du WS.
+```
+
+### Cellule entièrement destinée au tuteur
+Il s'agit d'une cellule markdown qui n'apparaît pas du tout dans la version Étudiante. C'est une cellule contenant uniquement un bloc <code>&lt;blockquote&gt;&lt;/blockquote&gt;</code>. La cellule est alors entièrement supprimée lors de la génération de la version étudiante.
+
+## Fichier de configuration
+
+Le fichier de configuration inclut des options pour la conversion et le workflow GitHub. Chacun ne prend en compte que les options pertinentes&nbsp;:
+```json
+{
+    "notebooks_dir": ["notebooks", "ASSIGNMENTS"],
+    "solution_marker": {
+        "code": "SOLUTION",
+        "markdown": "blockquote"
+    },
+    "placeholder": {
+        "code": "#TO COMPLETE",
+        "markdown": "<em>TO COMPLETE</em>"
+    },
+    "tutor_postfix": "_Tutor",
+    "student_postfix": "_Student",
+    "generate_zip": true,
+    "pre_processing": "echo 'Pre-processing completed' || true"
+    "post_processing": "echo 'Post-processing completed' || true"
+}
+```
+
+* Options de conversion (toutes obligatoires pour le script de conversion, ignorées par le workflow)&nbsp;:
+	* `solution_marker`&nbsp;: Dictionnaire des marqueurs identifiant le contenu solution, contenant uniquement le texte central, qui est soit encapsulé comme une balise HTML pour Markdown, soit préfixé par un caractère de commentaire pour Python.
+	* `placeholder`&nbsp;:  Dictionnaire du texte de remplacement pour les solutions supprimées
+	* `generate_zip`&nbsp;: Booléen activant la génération d'archives ZIP
+	* `tutor_postfix`&nbsp;: Chaîne remplacée par la valeur de `student_postfix` pour le nom de fichier du Notebook.
+	* `student_postfix`&nbsp;: Chaîne remplaçant la valeur de `tutor_postfix` pour le nom de fichier du Notebook.
+* Options de workflow (ignorées par le script de conversion)&nbsp;:
+	* `notebooks_dir` (obligatoire)&nbsp;: Liste des répertoires à traiter
+	* `pre_processing` et `post_processing` (optionnel)&nbsp;: Commandes shell de pré et post-traitement à exécuter par le workflow, permettant par exemple de modifier les notebooks avant conversion et d'envoyer les archives ZIP générées à un LMS.
+	
+Le fichier de configuration se trouve à différents endroits selon le mode d'utilisation :
+- **Utilisation du workflow GitHub**&nbsp;: `.github/conversion.json`
+- **Utilisation manuelle du script**&nbsp;: `./conversion.json` (dans le répertoire courant), mais peut être changé via une option en ligne de commande (voir [Script de conversion](#script-de-conversion)
+
+## Processus de conversion
+
+### Script de conversion
+
+Le script Python qui génère les Notebooks étudiants se trouve dans `.github/scripts/student_version.py` S'il est exécuté via le workflow GitHub, il n'est pas nécessaire de le connaître. Tout (y compris les chemins des fichiers générés et la gestion des erreurs) est géré par le workflow et via le fichier de configuration.
+
+S'il est exécuté manuellement (c'est-à-dire pas via le workflow GitHub), la version étudiante est créée dans le même répertoire que le Notebook original. Voici l'interface en ligne de commande&nbsp;:
+```bash
+python version_etudiante.py CHEMINS_NOTEBOOK  [--config PATH] [--hide-header]
+```
+
+ * `CHEMINS_NOTEBOOK `: raite des Notebooks spécifiques (supporte les motifs globaux&nbsp;:`*.ipynb`, `**/exercices/*.ipynb`)
+ * `--config` (optionnel): Spécifie un chemin de configuration alternatif (par défaut&nbsp;: `./conversion.json`)
+ * `--hide-header` (optionnel): Supprime les en-têtes de tableau Markdown pour l'intégration dans des rapports
+ 
+Le résumé du processus de conversion est envoyé sur la sortie standard. Dans ce résumé, les Notebooks sont référencés par chemin absolu s'ils ne sont pas dans la hiérarchie du répertoire de travail courant. Selon que le traitement par lots est effectué en interne par le script ou non, l'option `--hide-header` peut être utilisée pour générer un tableau récapitulatif sans en-tête, afin de concaténer les lignes de feuille de rapport générées successivement par le script. Cela peut être utile lors de l'intégration du script dans un traitement par lots externe (comme un pipeline CI/CD).
+
+**Note importante sur la configuration**&nbsp;: Lorsque le script est utilisé manuellement, il utilise par défaut le fichier `./conversion.json` dans le répertoire courant, contrairement au workflow GitHub qui utilise `.github/conversion.json`.
+
+### Nom des fichiers des Notebooks
+
+Chaque marqueur de solution dans les Notebooks traités est remplacé par l'espace réservé correspondant (tous deux peuvent être définis dans le [Fichier de configuration file](#fichier-de-configuration)).Si un nom de fichier de Notebook original se termine par le paramètre `tutor_postfix` configuré (voir [Configuration](#configuration)), ce suffixe est remplacé par le paramètre `student_postfix` dans le nom de fichier du Notebook converti. Si le nom original ne se termine pas par `tutor_postfix`, la valeur de  `student_postfix` est simplement ajoutée au nom de base. Aucun caractère supplémentaire (tel que des tirets bas ou des espaces) n'est inséré automatiquement&nbsp;; le format exact est entièrement déterminé par les valeurs de suffixe définies dans la configuration.
+
+## Workflow GitHub
+
+La conversion peut être automatisée par un workflow GitHub Actions appelé `Generate Students Notebooks branch` qui appelle le script de conversion à chaque mise à jour d'un Notebook dans un répertoire surveillé. Notez que le workflow GitHub utilise `.github/conversion.json` comme fichier de configuration (y compris pour appeler le script de conversion) et fournit un journal d'erreurs détaillé en cas de fichier invalide (ou manquant).
+
+Le résultat de l'exécution du workflow peut être consulté sur le `README.md` de la branche Students qui contient un bref aperçu du processus de conversion&nbsp;:
+![image](https://github.com/user-attachments/assets/bc132feb-5f43-40e7-aa64-962154bc15b1)
+
+Une copie de cette revue apparaît sur la page du workflow dans l'onglet Action de la page web du dépôt GitHub&nbsp;:
+![summary](https://github.com/user-attachments/assets/545d2bd4-8740-4ebc-8675-a7ac4e952cfb)
+
+
+Le workflow peut également être exécuté manuellement depuis le même onglet. Pour plus d'informations sur la gestion et la surveillance des workflows GitHub, consultez la [documentation officielle GitHub Actions](https://docs.github.com/en/actions/writing-workflows/quickstart).
+
+### Archive Zip et fichiers joints
+
+Pour chaque Notebook traité, si des archives ZIP doivent être générées (voir la section Configuration ci-dessous), elles sont ajoutées dans le sous-répertoire ZIP de chaque répertoire contenant des Notebooks convertis. Chaque archive contient un Notebook et tous les fichiers intégrés. Ces fichiers doivent être référencés directement dans les métadonnées globales du Notebook, comme une liste associée à la clé `"attached_files"`. Exemple&nbsp;:
+```json
+"attached_files": [
+	"picture1.png",
+	"img/picture2.jpg"
+]
+```
+
+Les chemins relatifs peuvent être utilisés, ils sont répliqués dans l'archive ZIP. Les chemins absolus sont interdits et génèrent une erreur empêchant la conversion de se terminer. S'il y a une erreur (fichier intégré manquant ou défini par un chemin absolu), la conversion est abandonnée. Lorsqu'elle est utilisée via le workflow GitHub (voir ci-dessous), les Notebooks suivants sont générés, mais le statut d'exécution du workflow est défini sur échec, et le résumé affiche le Notebook défectueux (voir [Workflow GitHub](#workflow-gitHub)).
+
+Remarque&nbsp;: Dans les environnements basés sur Jupyter, la modification des métadonnées d'un Notebook se fait dans la zone  _ADVANCED TOOLS_, sous  _Notebook metadata_. Dans Jupyter, on y accède en activant _View_ > _Right Sidebar_ > _Show Notebook tools_. Dans JupyterLab, il se trouve dans _Property Inspector_ (icône d'engrenage) dans la barre latérale droite.
+
+### Déclenchement de la conversion et branches
+
+Ce workflow utilise deux branches pour générer les Notebooks étudiants (mais autant de branches que nécessaire peuvent être créées, elles seront simplement ignorées)&nbsp;:
+ * La branche  `main` contient les versions solutions et les ressources nécessaires (elle peut également contenir d'autres matériaux, qui sont ignorés). Pousser un Notebook sur cette branche déclenche sa conversion, à condition que le Notebook poussé soit dans un répertoire surveillé (tel que défini dans la section `notebooks_dir` du fichier de configuration).
+ * La branche `Students` est générée automatiquement. Son contenu ne doit pas être modifié, car il est entièrement réécrit à chaque conversion. Elle contient le même contenu (y compris la structure des sous-répertoires) que les répertoires surveillés dans la branche `main`, sauf que les solutions et notes d'instructeur sont supprimées des Notebooks, que ce soit pour le code ou pour les questions dans le texte.
+
+Veuillez noter que la conversion peut prendre plusieurs dizaines de secondes. Ce délai total comprend à la fois le temps d'attente pour qu'un runner GitHub Actions devienne disponible (ce qui peut être long si aucun runner n'est libre) et le temps nécessaire pour traiter réellement la tâche. Le temps d'exécution dépend du nombre de Notebooks à convertir et de leur longueur. L'exécution d'autres workflows dans le dépôt en même temps peut également augmenter le temps d'exécution global. De plus, pour éviter des conversions inutiles, les répertoires `.ipynb_checkpoints` peuvent être ajoutés à `.gitignore`.
+
+### Commandes de pré et post-traitement
+
+Les options  `pre_processing` et `post_processing` dans `conversion.json` permettent d'exécuter une commande avant ou après que toutes les conversions de Notebooks soient terminées&nbsp;:
+ - La commande de pré-traitement est exécutée juste après la configuration du workflow et la validation du fichier de configuration
+ - La commande de post-traitement est exécutée après que la branche Students a été commitée et poussée
+
+Ces commandes sont exécutées sur la branche Students. Cela signifie qu'elles n'ont accès qu'aux Notebooks traités/convertis, pas aux versions originales de la branche principale. Cela permet par exemple de modifier les notebooks avant conversion (supprimer par exemple des journaux de modifications ou ajouter des dates), et d'envoyer toutes les archives ZIP générées à un LMS en utilisant son API (ce qui pourrait être considéré comme du TeachOps...). La sortie standard de l'exécution de la commande est ajoutée au résumé du processus. Markdown peut être utilisé pour formater cette sortie. Si l'exécution échoue, la sortie d'erreur d'exécution est également affichée.
+
+Les commandes de pré et post-traitement peuvent exécuter toute commande shell disponible dans l'environnement du runner GitHub Actions (voir [Adding scripts to your workflow](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/adding-scripts-to-your-workflow) et [Workflow commands for GitHub Actions](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/workflow-commands-for-github-actions)).  Notamment, il est possible de changer de branche dans la commande de post-traitement en utilisant la commande Git standard&nbsp;:
+```bash
+git checkout main
+```
+Cette capacité de changement de branche peut être incluse au début de votre chaîne de commande post&nbsp;:
+```yaml
+"post_processing": "git checkout main && ./your-program"
+```
+Elle peut également être faite depuis le programme appelé lui-même via l'exécution de commande externe.
+
+Notez également que la permission `actions: write` a été activée, permettant aux commandes de déclencher d'autres workflows en utilisant GitHub CLI (`gh workflow run`)  sans nécessiter de jetons d'accès personnels supplémentaires. Cela nécessite que les workflows cibles déclarent un déclencheur workflow_dispatch. Faites simplement attention aux règles de déclenchement, car des déclencheurs qui se chevauchent peuvent provoquer plusieurs exécutions.
+
+
 </details>
 
 <details>
-  <summary>English version</summary>
+  <summary>🇬🇧 English version 🇬🇧</summary>
 
 ## Content:
 - [Presentation](#presentation)
@@ -184,8 +471,7 @@ Continuation of the WS.
 
 ```
 
-To place this note inside a single paragraph in the student version, chain the text and notes without a line break above or below the comment.
-Example:
+To place this note inside a single paragraph in the student version, chain the text and notes without a line break above or below the comment. Example:
 ```html
 WS text.
 <blockquote class="comment">
@@ -229,14 +515,14 @@ The configuration file includes options for both conversion and GitHub workflow.
 	* `solution_marker`: Dictionary of markers identifying solution content, containing only the core text, which is either wrapped as an HTML tag for Markdown or prefixed with a comment character for Python.
 	* `placeholder`: Dictionary of replacement text for removed solutions
 	* `generate_zip`: Boolean enabling ZIP archives to be generated
-	* "tutor_postfix": String replaced by the value of "student_postfix" for the Notebook filename.
-	* "student_postfix": String replacing the value of "tutor_postfix" for the Notebook filename.
+	* `tutor_postfix`: String replaced by the value of `student_postfix` for the Notebook filename.
+	* "student_postfix": String replacing the value of `tutor_postfix` for the Notebook filename.
 * Workflow options (ignored by the conversion script):
 	* `notebooks_dir` (mandatory): List of directories to process
 	* `pre_processing` and `post_processing` (optional): Pre and Post-processing shell commands to be executed by the workflow, allowing for example to modify the notebooks before conversion, and send the generated ZIP archives to a LMS.
 	
 The configuration file is located in different places depending on the mode of use:
-- **Using GitHub workflow**: `.github/conversion.json` (in current directory)
+- **Using GitHub workflow**: `.github/conversion.json`
 - **Manual script use**: `./conversion.json` (in current directory), but can be changed through commandlin option (see [Conversion script](#conversion-script))
 
 ## Conversion process
@@ -264,9 +550,9 @@ Every solution marker in processed Notebooks is replaced by the corresponding pl
 
 ## GitHub workflow
 
-The conversion can be automated by a GitHub Actions workflow called `Generate Students Notebooks branch` which calls the conversion script on every update of a Notebook in a monitored directory. Note that the GitHub workflow shares the `.github/conversion.json` as configuration file (including for calling the conversion script), and provides detailed error log in case this file is invalid (or missing).
+The conversion can be automated by a GitHub Actions workflow called `Generate Students Notebooks branch` which calls the conversion script on every update of a Notebook in a monitored directory. Note that the GitHub workflow uses `.github/conversion.json` as configuration file (including for calling the conversion script), and provides detailed error log in case this file is invalid (or missing).
 
-The result of the workflow execution can be reviewed on the README.md of the Students branch which contains a short overview of the conversion process :
+The result of the workflow execution can be reviewed on the `README.md` of the Students branch which contains a short overview of the conversion process :
 ![image](https://github.com/user-attachments/assets/bc132feb-5f43-40e7-aa64-962154bc15b1)
 
 A copy of this review appears on the workflow page in the `Action` tab on the GitHub repository web page:
