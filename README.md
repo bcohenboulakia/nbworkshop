@@ -15,7 +15,7 @@ along with nbworkshop. If not, see <https://www.gnu.org/licenses/>.
 -->
 
 <p align="center">
-<img width=400 src="https://github.com/user-attachments/assets/db55c14a-c1f1-4731-a9cb-569d3129a371">
+<img width=400 alt="nbworkshop logo" src="https://github.com/user-attachments/assets/db55c14a-c1f1-4731-a9cb-569d3129a371">
 </p>
 
 [🇫🇷 Aller à la version française 🇫🇷](#-version-française-)
@@ -43,7 +43,7 @@ along with nbworkshop. If not, see <https://www.gnu.org/licenses/>.
 ## Presentation
 
 _nbworkshop_ is a streamlined tool designed for educators who use Jupyter Notebooks to tech Python and need to efficiently prepare and distribute exercise Notebooks with hidden solutions or instructor-only comments:
-![example](https://github.com/user-attachments/assets/be557bda-6294-432e-8739-4d19538a341e)
+![Simple nbworkshop example](https://github.com/user-attachments/assets/be557bda-6294-432e-8739-4d19538a341e)
 
 Unlike more comprehensive systems such as _nbgrader_, _nbworkshop_ prioritizes simplicity and flexibility, allowing teachers to mark specific parts of any cell-whether code or markdown-for removal in student versions, without imposing a rigid file structure or complex workflow. An archive (ZIP) containing these student versions, along with any necessary attachments, can also be created. This makes it easy to distribute up-to-date materials to students while keeping instructor content private and organized.
 
@@ -259,10 +259,10 @@ Every solution marker in processed Notebooks is replaced by the corresponding pl
 The conversion can be automated by a GitHub Actions workflow called `Generate Students Notebooks branch` which calls the conversion script on every update of a Notebook in a monitored directory. Note that the GitHub workflow uses `.github/conversion.json` as configuration file (including for calling the conversion script), and provides detailed error log in case this file is invalid (or missing).
 
 The result of the workflow execution can be reviewed on the `README.md` of the Students branch which contains a short overview of the conversion process :
-![image](https://github.com/user-attachments/assets/bc132feb-5f43-40e7-aa64-962154bc15b1)
+![Student branch README](https://github.com/user-attachments/assets/bc132feb-5f43-40e7-aa64-962154bc15b1)
 
 A copy of this review appears on the workflow page in the `Action` tab on the GitHub repository web page:
-![summary](https://github.com/user-attachments/assets/545d2bd4-8740-4ebc-8675-a7ac4e952cfb)
+![GitHub Actions summary](https://github.com/user-attachments/assets/545d2bd4-8740-4ebc-8675-a7ac4e952cfb)
 
 
 The workflow can also be run manually from the same tab. For more information on how to manage and monitor GitHub workflow, see the [official GitHub Actions documentation](https://docs.github.com/en/actions/writing-workflows/quickstart).
@@ -336,7 +336,7 @@ Also note that the `actions: write` permission has been enabled, allowing comman
 ## Présentation
 
 _nbworkshop_ est un outil simplifié conçu pour les enseignants utilisant des Notebooks Jupyter pour enseigner Python, qui ont besoin de préparer et distribuer efficacement des Notebooks d'exercices avec des solutions cachées ou des commentaires réservés aux instructeurs :
-![exemple](https://github.com/user-attachments/assets/be557bda-6294-432e-8739-4d19538a341e)
+![Exemple simple nbworkshop](https://github.com/user-attachments/assets/be557bda-6294-432e-8739-4d19538a341e)
 
 Contrairement à des systèmes plus complets comme _nbgrader_, _nbworkshop_ privilégie la simplicité et la flexibilité, permettant aux enseignants de marquer des parties spécifiques de n'importe quelle cellule - code ou markdown - pour suppression dans les versions étudiantes, sans imposer de structure de fichiers rigide ou de workflow complexe. Une archive (ZIP) contenant ces versions étudiantes, ainsi que toutes les pièces jointes nécessaires, peut également être créée. Cela facilite la distribution de matériel actualisé aux étudiants tout en gardant le contenu enseignant privé et organisé.
 
@@ -551,10 +551,10 @@ Chaque marqueur de solution dans les Notebooks traités est remplacé par l'espa
 La conversion peut être automatisée par un workflow GitHub Actions appelé `Generate Students Notebooks branch` qui appelle le script de conversion à chaque mise à jour d'un Notebook dans un répertoire surveillé. Notez que le workflow GitHub utilise `.github/conversion.json` comme fichier de configuration (y compris pour appeler le script de conversion) et fournit un journal d'erreurs détaillé en cas de fichier invalide (ou manquant).
 
 Le résultat de l'exécution du workflow peut être consulté sur le `README.md` de la branche Students qui contient un bref aperçu du processus de conversion&nbsp;:
-![image](https://github.com/user-attachments/assets/bc132feb-5f43-40e7-aa64-962154bc15b1)
+![README de la branche Students](https://github.com/user-attachments/assets/bc132feb-5f43-40e7-aa64-962154bc15b1)
 
 Une copie de cette revue apparaît sur la page du workflow dans l'onglet Action de la page web du dépôt GitHub&nbsp;:
-![summary](https://github.com/user-attachments/assets/545d2bd4-8740-4ebc-8675-a7ac4e952cfb)
+![Sommaire de la page GitHub Actions](https://github.com/user-attachments/assets/545d2bd4-8740-4ebc-8675-a7ac4e952cfb)
 
 
 Le workflow peut également être exécuté manuellement depuis le même onglet. Pour plus d'informations sur la gestion et la surveillance des workflows GitHub, consultez la [documentation officielle GitHub Actions](https://docs.github.com/en/actions/writing-workflows/quickstart).
