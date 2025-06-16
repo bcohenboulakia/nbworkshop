@@ -204,29 +204,28 @@ jobs:
         id: notebooks
         run: |
           REBUILD_ALL="${{ steps.config.outputs.rebuild_all }}"
-          # Get monitored dirs as bash array
           mapfile -t notebooks_dirs < <(jq -r '.notebooks_dir[]' "$CONFIG_PATH")
           NOTEBOOKS_LIST="notebooks_to_process.txt"
           > $NOTEBOOKS_LIST
 
           if [ "$REBUILD_ALL" = "true" ]; then
-            # Full rebuild: process all notebooks in monitored dirs
             for dir in "${notebooks_dirs[@]}"; do
               find "$dir" -type f -name "*.ipynb"
             done | sort -u > $NOTEBOOKS_LIST
           else
-            # Selective: only process changed notebooks in monitored dirs
             BASE_SHA="${{ github.event.before }}"
             HEAD_SHA="${{ github.sha }}"
             git diff --name-only --diff-filter=ACMRT "$BASE_SHA" "$HEAD_SHA" > changed_files.txt
             while IFS= read -r f; do
               for d in "${notebooks_dirs[@]}"; do
-                if [[ ("$f" == "$d" || "$f" == "$d/"* ) && "$f" == *.ipynb ]]; then
-                  echo "$f"
+                # Vérifie si le fichier est dans le dossier monitoré ou un sous-dossier
+                if [[ "$f" == "$d" || "$f" == "$d/"* ]] && [[ "$f" == *.ipynb ]]; then
+                  echo "$f" >> $NOTEBOOKS_LIST
                   break
                 fi
               done
-            done < changed_files.txt | sort -u > $NOTEBOOKS_LIST
+            done < changed_files.txt
+            sort -u $NOTEBOOKS_LIST -o $NOTEBOOKS_LIST
           fi
 
           echo "notebooks_list=$NOTEBOOKS_LIST" >> $GITHUB_OUTPUT
@@ -245,7 +244,6 @@ jobs:
 
           while IFS= read -r nb; do
             [ -z "$nb" ] && continue
-            # Run conversion and capture output for summary
             SUMMARY_LINE=$(uv run .github/scripts/student_version.py "$nb" --config "$CONFIG_PATH" --hide-header)
             rm "$nb"
 
@@ -263,11 +261,9 @@ jobs:
               git add "$nb"
             fi
 
-            # Add the notebook line to the summary with the conflict marker
             printf "%s | %s\n" "$SUMMARY_LINE" "$CONFLICT_MARK" >> $SUMMARY_FILE
           done < "$NOTEBOOKS_LIST"
 
-          # Handle other files in conflict (non-notebooks)
           if [ "$REBUILD_ALL" = "false" ]; then
             git ls-files -u | awk '{print $4}' | grep -v '\.ipynb$' | sort -u | while read -r file; do
               git checkout --theirs -- "$file"
@@ -276,7 +272,6 @@ jobs:
             done
           fi
 
-          # Add section for other files with conflicts
           if [ -s other_files_with_conflicts.txt ]; then
             echo -e "\n## Other files overwritten due to conflict:\n" >> $SUMMARY_FILE
             cat other_files_with_conflicts.txt >> $SUMMARY_FILE
