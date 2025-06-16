@@ -296,7 +296,7 @@ The `pre_processing` and `post_processing` options in `conversion.json` allow ex
  - The post-processing command is run the Students branch has been commited and pushed
 
 By default (but it can be changed, see below), these command are executed on the Students branch with mainly two consequences:
-* The pre-processing command can modify the Notebooks to be converted (or any file) without the changes impacting the main branch. This allows for example to modify notebooks before conversion (removing for example changelogs or adding dates)
+* The pre-processing command can modify any file without the changes impacting the main branch. This allows for example to modify notebooks before conversion (removing changelogs or adding dates)
 * The post-processing command only has access to the processed/converted Notebooks. This allows for example to send all the generated ZIP archives to a LMS using its API (which could be considered as _TeachOps_...).
 
 The standard outputs of the commands execution are added to the process summary. Markdown can be used to format those output. If the execution failed, the execution error output is also displayed.
@@ -592,7 +592,7 @@ Les options  `pre_processing` et `post_processing` dans `conversion.json` permet
  - La commande de post-traitement est exécutée après que la branche Students a été commitée et poussée
  
 Par défaut (mais cela peut être modifié, voir ci-dessous), ces commandes sont exécutées sur la branche Etudiants avec principalement deux conséquences&nbsp;:
-* La commande de prétraitement peut modifier les Notebooks à convertir (ou n'importe quel fichier) sans que les changements impactent la branche principale. Cela permet par exemple de modifier les Notebooks avant la conversion (en supprimant par exemple les changelogs ou en ajoutant des dates).
+* La commande de prétraitement peut modifier n'importe quel fichier sans que les changements impactent la branche principale. This allows, for example, to delete changelogs or add dates to Notebooks before conversion.
 * La commande de post-traitement n'a accès qu'aux Notebooks traités/convertis. Cela permet par exemple d'envoyer toutes les archives ZIP générées à un LMS en utilisant son API (ce qui pourrait être considéré comme du _TeachOps_...).
 
 Les sorties standard de l'exécution des commandes sont ajoutées au résumé du processus. Markdown peut être utilisé pour formater ces sorties. Si l'exécution a échoué, la sortie de l'erreur d'exécution est également affichée.
