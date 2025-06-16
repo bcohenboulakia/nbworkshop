@@ -592,7 +592,7 @@ Les options  `pre_processing` et `post_processing` dans `conversion.json` permet
  - La commande de post-traitement est exécutée après que la branche Students a été commitée et poussée
  
 Par défaut (mais cela peut être modifié, voir ci-dessous), ces commandes sont exécutées sur la branche Etudiants avec principalement deux conséquences&nbsp;:
-* La commande de prétraitement peut modifier n'importe quel fichier sans que les changements impactent la branche principale. This allows, for example, to delete changelogs or add dates to Notebooks before conversion.
+* La commande de prétraitement peut modifier n'importe quel fichier sans que les changements impactent la branche principale. Cela permet, par exemple, de supprimer les changelogs ou d'ajouter des dates aux Notebooks avant la conversion.
 * La commande de post-traitement a accès aux fichiers générés par le workflow. Cela permet par exemple d'envoyer toutes les archives ZIP générées à un LMS en utilisant son API (ce qui pourrait être considéré comme du _TeachOps_...).
 
 Les sorties standard de l'exécution des commandes sont ajoutées au résumé du processus. Markdown peut être utilisé pour formater ces sorties. Si l'exécution a échoué, la sortie de l'erreur d'exécution est également affichée.
