@@ -295,7 +295,11 @@ The `pre_processing` and `post_processing` options in `conversion.json` allow ex
  - The pre-processing command is run just after setting up the workflow and validating the configuration file
  - The post-processing command is run the Students branch has been commited and pushed
 
-These command are executed on the Students branch. It means they only have access to the processed/converted Notebooks, not the original versions from the main branch. This allows for example to modify notebooks before conversion (removing for example changelogs or adding dates), and send all the generated ZIP archives to a LMS using its API (which could be considered as _TeachOps_...). The standard output of the command execution is added to the process summary. Markdown can be used to format this output. If the execution failed, the execution error output is also displayed.
+By default (but it can be changed, see below), these command are executed on the Students branch with mainly two consequences:
+* The pre-processing command can modify the Notebooks to be converted (or any file) without the changes impacting the main branch. This allows for example to modify notebooks before conversion (removing for example changelogs or adding dates)
+* The post-processing command only has access to the processed/converted Notebooks. This allows for example to send all the generated ZIP archives to a LMS using its API (which could be considered as _TeachOps_...).
+
+The standard outputs of the commands execution are added to the process summary. Markdown can be used to format those output. If the execution failed, the execution error output is also displayed.
 
 The pre and post-processing commands can execute any shell command that is available in the GitHub Actions runner environment (see [Adding scripts to your workflow](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/adding-scripts-to-your-workflow) and [Workflow commands for GitHub Actions](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/workflow-commands-for-github-actions)). Notably, It is possible to switch branches within the post-processing command using the standard Git checkout command:
 ```bash
@@ -586,8 +590,12 @@ Veuillez noter que la conversion peut prendre plusieurs dizaines de secondes. Ce
 Les options  `pre_processing` et `post_processing` dans `conversion.json` permettent d'exécuter une commande avant ou après que toutes les conversions de Notebooks soient terminées&nbsp;:
  - La commande de pré-traitement est exécutée juste après la configuration du workflow et la validation du fichier de configuration
  - La commande de post-traitement est exécutée après que la branche Students a été commitée et poussée
+ 
+Par défaut (mais cela peut être modifié, voir ci-dessous), ces commandes sont exécutées sur la branche Etudiants avec principalement deux conséquences&nbsp;:
+* La commande de prétraitement peut modifier les Notebooks à convertir (ou n'importe quel fichier) sans que les changements impactent la branche principale. Cela permet par exemple de modifier les Notebooks avant la conversion (en supprimant par exemple les changelogs ou en ajoutant des dates).
+* La commande de post-traitement n'a accès qu'aux Notebooks traités/convertis. Cela permet par exemple d'envoyer toutes les archives ZIP générées à un LMS en utilisant son API (ce qui pourrait être considéré comme du _TeachOps_...).
 
-Ces commandes sont exécutées sur la branche Students. Cela signifie qu'elles n'ont accès qu'aux Notebooks traités/convertis, pas aux versions originales de la branche principale. Cela permet par exemple de modifier les notebooks avant conversion (supprimer par exemple des journaux de modifications ou ajouter des dates), et d'envoyer toutes les archives ZIP générées à un LMS en utilisant son API (ce qui pourrait être considéré comme du TeachOps...). La sortie standard de l'exécution de la commande est ajoutée au résumé du processus. Markdown peut être utilisé pour formater cette sortie. Si l'exécution échoue, la sortie d'erreur d'exécution est également affichée.
+Les sorties standard de l'exécution des commandes sont ajoutées au résumé du processus. Markdown peut être utilisé pour formater ces sorties. Si l'exécution a échoué, la sortie de l'erreur d'exécution est également affichée.
 
 Les commandes de pré et post-traitement peuvent exécuter toute commande shell disponible dans l'environnement du runner GitHub Actions (voir [Adding scripts to your workflow](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/adding-scripts-to-your-workflow) et [Workflow commands for GitHub Actions](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/workflow-commands-for-github-actions)).  Notamment, il est possible de changer de branche dans la commande de post-traitement en utilisant la commande Git standard&nbsp;:
 ```bash
