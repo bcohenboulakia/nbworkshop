@@ -233,7 +233,7 @@ jobs:
             find "$dir" -type f -name "*.ipynb" | while IFS= read -r nb; do
               uv run .github/scripts/student_version.py "$nb" \
                 --config "$CONFIG_PATH" \
-                --hide-header | sed "s|$dir/||g" >> $SUMMARY_FILE
+                --hide-header >> $SUMMARY_FILE
               rm "$nb"
             done
           done < <(jq -r '.notebooks_dir[]' "$CONFIG_PATH")
