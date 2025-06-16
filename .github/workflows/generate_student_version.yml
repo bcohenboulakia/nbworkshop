@@ -213,53 +213,32 @@ jobs:
                       printf "\`\`\`\n" >> $SUMMARY_FILE
                   fi
               fi
-          
-      # Every monitored directory is copied structure-wise in order to replace tutor notebooks
-      # without deleting other materials
-      - name: Prepare temp directory used for notebooks conversion
-        run: |
-          rm -rf /tmp/processed
-          mkdir -p /tmp/processed
-          jq -r '.notebooks_dir[]' "$CONFIG_PATH" | while IFS= read -r dir; do
-            cp -r --parents "$dir" /tmp/processed/
-          done
-      
-      # Conversion is done on the copied notebooks
-      - name: Convert notebooks
-        run: |
-          # Generate summary table in Markdown format
-          printf "## Notebook processed\n" >> $SUMMARY_FILE
-          printf "| Notebook | Questions | Code Blocks | ZIP |\n" >> $SUMMARY_FILE
-          printf "|----------|-----------|-------------|-----|\n" >> $SUMMARY_FILE
 
-          # Run python conversion script on each notebook to be converted through uv in order
-          # to manage packages automatically. Standard output of successive conversions are
-          # added directly to GitHub step summary
-          find /tmp/processed -name "*.ipynb" -print0 | while IFS= read -d '' -r nb; do
-            uv run .github/scripts/student_version.py "$nb" \
-              --config "$CONFIG_PATH" \
-              --hide-header | sed 's|/tmp/processed/||g' >> $SUMMARY_FILE
-            rm "$nb"
-          done
-
-
-      # Reset the whole Students branch
-      - name: Reset Students branch
+      - name: Recreate Students branch before conversion
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           if git show-ref --verify --quiet refs/heads/Students; then
             git branch -D Students
           fi
-          git checkout --orphan Students
-          git reset --hard
-      
-      # Syncing processed files in Students branch
-      - name: Sync processed files
+          git checkout -b Students
+          
+      # Convert notebooks in place and delete originals
+      - name: Convert notebooks and remove originals
         run: |
-          cp -a /tmp/processed/. .
-          cp -a $SUMMARY_FILE .
-           
+          printf "## Notebooks processed\n" >> $SUMMARY_FILE
+          printf "| Notebook | Questions | Code Blocks | ZIP |\n" >> $SUMMARY_FILE
+          printf "|----------|-----------|-------------|-----|\n" >> $SUMMARY_FILE
+          while IFS= read -r dir; do
+            find "$dir" -type f -name "*.ipynb" | while IFS= read -r nb; do
+              uv run .github/scripts/student_version.py "$nb" \
+                --config "$CONFIG_PATH" \
+                --hide-header | sed "s|$dir/||g" >> $SUMMARY_FILE
+              rm "$nb"
+            done
+          done < <(jq -r '.notebooks_dir[]' "$CONFIG_PATH")
+
+
       # Execution of the post-processing command, if defined, with summary update
       - name: Execute post-processing command
         run: |
