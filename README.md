@@ -200,7 +200,7 @@ This is a markdown cell that does not appear at all in the `Students` version. I
 The configuration file includes options for both conversion and GitHub workflow. Each one only takes into account the relevant options:
 ```json
 {
-    "notebooks_dir": ["notebooks", "ASSIGNMENTS"],
+    "notebooks_dir": ["Examples/notebooks/", "Examples/ASSIGNMENTS"],
     "solution_marker": {
         "code": "SOLUTION",
         "markdown": "blockquote"
@@ -211,20 +211,22 @@ The configuration file includes options for both conversion and GitHub workflow.
     },
     "tutor_postfix": "_Tutor",
     "student_postfix": "_Student",
-    "generate_zip": true,
-    "pre_processing": "echo 'Pre-processing completed' || true"
-    "post_processing": "echo 'Post-processing completed' || true"
+	"generate_zip": true,
+	"rebuild_all": false,
+    "post_processing": "echo 'Post-processing complété' || true",
+    "pre_processing": "echo 'Pré-processing complété' || true"
 }
 ```
 
 * Conversion options (all mandatory for the conversion script, ignored by the workflow):
 	* `solution_marker`: Dictionary of markers identifying solution content, containing only the core text, which is either wrapped as an HTML tag for Markdown or prefixed with a comment character for Python.
 	* `placeholder`: Dictionary of replacement text for removed solutions
-	* `generate_zip`: Boolean enabling ZIP archives to be generated
+	* `generate_zip`: Boolean enabling ZIP archives to be generated.
 	* `tutor_postfix`: String replaced by the value of `student_postfix` for the Notebook filename.
 	* "student_postfix": String replacing the value of `tutor_postfix` for the Notebook filename.
 * Workflow options (ignored by the conversion script):
-	* `notebooks_dir` (mandatory): List of directories to process
+	* `notebooks_dir` (mandatory): List of directories to process.
+	* `rebuild_all` (optional): Boolean determining whether all notebooks are rebuilt every time, or only the ones that have changed since the last commit
 	* `pre_processing` and `post_processing` (optional): Pre and Post-processing shell commands to be executed by the workflow, allowing for example to modify the notebooks before conversion, and send the generated ZIP archives to a LMS.
 	
 The configuration file is located in different places depending on the mode of use:
@@ -256,16 +258,20 @@ Every solution marker in processed Notebooks is replaced by the corresponding pl
 
 ## GitHub workflow
 
-The conversion can be automated by a GitHub Actions workflow called `Generate `Students` Notebooks branch` which calls the conversion script on every update of a Notebook in a monitored directory. Note that the GitHub workflow uses `.github/conversion.json` as configuration file (including for calling the conversion script), and provides detailed error log in case this file is invalid (or missing).
+The conversion can be automated by a GitHub Actions workflow called `Generate `Students` Notebooks branch` which calls the conversion script on every update of a Notebook in a monitored directory. Note that the GitHub workflow uses `.github/conversion.json` as configuration file (including for calling the conversion script), and provides detailed error log in case this file is invalid (or missing). The workflow's behavior depends on the value of the `rebuild_all` parameter:
+* If set to `true`, the workflow wipes out the existing `Students`branch and recreates it from the latest state of the main branch, then runs the conversion script on every Notebook in a monitored directory. If you have manually edited the content of the Students branch, be aware that these manual changes — including Notebooks and other files — will be completely lost, as the branch is fully reset and all content is regenerated from scratch.
+* If set to `false`, the workflow checks out the latest main branch, updates the Students branch, and runs the conversion script on every Notebook that has been modified since the last commit. If you have manually edited  a notebook that is detected as changed and thus regenerated, your manual changes to that notebook will be overwritten by the automated process. Manual changes to other Notebooks or files will remain until a merge conflict occurs. For non-Notebook files that are in conflict, the workflow automatically resolves the conflict by keeping the version from the remote Students branch, meaning your manual changes to those files will be preserved, while changes from the main branch are discarded.
 
-The result of the workflow execution can be reviewed on the `README.md` of the `Students` branch which contains a short overview of the conversion process:
+Thus, manually editing the `Students`branch should be avoided.
+
+The result of the workflow execution can be reviewed on the `README.md` of the `Students` branch which contains a short overview of the conversion process (including merge conflicts, whether on Notebooks or other files):
 ![Student branch README](https://github.com/user-attachments/assets/bc132feb-5f43-40e7-aa64-962154bc15b1)
 
 A copy of this review appears on the workflow page in the `Action` tab on the GitHub repository web page:
 ![GitHub Actions summary](https://github.com/user-attachments/assets/545d2bd4-8740-4ebc-8675-a7ac4e952cfb)
 
-
 The workflow can also be run manually from the same tab. For more information on how to manage and monitor GitHub workflow, see the [official GitHub Actions documentation](https://docs.github.com/en/actions/writing-workflows/quickstart).
+
 
 ### Zip archive and attached files
 
@@ -495,7 +501,7 @@ Il s'agit d'une cellule markdown qui n'apparaît pas du tout dans la version Ét
 Le fichier de configuration inclut des options pour la conversion et le workflow GitHub. Chacun ne prend en compte que les options pertinentes&nbsp;:
 ```json
 {
-    "notebooks_dir": ["notebooks", "ASSIGNMENTS"],
+    "notebooks_dir": ["Examples/notebooks/", "Examples/ASSIGNMENTS"],
     "solution_marker": {
         "code": "SOLUTION",
         "markdown": "blockquote"
@@ -506,9 +512,10 @@ Le fichier de configuration inclut des options pour la conversion et le workflow
     },
     "tutor_postfix": "_Tutor",
     "student_postfix": "_Student",
-    "generate_zip": true,
-    "pre_processing": "echo 'Pre-processing completed' || true"
-    "post_processing": "echo 'Post-processing completed' || true"
+	"generate_zip": true,
+	"rebuild_all": false,
+    "post_processing": "echo 'Post-processing complété' || true",
+    "pre_processing": "echo 'Pré-processing complété' || true"
 }
 ```
 
@@ -551,9 +558,13 @@ Chaque marqueur de solution dans les Notebooks traités est remplacé par l'espa
 
 ## Workflow GitHub
 
-La conversion peut être automatisée par un workflow GitHub Actions appelé `Generate `Students` Notebooks branch` qui appelle le script de conversion à chaque mise à jour d'un Notebook dans un répertoire surveillé. Notez que le workflow GitHub utilise `.github/conversion.json` comme fichier de configuration (y compris pour appeler le script de conversion) et fournit un journal d'erreurs détaillé en cas de fichier invalide (ou manquant).
+La conversion peut être automatisée par un workflow GitHub Actions appelé `Generate `Students` Notebooks branch` qui appelle le script de conversion à chaque mise à jour d'un Notebook dans un répertoire surveillé. Notez que le workflow GitHub utilise `.github/conversion.json` comme fichier de configuration (y compris pour appeler le script de conversion), et fournit un journal d'erreur détaillé dans le cas où ce fichier est invalide (ou manquant). Le comportement du workflow dépend de la valeur du paramètre `rebuild_all` :
+* S'il vaut `true`, le workflow efface la branche `Students` existante et la recrée à partir du dernier état de la branche principale, puis exécute le script de conversion sur chaque Notebook dans un répertoire surveillé. Si vous avez édité manuellement le contenu de la branche `Students`, que ces modifications manuelles - Notebooks et autres fichiers - seront complètement perdues, car la branche est entièrement réinitialisée et tout le contenu est régénéré à partir de zéro.
+* Si la valeur est `false`, le workflow fait un check out de la dernier `main`, met à jour la branche `Students`, et exécute le script de conversion sur chaque Notebook qui a été modifié depuis le dernier commit. Si vous avez édité manuellement un Notebook qui est détecté comme modifié et donc régénéré, vos modifications manuelles à ce Notebook seront écrasées par le workflow. Les modifications manuelles apportées à d'autres Notebooks ou fichiers seront conservées jusqu'à ce qu'un conflit de merge se produise. Pour les fichiers non-Notebook qui sont en conflit, le workflow résout automatiquement le conflit en conservant la version de la branche `Students` distante, ce qui signifie que vos modifications manuelles de ces fichiers seront préservées, alors que les modifications de la branche principale seront rejetées.
 
-Le résultat de l'exécution du workflow peut être consulté sur le `README.md` de la branche `Students` qui contient un bref aperçu du processus de conversion&nbsp;:
+Il est donc préférable d'éviter d'éditer manuellement la branche `Students`.
+
+Le résultat de l'exécution du workflow peut être consulté sur le `README.md` de la branche `Students` qui contient un bref aperçu du processus de conversion (y compris les conflits de merge, que ce soit sur les Notebook ou les autres fichiers)&nbsp;:
 ![README de la branche `Students`](https://github.com/user-attachments/assets/bc132feb-5f43-40e7-aa64-962154bc15b1)
 
 Une copie de cette revue apparaît sur la page du workflow dans l'onglet Action de la page web du dépôt GitHub&nbsp;:
