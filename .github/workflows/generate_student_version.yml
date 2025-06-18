@@ -19,7 +19,7 @@ jobs:
     steps:
       - name: Initialize summary file
         run: |
-          SUMMARY_FILE="${{ runner.temp }}/summary.md"
+          SUMMARY_FILE="${{ runner.temp }}/README.md"
           echo "SUMMARY_FILE=$SUMMARY_FILE" >> $GITHUB_ENV
           mkdir -p "$(dirname "$SUMMARY_FILE")"
           rm -f "$SUMMARY_FILE"
@@ -324,7 +324,6 @@ jobs:
         run: |
           cat $SUMMARY_FILE >> $GITHUB_STEP_SUMMARY
           cp -a $SUMMARY_FILE README.md
-          git add README.md
 
       - name: Commit and push
         run: |
