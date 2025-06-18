@@ -42,10 +42,10 @@ along with nbworkshop. If not, see <https://www.gnu.org/licenses/>.
 
 ## Presentation
 
-_nbworkshop_ is a streamlined tool designed for educators who use Jupyter Notebooks to tech Python and need to efficiently prepare and distribute exercise Notebooks with hidden solutions or instructor-only comments:
+_nbworkshop_ is a streamlined tool designed for educators who use Jupyter Notebooks to teach Python and need to efficiently prepare and distribute exercise Notebooks with hidden solutions or instructor-only comments:
 ![Simple nbworkshop example](https://github.com/user-attachments/assets/be557bda-6294-432e-8739-4d19538a341e)
 
-Unlike more comprehensive systems such as _nbgrader_, _nbworkshop_ prioritizes simplicity and flexibility, allowing teachers to mark specific parts of any cell-whether code or markdown-for removal in student versions, without imposing a rigid file structure or complex workflow. An archive (ZIP) containing these student versions, along with any necessary attachments, can also be created. This makes it easy to distribute up-to-date materials to students while keeping instructor content private and organized.
+Unlike more comprehensive systems such as _nbgrader_, _nbworkshop_ prioritizes simplicity and flexibility, allowing teachers to mark specific parts of any cell-whether code or markdown-focr removal in student versions, without imposing a rigid file structure or complex workflow. An archive (ZIP) containing these student versions, along with any necessary attachments, can also be created. This makes it easy to distribute up-to-date materials to students while keeping instructor content private and organized.
 
 For users working with GitHub, _nbworkshop_ also provides a workflow that monitors specific directories and, whenever a Notebook within these monitored directories is updated on the `main` branch, automatically generates Student versions of those Notebooks that is stored on a specific branch. If ZIP archives are to be created, they are stored in the same branch. Note that this workflow can be easily adapted to GitLab or BitBucket using their respective CD/CI tools.
 
