@@ -20,6 +20,7 @@ jobs:
     steps:
       - name: Initialize summary file
         run: |
+          echo "=== [DEBUG] Initializing summary file at $SUMMARY_FILE ==="
           rm -f "$SUMMARY_FILE"
           mkdir -p "$(dirname "$SUMMARY_FILE")"
 
@@ -30,6 +31,7 @@ jobs:
 
       - name: Validate JSON config file syntax
         run: |
+          echo "=== [DEBUG] Validating JSON config file syntax ==="
           if ! jq empty "$CONFIG_PATH" 2>/tmp/json_error; then
             printf "## ❌ Error in JSON configuration file\n" >> $SUMMARY_FILE
             printf "Please fix $CONFIG_PATH error:\n" >> $SUMMARY_FILE
@@ -39,6 +41,7 @@ jobs:
 
       - name: Validate JSON config file against config schema
         run: |
+          echo "=== [DEBUG] Validating JSON config file against schema ==="
           cat > /tmp/schema.json << 'EOF'
           {
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -73,7 +76,6 @@ jobs:
             }
           }
           EOF
-
           npm install -g @jirutka/ajv-cli
           if ! ajv validate -s /tmp/schema.json "$CONFIG_PATH" --strict=true --all-errors > /tmp/json_error 2>&1 ; then
             printf "## ❌ Error in JSON configuration file\n" >> $SUMMARY_FILE
@@ -83,9 +85,11 @@ jobs:
 
       - name: Check monitored directories existence
         run: |
+          echo "=== [DEBUG] Checking existence of monitored directories ==="
           EXIT_WITH_ERROR=false
           ERROR_HEADER_CREATED=false
           while IFS= read -r dir; do
+            echo "[DEBUG] Checking directory: $dir"
             if [ ! -d "$dir" ]; then
               if [ "$ERROR_HEADER_CREATED" = false ]; then
                 printf "## ❌ Error: Missing notebook directories\n" >> $SUMMARY_FILE
@@ -103,12 +107,15 @@ jobs:
 
       - name: Store pre and post-processing command for future execution
         run: |
+          echo "=== [DEBUG] Storing pre/post-processing commands ==="
           echo "PRE_PROCESSING=$(jq -r '.pre_processing // empty' "$CONFIG_PATH")" >> $GITHUB_ENV
           echo "POST_PROCESSING=$(jq -r '.post_processing // empty' "$CONFIG_PATH")" >> $GITHUB_ENV
 
       - name: Check pre/post-processing commands syntax
         run: |
+          echo "=== [DEBUG] Checking pre/post-processing command syntax ==="
           if [ -n "$PRE_PROCESSING" ]; then
+            echo "[DEBUG] PRE_PROCESSING command: $PRE_PROCESSING"
             ERROR_OUTPUT=$(echo "$PRE_PROCESSING" | bash -n 2>&1) || {
               printf "## ❌ Error: Pre-processing command syntax error\n" >> $SUMMARY_FILE
               printf "Please fix your pre-processing command syntax:\n" >> $SUMMARY_FILE
@@ -123,6 +130,7 @@ jobs:
             }
           fi
           if [ -n "$POST_PROCESSING" ]; then
+            echo "[DEBUG] POST_PROCESSING command: $POST_PROCESSING"
             ERROR_OUTPUT=$(echo "$POST_PROCESSING" | bash -n 2>&1) || {
               printf "## ❌ Error: Post-processing command syntax error\n" >> $SUMMARY_FILE
               printf "Please fix your post-processing command syntax:\n" >> $SUMMARY_FILE
@@ -148,37 +156,43 @@ jobs:
           enable-cache: true
           cache-dependency-glob: ".github/scripts/student_version.py"
 
-      # Step 1 : Extract rebuild_all option
       - name: Extract rebuild_all option
         id: config
         run: |
+          echo "=== [DEBUG] Extracting rebuild_all option from config ==="
           REBUILD_ALL=$(jq -r '.rebuild_all // empty' "$CONFIG_PATH")
+          echo "[DEBUG] REBUILD_ALL value: $REBUILD_ALL"
           if [ "$REBUILD_ALL" = "true" ]; then
             echo "rebuild_all=true" >> $GITHUB_OUTPUT
           else
             echo "rebuild_all=false" >> $GITHUB_OUTPUT
           fi
 
-      # Step 2 : Manage Students branch (full rebuild or selective)
-      - name: Manage Students branch
+      - name: Manage Students branch (full rebuild or selective)
         run: |
+          echo "=== [DEBUG] Managing Students branch ==="
           if [ "${{ steps.config.outputs.rebuild_all }}" = "true" ]; then
+            echo "[DEBUG] Full rebuild: deleting and recreating Students branch"
             git fetch origin
             git checkout main
             git branch -D Students 2>/dev/null || true
             git checkout -b Students
           else
+            echo "[DEBUG] Selective mode: merging Students branch"
             git fetch origin Students
             git checkout -B Students main
             git merge origin/Students || true
           fi
 
-      # Step 3 : Execute pre-processing command
       - name: Execute pre-processing command
         run: |
+          echo "=== [DEBUG] Executing pre-processing command ==="
           if [ -n "$PRE_PROCESSING" ]; then
+            echo "[DEBUG] Running: $PRE_PROCESSING"
             OUTPUT=$(bash -c "$PRE_PROCESSING" 2>&1)
             EXIT_CODE=$?
+            echo "[DEBUG] PRE_PROCESSING exit code: $EXIT_CODE"
+            echo "[DEBUG] PRE_PROCESSING output: $OUTPUT"
             if [ $EXIT_CODE -eq 0 ]; then
               printf "## Pre-processing executed successfully ✅\n" >> $SUMMARY_FILE
               if [ -n "$OUTPUT" ]; then
@@ -199,27 +213,34 @@ jobs:
             fi
           fi
 
-      # Step 4 : Detect notebooks to process (changed or all)
-      - name: Detect notebooks to process
+      - name: Detect notebooks to process (changed or all)
         id: notebooks
         run: |
+          echo "=== [DEBUG] Detecting notebooks to process ==="
           REBUILD_ALL="${{ steps.config.outputs.rebuild_all }}"
           mapfile -t notebooks_dirs < <(jq -r '.notebooks_dir[]' "$CONFIG_PATH")
+          echo "[DEBUG] Monitored directories: ${notebooks_dirs[*]}"
           NOTEBOOKS_LIST="notebooks_to_process.txt"
           > $NOTEBOOKS_LIST
 
           if [ "$REBUILD_ALL" = "true" ]; then
+            echo "[DEBUG] Full rebuild: finding all notebooks"
             for dir in "${notebooks_dirs[@]}"; do
+              echo "[DEBUG] Searching in $dir"
               find "$dir" -type f -name "*.ipynb"
             done | sort -u > $NOTEBOOKS_LIST
           else
             BASE_SHA="${{ github.event.before }}"
             HEAD_SHA="${{ github.sha }}"
+            echo "[DEBUG] BASE_SHA: $BASE_SHA"
+            echo "[DEBUG] HEAD_SHA: $HEAD_SHA"
             git diff --name-only --diff-filter=ACMRT "$BASE_SHA" "$HEAD_SHA" > changed_files.txt
+            echo "[DEBUG] Changed files:"
+            cat changed_files.txt
             while IFS= read -r f; do
               for d in "${notebooks_dirs[@]}"; do
-                # Vérifie si le fichier est dans le dossier monitoré ou un sous-dossier
                 if [[ "$f" == "$d" || "$f" == "$d/"* ]] && [[ "$f" == *.ipynb ]]; then
+                  echo "[DEBUG] Notebook to process: $f"
                   echo "$f" >> $NOTEBOOKS_LIST
                   break
                 fi
@@ -228,11 +249,13 @@ jobs:
             sort -u $NOTEBOOKS_LIST -o $NOTEBOOKS_LIST
           fi
 
+          echo "[DEBUG] Final notebooks to process:"
+          cat $NOTEBOOKS_LIST
           echo "notebooks_list=$NOTEBOOKS_LIST" >> $GITHUB_OUTPUT
 
-      # Step 5 : Convert notebooks and handle conflicts
       - name: Convert notebooks and handle conflicts
         run: |
+          echo "=== [DEBUG] Converting notebooks and handling conflicts ==="
           printf "## Notebooks processed\n" >> $SUMMARY_FILE
           printf "| Notebook | Questions | Code Blocks | ZIP | ⚠️ |\n" >> $SUMMARY_FILE
           printf "|----------|-----------|-------------|-----|----|\n" >> $SUMMARY_FILE
@@ -244,12 +267,15 @@ jobs:
 
           while IFS= read -r nb; do
             [ -z "$nb" ] && continue
+            echo "[DEBUG] Processing notebook: $nb"
             SUMMARY_LINE=$(uv run .github/scripts/student_version.py "$nb" --config "$CONFIG_PATH" --hide-header)
+            echo "[DEBUG] Conversion output: $SUMMARY_LINE"
             rm "$nb"
 
             CONFLICT_MARK=""
             if [ "$REBUILD_ALL" = "false" ]; then
               if git ls-files -u -- "$nb" | grep -q .; then
+                echo "[DEBUG] Conflict detected for $nb"
                 git checkout --ours -- "$nb"
                 git add "$nb"
                 echo "$nb" >> notebooks_with_conflicts.txt
@@ -265,7 +291,9 @@ jobs:
           done < "$NOTEBOOKS_LIST"
 
           if [ "$REBUILD_ALL" = "false" ]; then
+            echo "[DEBUG] Checking for other files in conflict"
             git ls-files -u | awk '{print $4}' | grep -v '\.ipynb$' | sort -u | while read -r file; do
+              echo "[DEBUG] Conflict detected for other file: $file"
               git checkout --theirs -- "$file"
               git add "$file"
               echo "$file" >> other_files_with_conflicts.txt
@@ -277,12 +305,15 @@ jobs:
             cat other_files_with_conflicts.txt >> $SUMMARY_FILE
           fi
 
-      # Step 6 : Execute post-processing command
       - name: Execute post-processing command
         run: |
+          echo "=== [DEBUG] Executing post-processing command ==="
           if [ -n "$POST_PROCESSING" ]; then
+            echo "[DEBUG] Running: $POST_PROCESSING"
             OUTPUT=$(bash -c "$POST_PROCESSING" 2>&1)
             EXIT_CODE=$?
+            echo "[DEBUG] POST_PROCESSING exit code: $EXIT_CODE"
+            echo "[DEBUG] POST_PROCESSING output: $OUTPUT"
             if [ $EXIT_CODE -eq 0 ]; then
               printf "## Post-processing executed successfully ✅\n" >> $SUMMARY_FILE
               if [ -n "$OUTPUT" ]; then
@@ -305,11 +336,13 @@ jobs:
 
       - name: manage summary
         run: |
+          echo "=== [DEBUG] Copying summary file and updating GitHub summary ==="
           cp -a $SUMMARY_FILE .
           cat README.md >> $GITHUB_STEP_SUMMARY
 
       - name: Commit and push
         run: |
+          echo "=== [DEBUG] Committing and pushing changes to Students branch ==="
           git add .
           git commit -m "Update student materials: $(date +'%Y-%m-%d %H:%M:%S')" || printf "No changes\n"
           git push origin Students --force
