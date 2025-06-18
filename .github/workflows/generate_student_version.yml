@@ -229,7 +229,8 @@ jobs:
               printf "DEBUG: Fichier changé : '$f'\n"
               for d in "${notebooks_dirs[@]}"; do
                 printf "DEBUG: Test dossier '$d' pour fichier '$f'\n"
-                if [[ "$f" == "$d" || "$f" == "$d/"* ]] && [[ "$f" == *.ipynb ]]; then
+                d="${d%/}"
+                if { [[ "$f" == "$d" ]] || [[ "$f" == "$d/"* ]]; } && [[ "$f" == *.ipynb ]];  then
                   printf "DEBUG: Ajout notebook détecté : '$f'\n"
                   echo "$f" >> $NOTEBOOKS_LIST
                   break
