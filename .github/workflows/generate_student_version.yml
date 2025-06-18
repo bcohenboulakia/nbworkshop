@@ -322,8 +322,8 @@ jobs:
 
       - name: manage summary
         run: |
-          cp -a $SUMMARY_FILE .
-          cat README.md >> $GITHUB_STEP_SUMMARY
+          cat $SUMMARY_FILE >> $GITHUB_STEP_SUMMARY
+          cp -a $SUMMARY_FILE README.md
 
       - name: Commit and push
         run: |
