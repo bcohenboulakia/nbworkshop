@@ -1,3 +1,17 @@
+# This file is part of nbworkshop.
+# 
+# nbworkshop is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as published by
+# the Free Software Foundation.
+# 
+# nbworkshop is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with nbworkshop. If not, see <https://www.gnu.org/licenses/>.
+
 name: Generate Students Notebooks branch
 
 on:
@@ -5,10 +19,12 @@ on:
     branches: [main]
     paths: ['**.ipynb']
   workflow_dispatch:
-
+  
 permissions:
   contents: write
-  actions: write
+  actions: write # Permission to trigger other workflows. Not used by the workflow,
+                 # but could useful if the user defined post-processing command must
+                 # run another workflow
 
 jobs:
   process:
@@ -16,20 +32,20 @@ jobs:
     env:
       CONFIG_PATH: .github/conversion.json
       SUMMARY_FILE: /tmp/README.md
-
+    
     steps:
       - name: Initialize summary file
         run: |
+          # Prepare README.md to be commited on Students branch
           rm -f "$SUMMARY_FILE"
           mkdir -p "$(dirname "$SUMMARY_FILE")"
-
+          
       - name: Checkout repo
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
+        
       - name: Validate JSON config file syntax
         run: |
+          # Check basic JSON syntax
           if ! jq empty "$CONFIG_PATH" 2>/tmp/json_error; then
             printf "## ❌ Error in JSON configuration file\n" >> $SUMMARY_FILE
             printf "Please fix $CONFIG_PATH error:\n" >> $SUMMARY_FILE
@@ -37,115 +53,92 @@ jobs:
             exit 1
           fi
 
-      - name: Validate JSON config file against syntax and config schema
+      - name: Validate JSON config file against config schema
         run: |
-          # basic synthax checking
-          if ! jq empty "$CONFIG_PATH" >/dev/null 2>&1; then
+          cat > /tmp/schema.json << 'EOF'
+          {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "required": ["solution_marker", "placeholder", "generate_zip", "notebooks_dir", "student_postfix", "tutor_postfix"],
+            "properties": {
+              "solution_marker": {
+                "type": "object",
+                "required": ["code", "markdown"],
+                "properties": {
+                  "code": {"type": "string"},
+                  "markdown": {"type": "string"}
+                },
+                "additionalProperties": false
+              },
+              "placeholder": {
+                "type": "object",
+                "required": ["code", "markdown"],
+                "properties": {
+                  "code": {"type": "string"},
+                  "markdown": {"type": "string"}
+                },
+                "additionalProperties": false
+              },
+              "generate_zip": {"type": "boolean"},
+              "notebooks_dir": {"type": "array", "items": {"type": "string"}},
+              "pre_processing": {"type": "string"},
+              "post_processing": {"type": "string"},
+              "tutor_postfix": {"type": "string"},
+              "student_postfix": {"type": "string"}
+            }
+          }
+          EOF
+        
+          # Check against configuration schema 
+          npm install -g @jirutka/ajv-cli
+          if ! ajv validate -s /tmp/schema.json "$CONFIG_PATH" --strict=true --all-errors > /tmp/json_error 2>&1 ; then
             printf "## ❌ Error in JSON configuration file\n" >> $SUMMARY_FILE
-            printf "Please fix $CONFIG_PATH error:\n" >> $SUMMARY_FILE
-            jq empty "$CONFIG_PATH" 2>&1 | sed 's/^jq: //' >> $SUMMARY_FILE
+            cat /tmp/json_error | sed 's/^ajv: //' >> $SUMMARY_FILE
             exit 1
           fi
 
-          # minimal instal of ajv
-          npm install ajv@8
-
-          # validation against config schema
-          node - <<EOF
-          const fs = require('fs');
-          const Ajv = require('ajv').default;
-          
-          const schema = {
-            type: 'object',
-            required: [
-              'solution_marker', 
-              'placeholder', 
-              'generate_zip', 
-              'notebooks_dir', 
-              'student_postfix', 
-              'tutor_postfix'
-            ],
-            properties: {
-              solution_marker: {
-                type: 'object',
-                required: ['code', 'markdown'],
-                properties: {
-                  code: {type: 'string'},
-                  markdown: {type: 'string'}
-                },
-                additionalProperties: false
-              },
-              placeholder: {
-                type: 'object',
-                required: ['code', 'markdown'],
-                properties: {
-                  code: {type: 'string'},
-                  markdown: {type: 'string'}
-                },
-                additionalProperties: false
-              },
-              generate_zip: {type: 'boolean'},
-              notebooks_dir: {
-                type: 'array',
-                items: {type: 'string'},
-                minItems: 1
-              },
-              pre_processing: {type: 'string'},
-              post_processing: {type: 'string'},
-              tutor_postfix: {type: 'string'},
-              student_postfix: {type: 'string'},
-              rebuild_all: {type: 'boolean'}
-            }
-          };
-          
-          try {
-            const config = JSON.parse(fs.readFileSync('$CONFIG_PATH'));
-            const ajv = new Ajv({allErrors: true, strict: true});
-            const validate = ajv.compile(schema);
-            
-            if (!validate(config)) {
-              console.error('## ❌ Error in JSON configuration file');
-              console.error('Config validation failed:');
-              validate.errors.forEach(err => {
-                console.error(`  ${err.instancePath} ${err.message}`);
-              });
-              process.exit(1);
-            }
-          } catch (error) {
-            console.error('::error::' + error.message);
-            process.exit(1);
-          }
-          EOF
-
       - name: Check monitored directories existence
         run: |
+          # Initialize error flag
           EXIT_WITH_ERROR=false
           ERROR_HEADER_CREATED=false
+          
+          # Read directories from config file and check existence
           while IFS= read -r dir; do
             if [ ! -d "$dir" ]; then
+              # First error needs to create the header
               if [ "$ERROR_HEADER_CREATED" = false ]; then
                 printf "## ❌ Error: Missing notebook directories\n" >> $SUMMARY_FILE
                 printf "The following directories specified in $CONFIG_PATH don't exist:\n" >> $SUMMARY_FILE
                 ERROR_HEADER_CREATED=true
               fi
+              
+              # List the missing directory in the error message
               printf -- "* \`\`\`%s\`\`\`\n" "$dir" >> $SUMMARY_FILE
               EXIT_WITH_ERROR=true
             fi
           done < <(jq -r '.notebooks_dir[]' "$CONFIG_PATH")
+          
+          # If error found, close the code block and exit with error
           if [ "$EXIT_WITH_ERROR" = true ]; then
             printf "\nPlease create these directories or update the configuration file.\n" >> $SUMMARY_FILE
             exit 1
           fi
-
+          
+      # Retrieve the pre and post-process command from the config file. This must be done
+      # at the beginning of the workflow specifically for the post-processing command, because
+      # the Students branch is cleaned after notebook generation, which also makes conversion.json unavailable
       - name: Store pre and post-processing command for future execution
         run: |
           echo "PRE_PROCESSING=$(jq -r '.pre_processing // empty' "$CONFIG_PATH")" >> $GITHUB_ENV
           echo "POST_PROCESSING=$(jq -r '.post_processing // empty' "$CONFIG_PATH")" >> $GITHUB_ENV
-
+          
       - name: Check pre/post-processing commands syntax
         run: |
+          # Verify pre-processing command syntax if defined
           if [ -n "$PRE_PROCESSING" ]; then
             ERROR_OUTPUT=$(echo "$PRE_PROCESSING" | bash -n 2>&1) || {
+              # Syntax error found
               printf "## ❌ Error: Pre-processing command syntax error\n" >> $SUMMARY_FILE
               printf "Please fix your pre-processing command syntax:\n" >> $SUMMARY_FILE
               printf "\`\`\`\n" >> $SUMMARY_FILE
@@ -158,8 +151,11 @@ jobs:
               exit 1
             }
           fi
+          
+          # Verify post-processing command syntax if defined
           if [ -n "$POST_PROCESSING" ]; then
             ERROR_OUTPUT=$(echo "$POST_PROCESSING" | bash -n 2>&1) || {
+              # Syntax error found
               printf "## ❌ Error: Post-processing command syntax error\n" >> $SUMMARY_FILE
               printf "Please fix your post-processing command syntax:\n" >> $SUMMARY_FILE
               printf "\`\`\`\n" >> $SUMMARY_FILE
@@ -178,189 +174,113 @@ jobs:
         with:
           python-version: '3.12'
 
+      # Uses uv in order to extract dependencies and leverage cache
+      # between workflow executions (following PEP 723)
       - name: Setup uv
         uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
           cache-dependency-glob: ".github/scripts/student_version.py"
 
-      # Step 1 : Extract rebuild_all option
-      - name: Extract rebuild_all option
-        id: config
-        run: |
-          REBUILD_ALL=$(jq -r '.rebuild_all // empty' "$CONFIG_PATH")
-          if [ "$REBUILD_ALL" = "true" ]; then
-            echo "rebuild_all=true" >> $GITHUB_OUTPUT
-          else
-            echo "rebuild_all=false" >> $GITHUB_OUTPUT
-          fi
-
-      # Step 2 : Manage Students branch (full rebuild or selective)
-      - name: Manage Students branch
-        run: |
-          if [ "${{ steps.config.outputs.rebuild_all }}" = "true" ]; then
-            git fetch origin
-            git checkout main
-            git branch -D Students 2>/dev/null || true
-            git checkout -b Students
-          else
-            git fetch origin Students
-            git checkout -B Students main
-            git merge origin/Students || true
-          fi
-      
-      # Step 3 : Execute pre-processing command
+      # Execution of the pre-processing command, if defined, with summary update
       - name: Execute pre-processing command
         run: |
-          if [ -n "$PRE_PROCESSING" ]; then
-            OUTPUT=$(bash -c "$PRE_PROCESSING" 2>&1)
-            EXIT_CODE=$?
-            if [ $EXIT_CODE -eq 0 ]; then
-              printf "## Pre-processing executed successfully ✅\n" >> $SUMMARY_FILE
-              if [ -n "$OUTPUT" ]; then
-                printf "%s\n" "$OUTPUT" >> $SUMMARY_FILE
+              # Execute the command and capture output (stdout and stderr combined)
+              OUTPUT=$(bash -c "$PRE_PROCESSING" 2>&1)
+              EXIT_CODE=$?
+              
+              if [ $EXIT_CODE -eq 0 ]; then
+                  # Command executed successfully
+                  printf "## Pre-processing executed successfully ✅\n" >> $SUMMARY_FILE
+                  
+                  # Add output if it exists
+                  if [ -n "$OUTPUT" ]; then
+                      printf "%s\n" "$OUTPUT" >> $SUMMARY_FILE
+                  else
+                      printf "\n" >> $SUMMARY_FILE
+                  fi
               else
-                printf "\n" >> $SUMMARY_FILE
+                  # Command failed
+                  printf "## Post-processing failed ❌\n" >> $SUMMARY_FILE
+                  printf "Code de sortie: %d\n" "$EXIT_CODE" >> $SUMMARY_FILE
+                  
+                  # Add output if it exists (will contain both stdout and stderr)
+                  if [ -n "$OUTPUT" ]; then
+                      printf "\n" >> $SUMMARY_FILE
+                      printf "Sortie de commande (incluant les erreurs):\n" >> $SUMMARY_FILE
+                      printf "\`\`\`bash\n" >> $SUMMARY_FILE
+                      printf "%s\n" "$OUTPUT" >> $SUMMARY_FILE
+                      printf "\`\`\`\n" >> $SUMMARY_FILE
+                  fi
               fi
-            else
-              printf "## Pre-processing failed ❌\n" >> $SUMMARY_FILE
-              printf "Exit code: %d\n" "$EXIT_CODE" >> $SUMMARY_FILE
-              if [ -n "$OUTPUT" ]; then
-                printf "\nCommand output (including errors):\n" >> $SUMMARY_FILE
-                printf "\`\`\`bash\n" >> $SUMMARY_FILE
-                printf "%s\n" "$OUTPUT" >> $SUMMARY_FILE
-                printf "\`\`\`\n" >> $SUMMARY_FILE
-              fi
-              exit 1
-            fi
-          fi
 
-      # Step 4 : Detect notebooks to process (changed or all)
-      - name: Detect notebooks to process
-        id: notebooks
+      - name: Recreate Students branch before conversion
         run: |
-          REBUILD_ALL="${{ steps.config.outputs.rebuild_all }}"
-          mapfile -t notebooks_dirs < <(jq -r '.notebooks_dir[]' "$CONFIG_PATH")
-          
-          # Remove trailing slash from directory if present to avoid double slashes in comparisons
-          for i in "${!notebooks_dirs[@]}"; do
-            notebooks_dirs[$i]="${notebooks_dirs[$i]%/}"
-          done
-          
-          NOTEBOOKS_LIST="notebooks_to_process.txt"
-          > $NOTEBOOKS_LIST
-
-          # In case of rebuilding of all notebooks, just parse monitored directories
-          if [ "$REBUILD_ALL" = "true" ]; then
-            for dir in "${notebooks_dirs[@]}"; do
-              find "$dir" -type f -name "*.ipynb"
-            done | sort -u > $NOTEBOOKS_LIST
-          else
-          # In case of rebuilding of only changed notebooks, filter by comparing the current commit (HEAD_SHA)
-          # to the previous commit (BASE_SHA) using git diff
-            printf "DEBUG: Mode rebuild_all=false, détection des notebooks modifiés\n"
-            BASE_SHA="${{ github.event.before }}"
-            HEAD_SHA="${{ github.sha }}"
-            printf "DEBUG: BASE_SHA='$BASE_SHA', HEAD_SHA='$HEAD_SHA'\n"
-            git diff --name-only --diff-filter=ACMRT "$BASE_SHA" "$HEAD_SHA" > changed_files.txt
-            printf "DEBUG: changed_files.txt contenu :\n"
-            cat changed_files.txt
-            while IFS= read -r f; do
-              printf "DEBUG: Fichier changé : '$f'\n"
-              for d in "${notebooks_dirs[@]}"; do
-                d="${d%/}"
-                
-                # Check if the changed file is exactly the monitored directory or inside it, and is a notebook
-                if { [[ "$f" == "$d" ]] || [[ "$f" == "$d/"* ]]; } && [[ "$f" == *.ipynb ]];  then
-                  echo "$f" >> $NOTEBOOKS_LIST
-                  break
-                fi
-              done
-            done < changed_files.txt
-            sort -u $NOTEBOOKS_LIST -o $NOTEBOOKS_LIST
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          if git show-ref --verify --quiet refs/heads/Students; then
+            git branch -D Students
           fi
-      
-          echo "notebooks_list=$NOTEBOOKS_LIST" >> $GITHUB_OUTPUT
-      # Step 5 : Convert notebooks and handle conflicts
-      - name: Convert notebooks and handle conflicts
+          git checkout -b Students
+          
+      # Convert notebooks in place and delete originals
+      - name: Convert notebooks and remove originals
         run: |
           printf "## Notebooks processed\n" >> $SUMMARY_FILE
-          printf "| Notebook | Questions | Code Blocks | ZIP | Merge conflict |\n" >> $SUMMARY_FILE
-          printf "|----------|-----------|-------------|-----|----|\n" >> $SUMMARY_FILE
-
-          REBUILD_ALL="${{ steps.config.outputs.rebuild_all }}"
-          NOTEBOOKS_LIST="${{ steps.notebooks.outputs.notebooks_list }}"
-          > notebooks_with_conflicts.txt
-          > other_files_with_conflicts.txt
-
-          while IFS= read -r nb; do
-            [ -z "$nb" ] && continue
-            SUMMARY_LINE=$(uv run .github/scripts/student_version.py "$nb" --config "$CONFIG_PATH" --hide-header)
-            rm "$nb"
-
-            CONFLICT_MARK=""
-            if [ "$REBUILD_ALL" = "false" ]; then
-              if git ls-files -u -- "$nb" | grep -q .; then
-                git checkout --ours -- "$nb"
-                git add "$nb"
-                echo "$nb" >> notebooks_with_conflicts.txt
-                CONFLICT_MARK="⚠️"
-              else
-                git add "$nb"
-              fi
-            else
-              git add "$nb"
-            fi
-
-            printf "%s | %s\n" "$SUMMARY_LINE" "$CONFLICT_MARK" >> $SUMMARY_FILE
-          done < "$NOTEBOOKS_LIST"
-
-          if [ "$REBUILD_ALL" = "false" ]; then
-            git ls-files -u | awk '{print $4}' | grep -v '\.ipynb$' | sort -u | while read -r file; do
-              git checkout --theirs -- "$file"
-              git add "$file"
-              echo "$file" >> other_files_with_conflicts.txt
+          printf "| Notebook | Questions | Code Blocks | ZIP |\n" >> $SUMMARY_FILE
+          printf "|----------|-----------|-------------|-----|\n" >> $SUMMARY_FILE
+          while IFS= read -r dir; do
+            find "$dir" -type f -name "*.ipynb" | while IFS= read -r nb; do
+              uv run .github/scripts/student_version.py "$nb" \
+                --config "$CONFIG_PATH" \
+                --hide-header >> $SUMMARY_FILE
+              rm "$nb"
             done
-          fi
+          done < <(jq -r '.notebooks_dir[]' "$CONFIG_PATH")
 
-          if [ -s other_files_with_conflicts.txt ]; then
-            echo -e "\n## Other files overwritten due to conflict:\n" >> $SUMMARY_FILE
-            cat other_files_with_conflicts.txt >> $SUMMARY_FILE
-          fi
 
-      # Step 6 : Execute post-processing command
+      # Execution of the post-processing command, if defined, with summary update
       - name: Execute post-processing command
         run: |
           if [ -n "$POST_PROCESSING" ]; then
-            OUTPUT=$(bash -c "$POST_PROCESSING" 2>&1)
-            EXIT_CODE=$?
-            if [ $EXIT_CODE -eq 0 ]; then
-              printf "## Post-processing executed successfully ✅\n" >> $SUMMARY_FILE
-              if [ -n "$OUTPUT" ]; then
-                printf "%s\n" "$OUTPUT" >> $SUMMARY_FILE
+              # Execute the command and capture output (stdout and stderr combined)
+              OUTPUT=$(bash -c "$POST_PROCESSING" 2>&1)
+              EXIT_CODE=$?
+              
+              if [ $EXIT_CODE -eq 0 ]; then
+                  # Command executed successfully
+                  printf "## Post-processing executed successfully ✅\n" >> $SUMMARY_FILE
+                  
+                  # Add output if it exists
+                  if [ -n "$OUTPUT" ]; then
+                      printf "%s\n" "$OUTPUT" >> $SUMMARY_FILE
+                  else
+                      printf "\n" >> $SUMMARY_FILE
+                  fi
               else
-                printf "\n" >> $SUMMARY_FILE
+                  # Command failed
+                  printf "## Post-processing failed ❌\n" >> $SUMMARY_FILE
+                  printf "Code de sortie: %d\n" "$EXIT_CODE" >> $SUMMARY_FILE
+                  
+                  # Add output if it exists (will contain both stdout and stderr)
+                  if [ -n "$OUTPUT" ]; then
+                      printf "\n" >> $SUMMARY_FILE
+                      printf "Sortie de commande (incluant les erreurs):\n" >> $SUMMARY_FILE
+                      printf "\`\`\`bash\n" >> $SUMMARY_FILE
+                      printf "%s\n" "$OUTPUT" >> $SUMMARY_FILE
+                      printf "\`\`\`\n" >> $SUMMARY_FILE
+                  fi
               fi
-            else
-              printf "## Post-processing failed ❌\n" >> $SUMMARY_FILE
-              printf "Exit code: %d\n" "$EXIT_CODE" >> $SUMMARY_FILE
-              if [ -n "$OUTPUT" ]; then
-                printf "\nCommand output (including errors):\n" >> $SUMMARY_FILE
-                printf "\`\`\`bash\n" >> $SUMMARY_FILE
-                printf "%s\n" "$OUTPUT" >> $SUMMARY_FILE
-                printf "\`\`\`\n" >> $SUMMARY_FILE
-              fi
-              exit 1
-            fi
           fi
 
       - name: manage summary
         run: |
           cp -a $SUMMARY_FILE .
-          cat README.md >> $GITHUB_STEP_SUMMARY
-
+          cat README.md >> $GITHUB_STEP_SUMMARY      
+      # The Students branch update is overwritten with the new content
       - name: Commit and push
         run: |
           git add .
           git commit -m "Update student materials: $(date +'%Y-%m-%d %H:%M:%S')" || printf "No changes\n"
           git push origin Students --force
+    
