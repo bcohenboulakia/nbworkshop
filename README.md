@@ -258,11 +258,13 @@ Every solution marker in processed Notebooks is replaced by the corresponding pl
 
 ## GitHub workflow
 
-The conversion can be automated by a GitHub Actions workflow called `Generate `Students` Notebooks branch` which calls the conversion script on every update of a Notebook in a monitored directory. Note that the GitHub workflow uses `.github/conversion.json` as configuration file (including for calling the conversion script), and provides detailed error log in case this file is invalid (or missing). The workflow's behavior depends on the value of the `rebuild_all` parameter:
+The conversion can be automated by a GitHub Actions workflow called `Generate Students Notebooks branch` which calls the conversion script on every update of a Notebook in a monitored directory. Note that the GitHub workflow uses `.github/conversion.json` as configuration file (including for calling the conversion script), and provides detailed error log in case this file is invalid (or missing). The workflow's behavior depends on the value of the `rebuild_all` parameter:
 * If set to `true`, the workflow wipes out the existing `Students`branch and recreates it from the latest state of the main branch, then runs the conversion script on every Notebook in a monitored directory. If you have manually edited the content of the Students branch, be aware that these manual changes — including Notebooks and other files — will be completely lost, as the branch is fully reset and all content is regenerated from scratch.
 * If set to `false`, the workflow checks out the latest main branch, updates the Students branch, and runs the conversion script on every Notebook that has been modified since the last commit. If you have manually edited  a notebook that is detected as changed and thus regenerated, your manual changes to that notebook will be overwritten by the automated process. Manual changes to other Notebooks or files will remain until a merge conflict occurs. For non-Notebook files that are in conflict, the workflow automatically resolves the conflict by keeping the version from the remote Students branch, meaning your manual changes to those files will be preserved, while changes from the main branch are discarded.
 
 Thus, manually editing the `Students`branch should be avoided.
+
+Depending on the number of Notebooks to be converted, you might consider setting `rebuild_all` to `true` for smaller repositories, allowing simpler handling of merge conflicts, or `false` to handle many Notebooks, allowing a more targeted conversion process.
 
 The result of the workflow execution can be reviewed on the `README.md` of the `Students` branch which contains a short overview of the conversion process (including merge conflicts, whether on Notebooks or other files):
 ![Student branch README](https://github.com/user-attachments/assets/bc132feb-5f43-40e7-aa64-962154bc15b1)
@@ -494,7 +496,7 @@ Texte du WS. Suite du WS.
 ```
 
 ### Cellule entièrement destinée au tuteur
-Il s'agit d'une cellule markdown qui n'apparaît pas du tout dans la version Étudiante. C'est une cellule contenant uniquement un bloc <code>&lt;blockquote&gt;&lt;/blockquote&gt;</code>. La cellule est alors entièrement supprimée lors de la génération de la version étudiante.
+Il s'agit d'une cellule markdown qui n'apparaît pas du tout dans la version étudiante. C'est une cellule contenant uniquement un bloc <code>&lt;blockquote&gt;&lt;/blockquote&gt;</code>. La cellule est alors entièrement supprimée lors de la génération de la version étudiante.
 
 ## Fichier de configuration
 
@@ -558,11 +560,13 @@ Chaque marqueur de solution dans les Notebooks traités est remplacé par l'espa
 
 ## Workflow GitHub
 
-La conversion peut être automatisée par un workflow GitHub Actions appelé `Generate `Students` Notebooks branch` qui appelle le script de conversion à chaque mise à jour d'un Notebook dans un répertoire surveillé. Notez que le workflow GitHub utilise `.github/conversion.json` comme fichier de configuration (y compris pour appeler le script de conversion), et fournit un journal d'erreur détaillé dans le cas où ce fichier est invalide (ou manquant). Le comportement du workflow dépend de la valeur du paramètre `rebuild_all` :
+La conversion peut être automatisée par un workflow GitHub Actions appelé `Generate Students Notebooks branch` qui appelle le script de conversion à chaque mise à jour d'un Notebook dans un répertoire surveillé. Notez que le workflow GitHub utilise `.github/conversion.json` comme fichier de configuration (y compris pour appeler le script de conversion), et fournit un journal d'erreur détaillé dans le cas où ce fichier est invalide (ou manquant). Le comportement du workflow dépend de la valeur du paramètre `rebuild_all` :
 * S'il vaut `true`, le workflow efface la branche `Students` existante et la recrée à partir du dernier état de la branche principale, puis exécute le script de conversion sur chaque Notebook dans un répertoire surveillé. Si vous avez édité manuellement le contenu de la branche `Students`, que ces modifications manuelles - Notebooks et autres fichiers - seront complètement perdues, car la branche est entièrement réinitialisée et tout le contenu est régénéré à partir de zéro.
 * Si la valeur est `false`, le workflow fait un check out de la dernier `main`, met à jour la branche `Students`, et exécute le script de conversion sur chaque Notebook qui a été modifié depuis le dernier commit. Si vous avez édité manuellement un Notebook qui est détecté comme modifié et donc régénéré, vos modifications manuelles à ce Notebook seront écrasées par le workflow. Les modifications manuelles apportées à d'autres Notebooks ou fichiers seront conservées jusqu'à ce qu'un conflit de merge se produise. Pour les fichiers non-Notebook qui sont en conflit, le workflow résout automatiquement le conflit en conservant la version de la branche `Students` distante, ce qui signifie que vos modifications manuelles de ces fichiers seront préservées, alors que les modifications de la branche principale seront rejetées.
 
 Il est donc préférable d'éviter d'éditer manuellement la branche `Students`.
+
+En fonction du nombre de Notebooks à convertir, vous pouvez envisager de mettre `rebuild_all` à `true` pour les petits dépôts, permettant une gestion plus simple des conflits de fusion, ou `false` pour gérer de nombreux Notebooks, permettant un processus de conversion plus ciblé.
 
 Le résultat de l'exécution du workflow peut être consulté sur le `README.md` de la branche `Students` qui contient un bref aperçu du processus de conversion (y compris les conflits de merge, que ce soit sur les Notebook ou les autres fichiers)&nbsp;:
 ![README de la branche `Students`](https://github.com/user-attachments/assets/bc132feb-5f43-40e7-aa64-962154bc15b1)
