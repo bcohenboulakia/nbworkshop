@@ -99,7 +99,7 @@ jobs:
               const lines = [];
               lines.push("## ❌ Error in JSON configuration file");
               lines.push("Config validation failed:");
-              lines.push("```
+              lines.push("```");
               validate.errors.forEach(err => {
                 lines.push(`- ${err.instancePath || '/'} ${err.message}`);
               });
