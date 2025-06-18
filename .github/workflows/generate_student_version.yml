@@ -251,7 +251,7 @@ jobs:
       - name: Convert notebooks and handle conflicts
         run: |
           printf "## Notebooks processed\n" >> $SUMMARY_FILE
-          printf "| Notebook | Questions | Code Blocks | ZIP | merge conflict |\n" >> $SUMMARY_FILE
+          printf "| Notebook | Questions | Code Blocks | ZIP | Merge conflict |\n" >> $SUMMARY_FILE
           printf "|----------|-----------|-------------|-----|----|\n" >> $SUMMARY_FILE
 
           REBUILD_ALL="${{ steps.config.outputs.rebuild_all }}"
@@ -324,6 +324,7 @@ jobs:
         run: |
           cat $SUMMARY_FILE >> $GITHUB_STEP_SUMMARY
           cp -a $SUMMARY_FILE README.md
+          git add README.md
 
       - name: Commit and push
         run: |
