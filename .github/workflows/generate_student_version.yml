@@ -111,7 +111,7 @@ jobs:
             const lines = [];
             lines.push("## ❌ Error in JSON configuration file");
             lines.push("Parsing or validation failed:");
-            lines.push("```
+            lines.push("```");
             lines.push(error.message);
             lines.push("```");
             fs.appendFileSync(summaryFile, lines.join('\n') + '\n');
