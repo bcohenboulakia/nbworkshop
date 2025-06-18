@@ -215,15 +215,15 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           git fetch origin main
-          # If Students branch exists, merge main with "theirs" strategy to always keep main's version in case of conflict
           if git show-ref --verify --quiet refs/heads/Students; then
             git checkout Students
+            git pull origin Students --strategy-option=theirs --allow-unrelated-histories || true
             git merge origin/main --strategy-option=theirs --allow-unrelated-histories || true
           else
-            # If Students branch does not exist, create it from main
             git checkout -b Students origin/main
           fi
           git push origin Students
+
 
       - name: Detect changed notebooks
         id: notebooks_changed
