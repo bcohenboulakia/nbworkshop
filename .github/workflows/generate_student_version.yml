@@ -39,47 +39,83 @@ jobs:
 
       - name: Validate JSON config file against syntax and config schema
         run: |
-          cat > /tmp/schema.json << 'EOF'
-          {
-            "$schema": "http://json-schema.org/draft-07/schema#",
-            "type": "object",
-            "required": ["solution_marker", "placeholder", "generate_zip", "notebooks_dir", "student_postfix", "tutor_postfix"],
-            "properties": {
-              "solution_marker": {
-                "type": "object",
-                "required": ["code", "markdown"],
-                "properties": {
-                  "code": {"type": "string"},
-                  "markdown": {"type": "string"}
-                },
-                "additionalProperties": false
-              },
-              "placeholder": {
-                "type": "object",
-                "required": ["code", "markdown"],
-                "properties": {
-                  "code": {"type": "string"},
-                  "markdown": {"type": "string"}
-                },
-                "additionalProperties": false
-              },
-              "generate_zip": {"type": "boolean"},
-              "notebooks_dir": {"type": "array", "items": {"type": "string"}},
-              "pre_processing": {"type": "string"},
-              "post_processing": {"type": "string"},
-              "tutor_postfix": {"type": "string"},
-              "student_postfix": {"type": "string"},
-              "rebuild_all": {"type": "boolean"}
-            }
-          }
-          EOF
-
-          npm install -g @jirutka/ajv-cli
-          if ! ajv validate -s /tmp/schema.json "$CONFIG_PATH" --strict=true --all-errors > /tmp/json_error 2>&1 ; then
+          # basic synthax checking
+          if ! jq empty "$CONFIG_PATH" >/dev/null 2>&1; then
             printf "## ❌ Error in JSON configuration file\n" >> $SUMMARY_FILE
-            cat /tmp/json_error | sed 's/^ajv: //' >> $SUMMARY_FILE
+            printf "Please fix $CONFIG_PATH error:\n" >> $SUMMARY_FILE
+            jq empty "$CONFIG_PATH" 2>&1 | sed 's/^jq: //' >> $SUMMARY_FILE
             exit 1
           fi
+
+          # minimal instal of ajv
+          npm install ajv@8
+
+          # validation against config schema
+          node - <<EOF
+          const fs = require('fs');
+          const Ajv = require('ajv').default;
+          
+          const schema = {
+            type: 'object',
+            required: [
+              'solution_marker', 
+              'placeholder', 
+              'generate_zip', 
+              'notebooks_dir', 
+              'student_postfix', 
+              'tutor_postfix'
+            ],
+            properties: {
+              solution_marker: {
+                type: 'object',
+                required: ['code', 'markdown'],
+                properties: {
+                  code: {type: 'string'},
+                  markdown: {type: 'string'}
+                },
+                additionalProperties: false
+              },
+              placeholder: {
+                type: 'object',
+                required: ['code', 'markdown'],
+                properties: {
+                  code: {type: 'string'},
+                  markdown: {type: 'string'}
+                },
+                additionalProperties: false
+              },
+              generate_zip: {type: 'boolean'},
+              notebooks_dir: {
+                type: 'array',
+                items: {type: 'string'},
+                minItems: 1
+              },
+              pre_processing: {type: 'string'},
+              post_processing: {type: 'string'},
+              tutor_postfix: {type: 'string'},
+              student_postfix: {type: 'string'},
+              rebuild_all: {type: 'boolean'}
+            }
+          };
+          
+          try {
+            const config = JSON.parse(fs.readFileSync('$CONFIG_PATH'));
+            const ajv = new Ajv({allErrors: true, strict: true});
+            const validate = ajv.compile(schema);
+            
+            if (!validate(config)) {
+              console.error('## ❌ Error in JSON configuration file');
+              console.error('Config validation failed:');
+              validate.errors.forEach(err => {
+                console.error(`  ${err.instancePath} ${err.message}`);
+              });
+              process.exit(1);
+            }
+          } catch (error) {
+            console.error('::error::' + error.message);
+            process.exit(1);
+          }
+          EOF
 
       - name: Check monitored directories existence
         run: |
@@ -172,7 +208,7 @@ jobs:
             git checkout -B Students main
             git merge origin/Students || true
           fi
-
+      
       # Step 3 : Execute pre-processing command
       - name: Execute pre-processing command
         run: |
