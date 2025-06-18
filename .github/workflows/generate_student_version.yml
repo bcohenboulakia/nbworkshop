@@ -205,19 +205,23 @@ jobs:
         run: |
           REBUILD_ALL="${{ steps.config.outputs.rebuild_all }}"
           mapfile -t notebooks_dirs < <(jq -r '.notebooks_dir[]' "$CONFIG_PATH")
+          
+          # Remove trailing slash from directory if present to avoid double slashes in comparisons
+          for i in "${!notebooks_dirs[@]}"; do
+            notebooks_dirs[$i]="${notebooks_dirs[$i]%/}"
+          done
+          
           NOTEBOOKS_LIST="notebooks_to_process.txt"
           > $NOTEBOOKS_LIST
-      
-          printf "DEBUG: REBUILD_ALL='$REBUILD_ALL'\n"
-          printf "DEBUG: notebooks_dirs='%s'\n" "${notebooks_dirs[@]}"
-          printf "DEBUG: NOTEBOOKS_LIST='$NOTEBOOKS_LIST'\n"
-      
+
+          # In case of rebuilding of all notebooks, just parse monitored directories
           if [ "$REBUILD_ALL" = "true" ]; then
-            printf "DEBUG: Mode rebuild_all=true, recherche de tous les notebooks\n"
             for dir in "${notebooks_dirs[@]}"; do
               find "$dir" -type f -name "*.ipynb"
             done | sort -u > $NOTEBOOKS_LIST
           else
+          # In case of rebuilding of only changed notebooks, filter by comparing the current commit (HEAD_SHA)
+          # to the previous commit (BASE_SHA) using git diff
             printf "DEBUG: Mode rebuild_all=false, détection des notebooks modifiés\n"
             BASE_SHA="${{ github.event.before }}"
             HEAD_SHA="${{ github.sha }}"
@@ -228,10 +232,10 @@ jobs:
             while IFS= read -r f; do
               printf "DEBUG: Fichier changé : '$f'\n"
               for d in "${notebooks_dirs[@]}"; do
-                printf "DEBUG: Test dossier '$d' pour fichier '$f'\n"
                 d="${d%/}"
+                
+                # Check if the changed file is exactly the monitored directory or inside it, and is a notebook
                 if { [[ "$f" == "$d" ]] || [[ "$f" == "$d/"* ]]; } && [[ "$f" == *.ipynb ]];  then
-                  printf "DEBUG: Ajout notebook détecté : '$f'\n"
                   echo "$f" >> $NOTEBOOKS_LIST
                   break
                 fi
@@ -240,15 +244,12 @@ jobs:
             sort -u $NOTEBOOKS_LIST -o $NOTEBOOKS_LIST
           fi
       
-          printf "DEBUG: Contenu final de $NOTEBOOKS_LIST :\n"
-          cat $NOTEBOOKS_LIST
-      
           echo "notebooks_list=$NOTEBOOKS_LIST" >> $GITHUB_OUTPUT
       # Step 5 : Convert notebooks and handle conflicts
       - name: Convert notebooks and handle conflicts
         run: |
           printf "## Notebooks processed\n" >> $SUMMARY_FILE
-          printf "| Notebook | Questions | Code Blocks | ZIP | ⚠️ |\n" >> $SUMMARY_FILE
+          printf "| Notebook | Questions | Code Blocks | ZIP | merge conflict |\n" >> $SUMMARY_FILE
           printf "|----------|-----------|-------------|-----|----|\n" >> $SUMMARY_FILE
 
           REBUILD_ALL="${{ steps.config.outputs.rebuild_all }}"
