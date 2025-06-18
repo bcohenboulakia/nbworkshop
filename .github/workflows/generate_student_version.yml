@@ -217,12 +217,14 @@ jobs:
           git fetch origin main
           if git show-ref --verify --quiet refs/heads/Students; then
             git checkout Students
+            # Intègre les changements distants de Students (résout les conflits en faveur de main)
             git pull origin Students --strategy-option=theirs --allow-unrelated-histories || true
             git merge origin/main --strategy-option=theirs --allow-unrelated-histories || true
           else
             git checkout -b Students origin/main
           fi
           git push origin Students
+          
 
 
       - name: Detect changed notebooks
