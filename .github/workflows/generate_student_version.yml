@@ -246,15 +246,16 @@ jobs:
         run: |
           echo "[DEBUG] Notebooks à convertir :"
           echo "${{ steps.notebooks_changed.outputs.notebooks }}"
-          IFS=$'\n'
-          for nb in ${{ steps.notebooks_changed.outputs.notebooks }}; do
+          echo "${{ steps.notebooks_changed.outputs.notebooks }}" | while IFS= read -r nb || [ -n "$nb" ]; do
+            # Ignore les lignes vides
+            if [ -z "$nb" ]; then continue; fi
             echo "[DEBUG] Conversion du notebook : '$nb'"
             uv run .github/scripts/student_version.py "$nb" \
               --config "$CONFIG_PATH" \
               --hide-header >> $SUMMARY_FILE
             git add "$nb"
           done
-
+      
       
       - name: Execute post-processing command
         run: |
