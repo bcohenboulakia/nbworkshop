@@ -244,7 +244,8 @@ jobs:
       - name: Convert changed notebooks
         if: steps.notebooks_changed.outputs.notebooks != ''
         run: |
-          echo "[DEBUG] Notebooks à convertir : ${{ steps.notebooks_changed.outputs.notebooks }}"
+          echo "[DEBUG] Notebooks à convertir :"
+          echo "${{ steps.notebooks_changed.outputs.notebooks }}"
           IFS=$'\n'
           for nb in ${{ steps.notebooks_changed.outputs.notebooks }}; do
             echo "[DEBUG] Conversion du notebook : '$nb'"
@@ -253,6 +254,7 @@ jobs:
               --hide-header >> $SUMMARY_FILE
             git add "$nb"
           done
+
       
       - name: Execute post-processing command
         run: |
