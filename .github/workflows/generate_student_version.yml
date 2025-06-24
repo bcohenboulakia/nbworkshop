@@ -227,41 +227,30 @@ jobs:
           git merge origin/main --strategy-option=theirs --allow-unrelated-histories || true
           git push origin Students --force
           
-      - name: Debug HEAD vs origin/main
-        run: |
-          git log --oneline --graph --decorate --all | head -30 || true
-          echo "HEAD is at:"
-          git rev-parse HEAD
-          echo "origin/main is at:"
-          git rev-parse origin/main
-          echo "Files in Examples/notebooks:"
-          ls -l Examples/notebooks
-            
+          
       - name: Detect changed notebooks
         id: notebooks_changed
         shell: bash
         run: |
           git fetch origin main
       
-          # Récupère les dossiers monitorés depuis la config
+          # Récupère la liste des dossiers monitorés depuis la config JSON
           DIRS=$(jq -r '.notebooks_dir[]' "$CONFIG_PATH")
       
-          # Construit dynamiquement la liste des pathspecs pour git diff
+          # Construit dynamiquement les pathspecs pour git diff
           PATHS=()
           for dir in $DIRS; do
             dir=$(echo "$dir" | sed 's:/*$::')  # Enlève le slash final éventuel
             PATHS+=("$dir/**/*.ipynb")
           done
       
-          # Debug : affiche les pathspecs utilisés
           echo "[DEBUG] Pathspecs utilisés pour git diff :"
           printf '%s\n' "${PATHS[@]}"
       
-          # Récupère les notebooks modifiés dans ces dossiers
+          # Récupère les notebooks modifiés ou créés sur main par rapport à Students (merge fait avant)
           CHANGED=$(git diff --name-only origin/main...HEAD -- "${PATHS[@]}" || true)
-      
           # Nettoie la liste (enlève les espaces/lignes vides)
-          CHANGED=$(echo "$CHANGED" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | grep -v '^$')
+          CHANGED=$(echo "$CHANGED" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | grep -v '^$' || true)
       
           echo "[DEBUG] Notebooks modifiés détectés :"
           echo "$CHANGED"
@@ -270,6 +259,8 @@ jobs:
           echo "notebooks<<EOF" >> $GITHUB_OUTPUT
           echo "$CHANGED" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
+      
+          exit 0
       
 
       - name: Convert changed notebooks
