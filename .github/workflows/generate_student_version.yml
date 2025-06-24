@@ -227,7 +227,7 @@ jobs:
           git merge origin/main --strategy-option=theirs --allow-unrelated-histories || true
           git push origin Students --force
           
-      - name: Detect changed notebooks
+      - name: Detect notebooks changed on main vs Students
         id: notebooks_changed
         shell: bash
         run: |
@@ -235,15 +235,15 @@ jobs:
       
           CONFIG_PATH=".github/conversion.json"
       
-          echo "[DEBUG] HEAD is at $(git rev-parse HEAD)"
+          echo "[DEBUG] HEAD (Students) is at $(git rev-parse HEAD)"
           echo "[DEBUG] origin/main is at $(git rev-parse origin/main)"
-          BASE=$(git merge-base origin/main HEAD)
-          echo "[DEBUG] merge-base between origin/main and HEAD is $BASE ($(git log -1 --oneline $BASE))"
       
+          # Obtenir les dossiers de notebooks
           DIRS=$(jq -r '.notebooks_dir[]' "$CONFIG_PATH")
-          echo "[DEBUG] Dossiers monitorés détectés par jq :"
+          echo "[DEBUG] Dossiers monitorés :"
           echo "$DIRS"
       
+          # Construire le pattern regex pour grep
           PATTERNS=""
           for dir in $DIRS; do
             dir=$(echo "$dir" | sed 's:/*$::')
@@ -252,30 +252,30 @@ jobs:
             fi
             PATTERNS+="^${dir}/.*\\.ipynb$"
           done
-          echo "[DEBUG] Pattern regex construit pour grep : $PATTERNS"
+          echo "[DEBUG] Pattern regex pour grep : $PATTERNS"
       
-          echo "[DEBUG] Contenu de git ls-tree -r --name-only origin/main :"
-          git ls-tree -r --name-only origin/main
+          # Liste tous les fichiers .ipynb sur main
+          NOTEBOOKS_ON_MAIN=$(git ls-tree -r --name-only origin/main | grep -E "$PATTERNS" || true)
+          echo "[DEBUG] Notebooks sur main :"
+          echo "$NOTEBOOKS_ON_MAIN"
       
-          NOTEBOOKS=$(git ls-tree -r --name-only origin/main | grep -E "$PATTERNS" || true)
-          echo "[DEBUG] Liste des notebooks à vérifier :"
-          echo "$NOTEBOOKS"
-      
+          # Fichier temporaire pour la liste finale
           tmpfile=$(mktemp)
-          : > "$tmpfile"  # vide le fichier temporaire
+          : > "$tmpfile"
       
-          echo "$NOTEBOOKS" | while IFS= read -r nb; do
+          # Pour chaque notebook sur main, vérifier s'il diffère de la version sur Students
+          echo "$NOTEBOOKS_ON_MAIN" | while IFS= read -r nb; do
             [ -z "$nb" ] && continue
             echo "[DEBUG] Vérification du notebook '$nb' ..."
-            if ! git diff --quiet $BASE..origin/main -- "$nb"; then
-              echo "[DEBUG] '$nb' : MODIFIÉ"
+            if ! git diff --quiet HEAD...origin/main -- "$nb"; then
+              echo "[DEBUG] '$nb' : MODIFIÉ sur main"
               echo "$nb" >> "$tmpfile"
             else
               echo "[DEBUG] '$nb' : inchangé"
             fi
           done
       
-          echo "[DEBUG] Notebooks détectés comme modifiés :"
+          echo "[DEBUG] Notebooks à (re)générer :"
           cat "$tmpfile"
       
           # Export pour l'étape suivante
@@ -284,6 +284,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
       
           rm "$tmpfile"
+      
                               
       - name: Convert changed notebooks
         if: steps.notebooks_changed.outputs.notebooks != ''
