@@ -237,37 +237,47 @@ jobs:
       
           echo "[DEBUG] HEAD is at $(git rev-parse HEAD)"
           echo "[DEBUG] origin/main is at $(git rev-parse origin/main)"
-      
           BASE=$(git merge-base origin/main HEAD)
           echo "[DEBUG] merge-base between origin/main and HEAD is $BASE ($(git log -1 --oneline $BASE))"
       
-          # Récupérer les répertoires monitorés
+          # 1. Récupérer les répertoires monitorés
           DIRS=$(jq -r '.notebooks_dir[]' "$CONFIG_PATH")
+          echo "[DEBUG] Dossiers monitorés détectés par jq :"
+          echo "$DIRS"
       
-          # Générer le pattern regex pour grep
+          # 2. Générer le pattern regex pour grep
           PATTERN=$(echo "$DIRS" | awk '{for(i=1;i<=NF;i++) {gsub(/\//,"\\/",$i); printf "%s%s", (i>1?"|":""), $i}}')
+          echo "[DEBUG] Pattern regex construit pour grep : $PATTERN"
       
-          # Liste tous les notebooks sur main dans les dossiers concernés
+          # 3. Lister tous les fichiers sur main
+          echo "[DEBUG] Contenu de git ls-tree -r --name-only origin/main :"
+          git ls-tree -r --name-only origin/main
+      
+          # 4. Lister tous les notebooks sur main dans les dossiers concernés
           NOTEBOOKS=$(git ls-tree -r --name-only origin/main | grep -E "^(${PATTERN})/.*\.ipynb$" || true)
-      
           echo "[DEBUG] Liste des notebooks à vérifier :"
           echo "$NOTEBOOKS"
       
+          # 5. Pour chaque notebook, vérifier s'il a changé
           CHANGED=""
           for nb in $NOTEBOOKS; do
+            echo "[DEBUG] Vérification du notebook $nb ..."
             if ! git diff --quiet $BASE..origin/main -- "$nb"; then
+              echo "[DEBUG] $nb : MODIFIÉ"
               CHANGED="$CHANGED$nb"$'\n'
+            else
+              echo "[DEBUG] $nb : inchangé"
             fi
           done
       
-          echo "[DEBUG] Notebooks détectés :"
+          echo "[DEBUG] Notebooks détectés comme modifiés :"
           echo "$CHANGED"
       
-          # Export pour l'étape suivante
+          # 6. Export pour l'étape suivante
           echo "notebooks<<EOF" >> $GITHUB_OUTPUT
           echo "$CHANGED" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-      
+            
       - name: Convert changed notebooks
         if: steps.notebooks_changed.outputs.notebooks != ''
         run: |
