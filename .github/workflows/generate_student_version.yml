@@ -221,20 +221,24 @@ jobs:
           git push origin Students --force
 
       - name: Detect changed notebooks
-        id: notebooks_changed
-        run: |
+      id: notebooks_changed
+      run: |
           DIRS=$(jq -r '.notebooks_dir[]' "$CONFIG_PATH")
           git fetch origin main
           NOTEBOOKS=""
           for dir in $DIRS; do
-            dir=$(echo "$dir" | sed 's:/*$::')  # Remove trailing slashes
-            # Laisser git gérer le glob
-            CHANGED=$(git diff --name-only origin/main...HEAD -- "$dir" -- '*.ipynb' || true)
-            if [ -n "$CHANGED" ]; then
+          dir=$(echo "$dir" | sed 's:/*$::')  # Remove trailing slashes
+          CHANGED=$(git diff --name-only origin/main...HEAD -- "$dir" -- '*.ipynb' || true)
+          if [ -n "$CHANGED" ]; then
               NOTEBOOKS="$NOTEBOOKS $CHANGED"
-            fi
+          fi
           done
-          echo "notebooks=$NOTEBOOKS" >> $GITHUB_OUTPUT
+          echo "=== [DEBUG] Liste finale des notebooks modifiés :"
+          echo "$NOTEBOOKS"
+          # Utilisation du format multiline pour l'output
+          echo "notebooks<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTEBOOKS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
 
       - name: Convert changed notebooks
