@@ -221,8 +221,8 @@ jobs:
           git push origin Students --force
 
       - name: Detect changed notebooks
-      id: notebooks_changed
-      run: |
+        id: notebooks_changed
+        run: |
           DIRS=$(jq -r '.notebooks_dir[]' "$CONFIG_PATH")
           git fetch origin main
           NOTEBOOKS=""
@@ -239,7 +239,7 @@ jobs:
           echo "notebooks<<EOF" >> $GITHUB_OUTPUT
           echo "$NOTEBOOKS" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-
+        
 
       - name: Convert changed notebooks
         if: steps.notebooks_changed.outputs.notebooks != ''
