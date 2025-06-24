@@ -226,13 +226,16 @@ jobs:
           DIRS=$(jq -r '.notebooks_dir[]' "$CONFIG_PATH")
           git fetch origin main
           NOTEBOOKS=""
-
-            # Search for modified notebooks between  main and HEAD
-            CHANGED=$(git diff --name-only origin/main...HEAD -- "$dir"/*.ipynb || true)
+          for dir in $DIRS; do
+            dir=$(echo "$dir" | sed 's:/*$::')  # Remove trailing slashes
+            # Laisser git gérer le glob
+            CHANGED=$(git diff --name-only origin/main...HEAD -- "$dir" -- '*.ipynb' || true)
             if [ -n "$CHANGED" ]; then
               NOTEBOOKS="$NOTEBOOKS $CHANGED"
             fi
           done
+          echo "notebooks=$NOTEBOOKS" >> $GITHUB_OUTPUT
+
 
       - name: Convert changed notebooks
         if: steps.notebooks_changed.outputs.notebooks != ''
