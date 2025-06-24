@@ -229,14 +229,14 @@ jobs:
           
       - name: Debug HEAD vs origin/main
         run: |
-          git log --oneline --graph --decorate --all | head -30
+          git log --oneline --graph --decorate --all | head -30 || true
           echo "HEAD is at:"
           git rev-parse HEAD
           echo "origin/main is at:"
           git rev-parse origin/main
           echo "Files in Examples/notebooks:"
           ls -l Examples/notebooks
-      
+            
       - name: Detect changed notebooks
         id: notebooks_changed
         shell: bash
