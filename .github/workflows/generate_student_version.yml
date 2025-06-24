@@ -231,36 +231,38 @@ jobs:
         id: notebooks_changed
         shell: bash
         run: |
-          git fetch origin main
-                CONFIG_PATH=".github/conversion.json"
+          set -e
+      
+          CONFIG_PATH=".github/conversion.json"
+      
+          echo "[DEBUG] HEAD is at $(git rev-parse HEAD)"
+          echo "[DEBUG] origin/main is at $(git rev-parse origin/main)"
+      
+          # Trouver le commit ancêtre commun entre HEAD (Students) et origin/main
+          BASE=$(git merge-base origin/main HEAD)
+          echo "[DEBUG] merge-base between origin/main and HEAD is $BASE ($(git log -1 --oneline $BASE))"
+      
+          # Construire la liste des pathspecs
           DIRS=$(jq -r '.notebooks_dir[]' "$CONFIG_PATH")
           PATHS=()
           for dir in $DIRS; do
             dir=$(echo "$dir" | sed 's:/*$::')
             PATHS+=("$dir/**/*.ipynb")
           done
-                # Dernier commit main traité
-          LAST_MAIN_COMMIT=""
-          if [ -f .last_main_commit ]; then
-            LAST_MAIN_COMMIT=$(cat .last_main_commit)
-          fi
-                echo "[DEBUG] Last main commit processed: $LAST_MAIN_COMMIT"
-          echo "[DEBUG] Pathspecs utilisés pour git diff :"
+          echo "[DEBUG] Pathspecs utilisés :"
           printf '%s\n' "${PATHS[@]}"
-                # Si pas d'historique, prend tout
-          if [ -z "$LAST_MAIN_COMMIT" ]; then
-            CHANGED=$(git diff --name-only $(git hash-object -t tree /dev/null) origin/main -- "${PATHS[@]}" || true)
-          else
-            CHANGED=$(git diff --name-only "$LAST_MAIN_COMMIT"...origin/main -- "${PATHS[@]}" || true)
-          fi
+      
+          # Diff entre BASE et origin/main, restreint aux dossiers monitorés
+          CHANGED=$(git diff --name-only $BASE..origin/main -- "${PATHS[@]}" || true)
           CHANGED=$(echo "$CHANGED" | grep -v '^$' || true)
           echo "[DEBUG] Notebooks détectés :"
           echo "$CHANGED"
-                echo "notebooks<<EOF" >> $GITHUB_OUTPUT
+      
+          # Export pour l'étape suivante
+          echo "notebooks<<EOF" >> $GITHUB_OUTPUT
           echo "$CHANGED" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-          exit 0
-            
+                  
 
       - name: Convert changed notebooks
         if: steps.notebooks_changed.outputs.notebooks != ''
