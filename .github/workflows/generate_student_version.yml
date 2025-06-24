@@ -238,23 +238,28 @@ jobs:
           echo "[DEBUG] HEAD is at $(git rev-parse HEAD)"
           echo "[DEBUG] origin/main is at $(git rev-parse origin/main)"
       
-          # Trouver le commit ancêtre commun entre HEAD (Students) et origin/main
           BASE=$(git merge-base origin/main HEAD)
           echo "[DEBUG] merge-base between origin/main and HEAD is $BASE ($(git log -1 --oneline $BASE))"
       
-          # Construire la liste des pathspecs
+          # Récupérer les répertoires monitorés
           DIRS=$(jq -r '.notebooks_dir[]' "$CONFIG_PATH")
-          PATHS=()
-          for dir in $DIRS; do
-            dir=$(echo "$dir" | sed 's:/*$::')
-            PATHS+=("$dir/**/*.ipynb")
-          done
-          echo "[DEBUG] Pathspecs utilisés :"
-          printf '%s\n' "${PATHS[@]}"
       
-          # Diff entre BASE et origin/main, restreint aux dossiers monitorés
-          CHANGED=$(git diff --name-only $BASE..origin/main -- "${PATHS[@]}" || true)
-          CHANGED=$(echo "$CHANGED" | grep -v '^$' || true)
+          # Générer le pattern regex pour grep
+          PATTERN=$(echo "$DIRS" | awk '{for(i=1;i<=NF;i++) {gsub(/\//,"\\/",$i); printf "%s%s", (i>1?"|":""), $i}}')
+      
+          # Liste tous les notebooks sur main dans les dossiers concernés
+          NOTEBOOKS=$(git ls-tree -r --name-only origin/main | grep -E "^(${PATTERN})/.*\.ipynb$" || true)
+      
+          echo "[DEBUG] Liste des notebooks à vérifier :"
+          echo "$NOTEBOOKS"
+      
+          CHANGED=""
+          for nb in $NOTEBOOKS; do
+            if ! git diff --quiet $BASE..origin/main -- "$nb"; then
+              CHANGED="$CHANGED$nb"$'\n'
+            fi
+          done
+      
           echo "[DEBUG] Notebooks détectés :"
           echo "$CHANGED"
       
@@ -262,8 +267,7 @@ jobs:
           echo "notebooks<<EOF" >> $GITHUB_OUTPUT
           echo "$CHANGED" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-                  
-
+      
       - name: Convert changed notebooks
         if: steps.notebooks_changed.outputs.notebooks != ''
         run: |
