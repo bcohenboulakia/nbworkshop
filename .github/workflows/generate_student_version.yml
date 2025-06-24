@@ -35,7 +35,6 @@ jobs:
         with:
           fetch-depth: 0
 
-
       - name: Validate JSON config
         run: |
           # Syntax check with jq, output to summary if error
@@ -210,104 +209,93 @@ jobs:
               fi
           else
               printf "## Post-processing failed ❌\n" >> $SUMMARY_FILE
-              printf "Code de sortie: %d\n" "$EXIT_CODE" >> $SUMMARY_FILE
+              printf "Exit code: %d\n" "$EXIT_CODE" >> $SUMMARY_FILE
               if [ -n "$OUTPUT" ]; then
                   printf "\n" >> $SUMMARY_FILE
-                  printf "Sortie de commande (incluant les erreurs):\n" >> $SUMMARY_FILE
+                  printf "Command output (including errors):\n" >> $SUMMARY_FILE
                   printf "```
                   printf "%s\n" "$OUTPUT" >> $SUMMARY_FILE
                   printf "```\n" >> $SUMMARY_FILE
               fi
           fi
 
+      # --- OPTIMIZED BRANCH MANAGEMENT SECTION STARTS HERE ---
       - name: Prepare Students branch
         run: |
-          git fetch origin Students || true
-          git checkout Students || git checkout -b Students origin/Students || git checkout -b Students origin/main
-          git merge origin/main --strategy-option=theirs --allow-unrelated-histories || true
-          git push origin Students --force
+          # Fetch main branch for reference
+          git fetch origin main
           
-      - name: Detect notebooks changed on main vs Students
-        id: notebooks_changed
-        shell: bash
+          # Create or reset Students branch to match main
+          git checkout -B Students origin/main
+          
+          # Remove tutor notebooks from Students branch
+          TUTOR_POSTFIX=$(jq -r '.tutor_postfix' "$CONFIG_PATH")
+          jq -r '.notebooks_dir[]' "$CONFIG_PATH" | while read dir; do
+            find "$dir" -name "*$TUTOR_POSTFIX.ipynb" -exec git rm -f {} \;
+          done
+          
+          # Commit removal if changes exist
+          git commit -m "Remove tutor notebooks" || echo "No tutor notebooks to remove"
+
+      - name: Detect changed notebooks
+        id: changed_notebooks
         run: |
-          set -e
-      
-          CONFIG_PATH=".github/conversion.json"
-      
-          echo "[DEBUG] HEAD (Students) is at $(git rev-parse HEAD)"
-          echo "[DEBUG] origin/main is at $(git rev-parse origin/main)"
-      
-          # Obtenir les dossiers de notebooks
-          DIRS=$(jq -r '.notebooks_dir[]' "$CONFIG_PATH")
-          echo "[DEBUG] Dossiers monitorés :"
-          echo "$DIRS"
-      
-          # Construire le pattern regex pour grep
-          PATTERNS=""
-          for dir in $DIRS; do
-            dir=$(echo "$dir" | sed 's:/*$::')
-            if [ -n "$PATTERNS" ]; then
-              PATTERNS+="|"
-            fi
-            PATTERNS+="^${dir}/.*\\.ipynb$"
-          done
-          echo "[DEBUG] Pattern regex pour grep : $PATTERNS"
-      
-          # Liste tous les fichiers .ipynb sur main
-          NOTEBOOKS_ON_MAIN=$(git ls-tree -r --name-only origin/main | grep -E "$PATTERNS" || true)
-          echo "[DEBUG] Notebooks sur main :"
-          echo "$NOTEBOOKS_ON_MAIN"
-      
-          # Fichier temporaire pour la liste finale
-          tmpfile=$(mktemp)
-          : > "$tmpfile"
-      
-          # Pour chaque notebook sur main, vérifier s'il diffère de la version sur Students
-          echo "$NOTEBOOKS_ON_MAIN" | while IFS= read -r nb; do
-            [ -z "$nb" ] && continue
-            echo "[DEBUG] Vérification du notebook '$nb' ..."
-            if ! git diff --quiet HEAD...origin/main -- "$nb"; then
-              echo "[DEBUG] '$nb' : MODIFIÉ sur main"
-              echo "$nb" >> "$tmpfile"
-            else
-              echo "[DEBUG] '$nb' : inchangé"
+          # Get tutor postfix from config
+          TUTOR_POSTFIX=$(jq -r '.tutor_postfix' "$CONFIG_PATH")
+          
+          # Find all monitored notebooks
+          NOTEBOOK_PATHS=$(jq -r '.notebooks_dir[]' "$CONFIG_PATH" | while read dir; do
+            find "$dir" -name "*$TUTOR_POSTFIX.ipynb" -print
+          done)
+          
+          # Compare with Students branch before reset to detect real changes
+          CHANGED_NOTEBOOKS=""
+          for nb in $NOTEBOOK_PATHS; do
+            if ! git diff --quiet origin/Students...origin/main -- "$nb"; then
+              CHANGED_NOTEBOOKS+="$nb"$'\n'
             fi
           done
-      
-          echo "[DEBUG] Notebooks à (re)générer :"
-          cat "$tmpfile"
-      
-          # Export pour l'étape suivante
-          echo "notebooks<<EOF" >> $GITHUB_OUTPUT
-          cat "$tmpfile" >> $GITHUB_OUTPUT
+          
+          # Output results
+          echo "changed_notebooks<<EOF" >> $GITHUB_OUTPUT
+          printf "%s" "$CHANGED_NOTEBOOKS" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-      
-          rm "$tmpfile"
-      
-                              
+          
+          echo "Detected changed notebooks:"
+          printf "%s" "$CHANGED_NOTEBOOKS"
+
       - name: Convert changed notebooks
-        if: steps.notebooks_changed.outputs.notebooks != ''
+        if: steps.changed_notebooks.outputs.changed_notebooks != ''
         run: |
-          echo "[DEBUG] Notebooks à convertir :"
-          echo "${{ steps.notebooks_changed.outputs.notebooks }}"
+          STUDENT_POSTFIX=$(jq -r '.student_postfix' "$CONFIG_PATH")
           
           printf "## Processing Report\n" >> $SUMMARY_FILE
           printf "| Notebook | Questions | Code Blocks |  ZIP |\n" >> $SUMMARY_FILE
           printf "|----------|-----------|-------------|------|\n" >> $SUMMARY_FILE
 
-          echo "${{ steps.notebooks_changed.outputs.notebooks }}" | while IFS= read -r nb; do
+          echo "${{ steps.changed_notebooks.outputs.changed_notebooks }}" | while IFS= read -r nb; do
             [ -z "$nb" ] && continue
-            echo "[DEBUG] Conversion du notebook : '$nb'"
-            git checkout origin/main -- "$nb"
+            
+            # Generate student notebook name
+            BASENAME="${nb%$TUTOR_POSTFIX.ipynb}"
+            STUDENT_NB="${BASENAME}${STUDENT_POSTFIX}.ipynb"
+            
+            # Restore original tutor version from main
+            git restore --source=origin/main -- "$nb"
+            
+            # Convert to student version
+            echo "Converting $nb → $STUDENT_NB"
             uv run .github/scripts/student_version.py "$nb" \
+              --output "$STUDENT_NB" \
               --config "$CONFIG_PATH" \
               --hide-header >> $SUMMARY_FILE
-            git add "$nb"
+              
+            # Remove tutor version and add student version
+            git rm "$nb"
+            git add "$STUDENT_NB"
           done
-      
-      
-      
+      # --- OPTIMIZED BRANCH MANAGEMENT SECTION ENDS HERE ---
+
       - name: Execute post-processing command
         run: |
           if [ -n "$POST_PROCESSING" ]; then
@@ -322,10 +310,10 @@ jobs:
                   fi
               else
                   printf "## Post-processing failed ❌\n" >> $SUMMARY_FILE
-                  printf "Code de sortie: %d\n" "$EXIT_CODE" >> $SUMMARY_FILE
+                  printf "Exit code: %d\n" "$EXIT_CODE" >> $SUMMARY_FILE
                   if [ -n "$OUTPUT" ]; then
                       printf "\n" >> $SUMMARY_FILE
-                      printf "Sortie de commande (incluant les erreurs):\n" >> $SUMMARY_FILE
+                      printf "Command output (including errors):\n" >> $SUMMARY_FILE
                       printf "```
                       printf "%s\n" "$OUTPUT" >> $SUMMARY_FILE
                       printf "```\n" >> $SUMMARY_FILE
@@ -333,7 +321,7 @@ jobs:
               fi
           fi
 
-      - name: manage summary
+      - name: Manage summary
         run: |
           cp -a $SUMMARY_FILE .
           cat README.md >> $GITHUB_STEP_SUMMARY
@@ -345,6 +333,10 @@ jobs:
       
       - name: Commit and push changes
         run: |
-          # Only commit if there are actual changes (avoids empty commits)
-          git commit -m "Update student materials: $(date +'%Y-%m-%d %H:%M:%S')" || echo "No changes"
-          git push origin Students
+          # Only commit if there are actual changes
+          if git diff-index --quiet HEAD --; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update student materials: $(date +'%Y-%m-%d %H:%M:%S')"
+            git push origin Students
+          fi
