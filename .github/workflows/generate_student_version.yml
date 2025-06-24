@@ -262,7 +262,7 @@ jobs:
           echo "$NOTEBOOKS"
       
           tmpfile=$(mktemp)
-          echo "" > "$tmpfile"
+          : > "$tmpfile"  # vide le fichier temporaire
       
           echo "$NOTEBOOKS" | while IFS= read -r nb; do
             [ -z "$nb" ] && continue
@@ -284,8 +284,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
       
           rm "$tmpfile"
-      
-                        
+                              
       - name: Convert changed notebooks
         if: steps.notebooks_changed.outputs.notebooks != ''
         run: |
