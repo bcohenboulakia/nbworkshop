@@ -220,17 +220,32 @@ jobs:
       - name: Detect changed notebooks
         id: notebooks_changed
         run: |
+          echo "=== [DEBUG] Début de la détection des notebooks modifiés ==="
           DIRS=$(jq -r '.notebooks_dir[]' "$CONFIG_PATH")
+          echo "[DEBUG] Répertoires monitorés extraits de la conf : '$DIRS'"
           git fetch origin main
+          echo "[DEBUG] Branche courante : $(git rev-parse --abbrev-ref HEAD)"
+          echo "[DEBUG] HEAD pointe sur : $(git rev-parse HEAD)"
           NOTEBOOKS=""
           for dir in $DIRS; do
-            # Only list notebooks that have changed between main and Students
+            echo "[DEBUG] Vérification du répertoire : '$dir'"
+            if [ ! -d "$dir" ]; then
+              echo "[DEBUG] Répertoire inexistant : $dir"
+              continue
+            fi
+            # Affiche tous les notebooks présents pour vérifier le pattern
+            echo "[DEBUG] Notebooks trouvés dans $dir :"
+            ls -1 "$dir"/*.ipynb 2>/dev/null || echo "  Aucun notebook"
+            # Cherche les notebooks modifiés entre main et HEAD
             CHANGED=$(git diff --name-only origin/main...HEAD -- "$dir"/*.ipynb || true)
+            echo "[DEBUG] Notebooks modifiés détectés dans $dir : '$CHANGED'"
             if [ -n "$CHANGED" ]; then
               NOTEBOOKS="$NOTEBOOKS $CHANGED"
             fi
           done
+          echo "[DEBUG] Liste finale des notebooks modifiés : '$NOTEBOOKS'"
           echo "notebooks=$NOTEBOOKS" >> $GITHUB_OUTPUT
+          echo "=== [DEBUG] Fin de la détection ==="
 
       - name: Convert changed notebooks
         if: steps.notebooks_changed.outputs.notebooks != ''
