@@ -245,16 +245,23 @@ jobs:
           echo "[DEBUG] Dossiers monitorés détectés par jq :"
           echo "$DIRS"
       
-          # 2. Générer le pattern regex pour grep
-          PATTERN=$(echo "$DIRS" | awk '{for(i=1;i<=NF;i++) {gsub(/\//,"\\/",$i); printf "%s%s", (i>1?"|":""), $i}}')
-          echo "[DEBUG] Pattern regex construit pour grep : $PATTERN"
+          # 2. Générer le bon pattern regex pour grep
+          PATTERNS=""
+          for dir in $DIRS; do
+            dir=$(echo "$dir" | sed 's:/*$::')   # supprime les / finaux éventuels
+            if [ -n "$PATTERNS" ]; then
+              PATTERNS+="|"
+            fi
+            PATTERNS+="^${dir}/.*\\.ipynb$"
+          done
+          echo "[DEBUG] Pattern regex construit pour grep : $PATTERNS"
       
           # 3. Lister tous les fichiers sur main
           echo "[DEBUG] Contenu de git ls-tree -r --name-only origin/main :"
           git ls-tree -r --name-only origin/main
       
           # 4. Lister tous les notebooks sur main dans les dossiers concernés
-          NOTEBOOKS=$(git ls-tree -r --name-only origin/main | grep -E "^(${PATTERN})/.*\.ipynb$" || true)
+          NOTEBOOKS=$(git ls-tree -r --name-only origin/main | grep -E "$PATTERNS" || true)
           echo "[DEBUG] Liste des notebooks à vérifier :"
           echo "$NOTEBOOKS"
       
@@ -277,7 +284,7 @@ jobs:
           echo "notebooks<<EOF" >> $GITHUB_OUTPUT
           echo "$CHANGED" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-            
+                  
       - name: Convert changed notebooks
         if: steps.notebooks_changed.outputs.notebooks != ''
         run: |
