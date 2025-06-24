@@ -267,16 +267,17 @@ jobs:
       
           # 5. Pour chaque notebook, vérifier s'il a changé
           CHANGED=""
-          for nb in $NOTEBOOKS; do
-            echo "[DEBUG] Vérification du notebook $nb ..."
+          echo "$NOTEBOOKS" | while IFS= read -r nb; do
+            [ -z "$nb" ] && continue
+            echo "[DEBUG] Vérification du notebook '$nb' ..."
             if ! git diff --quiet $BASE..origin/main -- "$nb"; then
-              echo "[DEBUG] $nb : MODIFIÉ"
+              echo "[DEBUG] '$nb' : MODIFIÉ"
               CHANGED="$CHANGED$nb"$'\n'
             else
-              echo "[DEBUG] $nb : inchangé"
+              echo "[DEBUG] '$nb' : inchangé"
             fi
           done
-      
+          
           echo "[DEBUG] Notebooks détectés comme modifiés :"
           echo "$CHANGED"
       
