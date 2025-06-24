@@ -227,18 +227,20 @@ jobs:
           git fetch origin main
           NOTEBOOKS=""
           for dir in $DIRS; do
-          dir=$(echo "$dir" | sed 's:/*$::')  # Remove trailing slashes
-          CHANGED=$(git diff --name-only origin/main...HEAD -- "$dir" -- '*.ipynb' || true)
-          if [ -n "$CHANGED" ]; then
-              NOTEBOOKS="$NOTEBOOKS $CHANGED"
-          fi
+            dir=$(echo "$dir" | sed 's:/*$::')
+            CHANGED=$(git diff --name-only origin/main...HEAD -- "$dir" -- '*.ipynb' || true)
+            if [ -n "$CHANGED" ]; then
+              NOTEBOOKS="${NOTEBOOKS}"$'\n'"$CHANGED"
+            fi
           done
-          echo "=== [DEBUG] Liste finale des notebooks modifiés :"
+          # Nettoie les espaces et lignes vides
+          NOTEBOOKS=$(echo "$NOTEBOOKS" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | grep -v '^$')
+          echo "[DEBUG] Notebooks détectés :"
           echo "$NOTEBOOKS"
-          # Utilisation du format multiline pour l'output
           echo "notebooks<<EOF" >> $GITHUB_OUTPUT
           echo "$NOTEBOOKS" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
+      
         
 
       - name: Convert changed notebooks
@@ -246,15 +248,15 @@ jobs:
         run: |
           echo "[DEBUG] Notebooks à convertir :"
           echo "${{ steps.notebooks_changed.outputs.notebooks }}"
-          echo "${{ steps.notebooks_changed.outputs.notebooks }}" | while IFS= read -r nb || [ -n "$nb" ]; do
-            # Ignore les lignes vides
-            if [ -z "$nb" ]; then continue; fi
+          echo "${{ steps.notebooks_changed.outputs.notebooks }}" | while IFS= read -r nb; do
+            [ -z "$nb" ] && continue
             echo "[DEBUG] Conversion du notebook : '$nb'"
             uv run .github/scripts/student_version.py "$nb" \
               --config "$CONFIG_PATH" \
               --hide-header >> $SUMMARY_FILE
             git add "$nb"
           done
+      
       
       
       - name: Execute post-processing command
