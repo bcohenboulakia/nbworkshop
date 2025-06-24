@@ -261,25 +261,30 @@ jobs:
           echo "[DEBUG] Liste des notebooks à vérifier :"
           echo "$NOTEBOOKS"
       
-          CHANGED=()
-          while IFS= read -r nb; do
+          tmpfile=$(mktemp)
+          echo "" > "$tmpfile"
+      
+          echo "$NOTEBOOKS" | while IFS= read -r nb; do
             [ -z "$nb" ] && continue
             echo "[DEBUG] Vérification du notebook '$nb' ..."
             if ! git diff --quiet $BASE..origin/main -- "$nb"; then
               echo "[DEBUG] '$nb' : MODIFIÉ"
-              CHANGED+=("$nb")
+              echo "$nb" >> "$tmpfile"
             else
               echo "[DEBUG] '$nb' : inchangé"
             fi
-          done <<< "$NOTEBOOKS"
+          done
       
           echo "[DEBUG] Notebooks détectés comme modifiés :"
-          printf "%s\n" "${CHANGED[@]}"
+          cat "$tmpfile"
       
           # Export pour l'étape suivante
           echo "notebooks<<EOF" >> $GITHUB_OUTPUT
-          printf "%s\n" "${CHANGED[@]}" >> $GITHUB_OUTPUT
+          cat "$tmpfile" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
+      
+          rm "$tmpfile"
+      
                         
       - name: Convert changed notebooks
         if: steps.notebooks_changed.outputs.notebooks != ''
