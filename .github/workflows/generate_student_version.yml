@@ -22,6 +22,11 @@ jobs:
       SUMMARY_FILE: /tmp/README.md
 
     steps:
+      - name: Set up Git identity
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
       - name: Install Python dependencies
         run: pip install chardet
         
@@ -37,7 +42,6 @@ jobs:
 
       - name: Validate JSON config
         run: |
-          # Syntax check with jq, output to summary if error
           if ! jq empty "$CONFIG_PATH" >/dev/null 2>&1; then
             printf "## ❌ Error in JSON configuration file\n" >> $SUMMARY_FILE
             printf "Please fix $CONFIG_PATH error:\n" >> $SUMMARY_FILE
@@ -45,10 +49,8 @@ jobs:
             exit 1
           fi
       
-          # Install Ajv locally (no global install)
           npm install ajv@8
       
-          # Validate with embedded schema, output errors to summary
           node - <<'EOF'
           const fs = require('fs');
           const Ajv = require('ajv').default;
@@ -128,6 +130,11 @@ jobs:
           }
           EOF
       
+      - name: Cleanup npm artifacts
+        run: |
+          rm -rf node_modules
+          rm -f package.json package-lock.json
+      
       - name: Check monitored directories existence
         run: |
           EXIT_WITH_ERROR=false
@@ -155,16 +162,15 @@ jobs:
 
       - name: Check pre/post-processing commands syntax
         run: |
-          # Use bash -n to check shell command syntax without execution
           if [ -n "$PRE_PROCESSING" ]; then
             ERROR_OUTPUT=$(echo "$PRE_PROCESSING" | bash -n 2>&1) || {
               printf "## ❌ Error: Pre-processing command syntax error\n" >> $SUMMARY_FILE
               printf "Please fix your pre-processing command syntax:\n" >> $SUMMARY_FILE
-              printf "```
+              printf "```\n" >> $SUMMARY_FILE
               printf "%s\n" "$PRE_PROCESSING" >> $SUMMARY_FILE
               printf "```\n\n" >> $SUMMARY_FILE
               printf "**Error details:**\n" >> $SUMMARY_FILE
-              printf "```
+              printf "```\n" >> $SUMMARY_FILE
               printf "%s\n" "$ERROR_OUTPUT" >> $SUMMARY_FILE
               printf "```\n" >> $SUMMARY_FILE
               exit 1
@@ -174,11 +180,11 @@ jobs:
             ERROR_OUTPUT=$(echo "$POST_PROCESSING" | bash -n 2>&1) || {
               printf "## ❌ Error: Post-processing command syntax error\n" >> $SUMMARY_FILE
               printf "Please fix your post-processing command syntax:\n" >> $SUMMARY_FILE
-              printf "```
+              printf "```\n" >> $SUMMARY_FILE
               printf "%s\n" "$POST_PROCESSING" >> $SUMMARY_FILE
               printf "```\n\n" >> $SUMMARY_FILE
               printf "**Error details:**\n" >> $SUMMARY_FILE
-              printf "```
+              printf "```\n" >> $SUMMARY_FILE
               printf "%s\n" "$ERROR_OUTPUT" >> $SUMMARY_FILE
               printf "```\n" >> $SUMMARY_FILE
               exit 1
@@ -213,50 +219,43 @@ jobs:
               if [ -n "$OUTPUT" ]; then
                   printf "\n" >> $SUMMARY_FILE
                   printf "Command output (including errors):\n" >> $SUMMARY_FILE
-                  printf "```
+                  printf "```\n" >> $SUMMARY_FILE
                   printf "%s\n" "$OUTPUT" >> $SUMMARY_FILE
                   printf "```\n" >> $SUMMARY_FILE
               fi
           fi
 
-      # --- OPTIMIZED BRANCH MANAGEMENT SECTION STARTS HERE ---
+      # --- CORRECTED BRANCH MANAGEMENT SECTION ---
       - name: Prepare Students branch
         run: |
-          # Fetch main branch for reference
           git fetch origin main
-          
-          # Create or reset Students branch to match main
           git checkout -B Students origin/main
           
-          # Remove tutor notebooks from Students branch
+          # Remove tutor notebooks
           TUTOR_POSTFIX=$(jq -r '.tutor_postfix' "$CONFIG_PATH")
           jq -r '.notebooks_dir[]' "$CONFIG_PATH" | while read dir; do
             find "$dir" -name "*$TUTOR_POSTFIX.ipynb" -exec git rm -f {} \;
           done
-          
-          # Commit removal if changes exist
           git commit -m "Remove tutor notebooks" || echo "No tutor notebooks to remove"
 
       - name: Detect changed notebooks
         id: changed_notebooks
         run: |
-          # Get tutor postfix from config
+          # Compare with previous state of Students branch
+          git fetch origin Students --depth=1
+          
           TUTOR_POSTFIX=$(jq -r '.tutor_postfix' "$CONFIG_PATH")
-          
-          # Find all monitored notebooks
-          NOTEBOOK_PATHS=$(jq -r '.notebooks_dir[]' "$CONFIG_PATH" | while read dir; do
-            find "$dir" -name "*$TUTOR_POSTFIX.ipynb" -print
-          done)
-          
-          # Compare with Students branch before reset to detect real changes
           CHANGED_NOTEBOOKS=""
-          for nb in $NOTEBOOK_PATHS; do
-            if ! git diff --quiet origin/Students...origin/main -- "$nb"; then
-              CHANGED_NOTEBOOKS+="$nb"$'\n'
-            fi
-          done
           
-          # Output results
+          while IFS= read -r dir; do
+            while IFS= read -r nb; do
+              # Compare with previous Students branch state
+              if ! git diff --quiet origin/Students...origin/main -- "$nb"; then
+                CHANGED_NOTEBOOKS+="${nb}"$'\n'
+              fi
+            done < <(find "$dir" -name "*$TUTOR_POSTFIX.ipynb")
+          done < <(jq -r '.notebooks_dir[]' "$CONFIG_PATH")
+          
           echo "changed_notebooks<<EOF" >> $GITHUB_OUTPUT
           printf "%s" "$CHANGED_NOTEBOOKS" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
@@ -268,6 +267,7 @@ jobs:
         if: steps.changed_notebooks.outputs.changed_notebooks != ''
         run: |
           STUDENT_POSTFIX=$(jq -r '.student_postfix' "$CONFIG_PATH")
+          TUTOR_POSTFIX=$(jq -r '.tutor_postfix' "$CONFIG_PATH")
           
           printf "## Processing Report\n" >> $SUMMARY_FILE
           printf "| Notebook | Questions | Code Blocks |  ZIP |\n" >> $SUMMARY_FILE
@@ -294,7 +294,7 @@ jobs:
             git rm "$nb"
             git add "$STUDENT_NB"
           done
-      # --- OPTIMIZED BRANCH MANAGEMENT SECTION ENDS HERE ---
+      # --- END CORRECTED SECTION ---
 
       - name: Execute post-processing command
         run: |
@@ -314,7 +314,7 @@ jobs:
                   if [ -n "$OUTPUT" ]; then
                       printf "\n" >> $SUMMARY_FILE
                       printf "Command output (including errors):\n" >> $SUMMARY_FILE
-                      printf "```
+                      printf "```\n" >> $SUMMARY_FILE
                       printf "%s\n" "$OUTPUT" >> $SUMMARY_FILE
                       printf "```\n" >> $SUMMARY_FILE
                   fi
@@ -323,20 +323,13 @@ jobs:
 
       - name: Manage summary
         run: |
-          cp -a $SUMMARY_FILE .
-          cat README.md >> $GITHUB_STEP_SUMMARY
+          cat $SUMMARY_FILE >> $GITHUB_STEP_SUMMARY
 
-      - name: Set up Git identity
-        run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
-      
       - name: Commit and push changes
         run: |
-          # Only commit if there are actual changes
-          if git diff-index --quiet HEAD --; then
-            echo "No changes to commit"
-          else
+          if ! git diff-index --quiet HEAD --; then
             git commit -m "Update student materials: $(date +'%Y-%m-%d %H:%M:%S')"
             git push origin Students
+          else
+            echo "No changes to commit"
           fi
