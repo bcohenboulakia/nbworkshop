@@ -294,6 +294,7 @@ jobs:
           echo "${{ steps.notebooks_changed.outputs.notebooks }}" | while IFS= read -r nb; do
             [ -z "$nb" ] && continue
             echo "[DEBUG] Conversion du notebook : '$nb'"
+            git checkout origin/main -- "$nb"
             uv run .github/scripts/student_version.py "$nb" \
               --config "$CONFIG_PATH" \
               --hide-header >> $SUMMARY_FILE
