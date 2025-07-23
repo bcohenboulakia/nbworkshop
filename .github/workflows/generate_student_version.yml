@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths: ['**.ipynb']
   workflow_dispatch:
-  
+
 defaults:
   run:
     shell: bash
@@ -24,7 +24,7 @@ jobs:
     steps:
       - name: Install Python dependencies
         run: pip install chardet
-        
+
       - name: Initialize summary file
         run: |
           rm -f "$SUMMARY_FILE"
@@ -37,60 +37,45 @@ jobs:
 
       - name: Validate JSON config
         run: |
-          # Syntax check with jq, output to summary if error
+          # JSON syntax validation with jq
           if ! jq empty "$CONFIG_PATH" >/dev/null 2>&1; then
             printf "## ❌ Error in JSON configuration file\n" >> $SUMMARY_FILE
             printf "Please fix $CONFIG_PATH error:\n" >> $SUMMARY_FILE
             jq empty "$CONFIG_PATH" 2>&1 | sed 's/^jq: //' >> $SUMMARY_FILE
             exit 1
           fi
-      
-          # Install Ajv locally (no global install)
+
+          # Install Ajv locally (not global)
           npm install ajv@8
-      
-          # Validate with embedded schema, output errors to summary
+
+          # Validate JSON file structure/keys
           node - <<'EOF'
           const fs = require('fs');
           const Ajv = require('ajv').default;
-
           const summaryFile = process.env.SUMMARY_FILE || '/tmp/README.md';
           const configPath = process.env.CONFIG_PATH || '.github/conversion.json';
 
           const schema = {
             type: 'object',
             required: [
-              'solution_marker', 
-              'placeholder', 
-              'generate_zip', 
-              'notebooks_dir', 
-              'student_postfix', 
-              'tutor_postfix'
+              'solution_marker', 'placeholder', 'generate_zip', 
+              'notebooks_dir', 'student_postfix', 'tutor_postfix'
             ],
             properties: {
               solution_marker: {
                 type: 'object',
                 required: ['code', 'markdown'],
-                properties: {
-                  code: {type: 'string'},
-                  markdown: {type: 'string'}
-                },
+                properties: { code: {type: 'string'}, markdown: {type: 'string'} },
                 additionalProperties: false
               },
               placeholder: {
                 type: 'object',
                 required: ['code', 'markdown'],
-                properties: {
-                  code: {type: 'string'},
-                  markdown: {type: 'string'}
-                },
+                properties: { code: {type: 'string'}, markdown: {type: 'string'} },
                 additionalProperties: false
               },
               generate_zip: {type: 'boolean'},
-              notebooks_dir: {
-                type: 'array',
-                items: {type: 'string'},
-                minItems: 1
-              },
+              notebooks_dir: {type: 'array', items: {type: 'string'}, minItems: 1},
               pre_processing: {type: 'string'},
               post_processing: {type: 'string'},
               tutor_postfix: {type: 'string'},
@@ -103,12 +88,11 @@ jobs:
             const config = JSON.parse(fs.readFileSync(configPath));
             const ajv = new Ajv({allErrors: true, strict: true});
             const validate = ajv.compile(schema);
-
             if (!validate(config)) {
               const lines = [];
               lines.push("## ❌ Error in JSON configuration file");
               lines.push("Config validation failed:");
-              lines.push("```");
+              lines.push("```
               validate.errors.forEach(err => {
                 lines.push(`- ${err.instancePath || '/'} ${err.message}`);
               });
@@ -120,14 +104,14 @@ jobs:
             const lines = [];
             lines.push("## ❌ Error in JSON configuration file");
             lines.push("Parsing or validation failed:");
-            lines.push("```");
+            lines.push("```
             lines.push(error.message);
             lines.push("```");
             fs.appendFileSync(summaryFile, lines.join('\n') + '\n');
             process.exit(1);
           }
           EOF
-      
+
       - name: Check monitored directories existence
         run: |
           EXIT_WITH_ERROR=false
@@ -222,47 +206,25 @@ jobs:
       - name: Prepare Students branch
         run: |
           git fetch origin Students || true
-          # Try to checkout Students or create it from origin/Students or origin/main
+          # Create or update Students branch as needed
           git checkout Students || git checkout -b Students origin/Students || git checkout -b Students origin/main
-
-          # Merge main if necessary, favoring their changes, allow unrelated histories
           git merge origin/main --strategy-option=theirs --allow-unrelated-histories || true
           git push origin Students --force
-
-          # Detect if Students has just been created and is identical to main
-          # In such case, force processing all notebooks in the next step
+          # Detect if Students was freshly created and is identical to main
           if [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ]; then
             echo "STUDENTS_FRESHLY_CREATED=true" >> "$GITHUB_ENV"
           else
             echo "STUDENTS_FRESHLY_CREATED=false" >> "$GITHUB_ENV"
           fi
-          
-      - name: Debug changed notebooks detection
-        id: debug_notebooks
+
+      - name: Detect changed notebooks
+        id: detect_notebooks
         shell: bash
         run: |
           CONFIG_PATH=".github/conversion.json"
           DIRS=$(jq -r '.notebooks_dir[]' "$CONFIG_PATH")
-      
-          # Print context info for debug
-          echo "Github SHA context"
-          echo "------------------"
-          echo "GITHUB_EVENT_BEFORE=${GITHUB_EVENT_BEFORE}"
-          echo "GITHUB_EVENT_AFTER=${GITHUB_EVENT_AFTER}"
-          echo "github.event.before=${{ github.event.before }}"
-          echo "github.event.after=${{ github.event.after }}"
-          echo ""
-          echo "Commits in main branch (git log):"
-          git log --oneline -5
-          echo ""
-      
-          BEFORE=${{ github.event.before }}
-          AFTER=${{ github.event.after }}
-      
-          echo "BEFORE=$BEFORE"
-          echo "AFTER=$AFTER"
-      
-          # Build grep pattern
+
+          # Pattern for target notebook files
           PATTERNS=""
           for dir in $DIRS; do
             dir=$(echo "$dir" | sed 's:/*$::')
@@ -271,63 +233,37 @@ jobs:
             fi
             PATTERNS+="^${dir}/.*\\.ipynb$"
           done
-      
-          echo "PATTERNS=$PATTERNS"
-          echo ""
-      
-          echo "Diff files between BEFORE and AFTER:"
-          git diff --name-only "$BEFORE" "$AFTER"
-          echo ""
-      
-          echo "Matched notebooks:"
-          git diff --name-only "$BEFORE" "$AFTER" | grep -E "$PATTERNS" || true
-          echo ""
-      
-          # Write result to a file for step output
-          (git diff --name-only "$BEFORE" "$AFTER" | grep -E "$PATTERNS" || true) > notebooks_to_convert.txt
-      
+
+          # Decide whether to process all or only changed notebooks
+          REBUILD_ALL=$(jq -r '.rebuild_all // false' "$CONFIG_PATH")
+          BEFORE=${{ github.event.before }}
+          AFTER=${{ github.event.after }}
+
+          if [[ "${STUDENTS_FRESHLY_CREATED}" == "true" || "$REBUILD_ALL" == "true" ]]; then
+            NOTEBOOKS_ON_MAIN=$(git ls-tree -r --name-only "$AFTER" | grep -E "$PATTERNS" || true)
+            echo "$NOTEBOOKS_ON_MAIN" > notebooks_to_convert.txt
+          else
+            (git diff --name-only "$BEFORE" "$AFTER" | grep -E "$PATTERNS" || true) > notebooks_to_convert.txt
+          fi
+
           echo "notebooks<<EOF" >> $GITHUB_OUTPUT
           cat notebooks_to_convert.txt >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-      
-          echo ""
-          echo "notebooks_to_convert.txt content:"
-          cat notebooks_to_convert.txt
-          
-      - name: Debug notebooks_changed output variable
-        run: |
-          echo "GH_OUTPUT notebooks var BEGIN"
-          echo "::set-output name=notebooks::${{ steps.notebooks_changed.outputs.notebooks }}"
-          echo "Direct print with debug char :"
-          echo "${{ steps.notebooks_changed.outputs.notebooks }}" | cat -A
-          echo "GH_OUTPUT notebooks var END"
 
       - name: Convert changed notebooks
-        run: | 
-          echo "STEP notebooks variable =>"
-          echo "${{ steps.notebooks_changed.outputs.notebooks }}" | cat -A
-          if [ -z "${{ steps.notebooks_changed.outputs.notebooks }}" ]; then
-            echo "VAR EVALUATED AS EMPTY"
-          else
-            echo "VAR NOT EMPTY"
-          fi
-          echo "[DEBUG] Notebooks to convert:"
-          echo "${{ steps.notebooks_changed.outputs.notebooks }}"
-          
+        run: |
           printf "## Processing Report\n" >> $SUMMARY_FILE
           printf "| Notebook | Questions | Code Blocks |  ZIP |\n" >> $SUMMARY_FILE
           printf "|----------|-----------|-------------|------|\n" >> $SUMMARY_FILE
 
-          echo "${{ steps.notebooks_changed.outputs.notebooks }}" | while IFS= read -r nb; do
+          echo "${{ steps.detect_notebooks.outputs.notebooks }}" | while IFS= read -r nb; do
             [ -z "$nb" ] && continue
-            echo "[DEBUG] Converting notebook: '$nb'"
             git checkout origin/main -- "$nb"
             uv run .github/scripts/student_version.py "$nb" \
               --config "$CONFIG_PATH" \
               --hide-header >> $SUMMARY_FILE
-            
           done
-      
+
       - name: Execute post-processing command
         run: |
           if [ -n "$POST_PROCESSING" ]; then
@@ -353,7 +289,7 @@ jobs:
               fi
           fi
 
-      - name: manage summary
+      - name: Manage summary
         run: |
           cp -a $SUMMARY_FILE .
           cat README.md >> $GITHUB_STEP_SUMMARY
@@ -362,9 +298,8 @@ jobs:
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-      
+
       - name: Commit and push changes
         run: |
-          # Only commit if there are actual changes (avoids empty commits)
           git commit -m "Update student materials: $(date +'%Y-%m-%d %H:%M:%S')" || echo "No changes"
           git push origin Students
