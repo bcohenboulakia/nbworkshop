@@ -90,7 +90,7 @@ jobs:
               const lines = [];
               lines.push("## ❌ Error in JSON configuration file");
               lines.push("Config validation failed:");
-              lines.push("```
+              lines.push("```");
               validate.errors.forEach(err => {
                 lines.push(`- ${err.instancePath || '/'} ${err.message}`);
               });
@@ -102,7 +102,7 @@ jobs:
             const lines = [];
             lines.push("## ❌ Error in JSON configuration file");
             lines.push("Parsing or validation failed:");
-            lines.push("```
+            lines.push("```");
             lines.push(error.message);
             lines.push("```");
             fs.appendFileSync(summaryFile, lines.join('\n') + '\n');
