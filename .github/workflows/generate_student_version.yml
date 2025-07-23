@@ -237,19 +237,32 @@ jobs:
             echo "STUDENTS_FRESHLY_CREATED=false" >> "$GITHUB_ENV"
           fi
           
-      - name: Detect changed notebooks since last Students update
-        id: notebooks_changed
+      - name: Debug changed notebooks detection
+        id: debug_notebooks
         shell: bash
         run: |
           CONFIG_PATH=".github/conversion.json"
           DIRS=$(jq -r '.notebooks_dir[]' "$CONFIG_PATH")
-          # Get latest commit on origin/Students and origin/main
-          STUDENTS_SHA=$(git rev-parse HEAD)
-          MAIN_SHA=$(git rev-parse origin/main)
-          echo "[DEBUG] HEAD (Students): $STUDENTS_SHA"
-          echo "[DEBUG] origin/main: $MAIN_SHA"
       
-          # Build grep pattern for monitored dirs
+          # Print context info for debug
+          echo "Github SHA context"
+          echo "------------------"
+          echo "GITHUB_EVENT_BEFORE=${GITHUB_EVENT_BEFORE}"
+          echo "GITHUB_EVENT_AFTER=${GITHUB_EVENT_AFTER}"
+          echo "github.event.before=${{ github.event.before }}"
+          echo "github.event.after=${{ github.event.after }}"
+          echo ""
+          echo "Commits in main branch (git log):"
+          git log --oneline -5
+          echo ""
+      
+          BEFORE=${{ github.event.before }}
+          AFTER=${{ github.event.after }}
+      
+          echo "BEFORE=$BEFORE"
+          echo "AFTER=$AFTER"
+      
+          # Build grep pattern
           PATTERNS=""
           for dir in $DIRS; do
             dir=$(echo "$dir" | sed 's:/*$::')
@@ -259,21 +272,27 @@ jobs:
             PATTERNS+="^${dir}/.*\\.ipynb$"
           done
       
-          # If branch just created or if .rebuild_all == true, process all notebooks
-          REBUILD_ALL=$(jq -r '.rebuild_all // false' "$CONFIG_PATH")
-          if [[ "${STUDENTS_FRESHLY_CREATED}" == "true" || "$REBUILD_ALL" == "true" ]]; then
-            NOTEBOOKS_ON_MAIN=$(git ls-tree -r --name-only "$MAIN_SHA" | grep -E "$PATTERNS" || true)
-            echo "$NOTEBOOKS_ON_MAIN" > notebooks_to_convert.txt
-          else
-            git diff --name-only "${{ github.event.before }}" "${{ github.event.after }}" | grep -E "$PATTERNS" || true > notebooks_to_convert.txt
-          fi
+          echo "PATTERNS=$PATTERNS"
+          echo ""
       
-          echo "Notebooks detected for conversion:"
-          cat notebooks_to_convert.txt
+          echo "Diff files between BEFORE and AFTER:"
+          git diff --name-only "$BEFORE" "$AFTER"
+          echo ""
+      
+          echo "Matched notebooks:"
+          git diff --name-only "$BEFORE" "$AFTER" | grep -E "$PATTERNS" || true
+          echo ""
+      
+          # Write result to a file for step output
+          git diff --name-only "$BEFORE" "$AFTER" | grep -E "$PATTERNS" || true > notebooks_to_convert.txt
       
           echo "notebooks<<EOF" >> $GITHUB_OUTPUT
           cat notebooks_to_convert.txt >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
+      
+          echo ""
+          echo "notebooks_to_convert.txt content:"
+          cat notebooks_to_convert.txt
       
                                     
       - name: Convert changed notebooks
