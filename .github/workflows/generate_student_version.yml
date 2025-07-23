@@ -265,7 +265,7 @@ jobs:
             NOTEBOOKS_ON_MAIN=$(git ls-tree -r --name-only "$MAIN_SHA" | grep -E "$PATTERNS" || true)
             echo "$NOTEBOOKS_ON_MAIN" > notebooks_to_convert.txt
           else
-            git diff --name-only "$STUDENTS_SHA" "$MAIN_SHA" | grep -E "$PATTERNS" || true > notebooks_to_convert.txt
+            git diff --name-only "${{ github.event.before }}" "${{ github.event.after }}" | grep -E "$PATTERNS" || true > notebooks_to_convert.txt
           fi
       
           echo "Notebooks detected for conversion:"
@@ -278,7 +278,7 @@ jobs:
                                     
       - name: Convert changed notebooks
         if: steps.notebooks_changed.outputs.notebooks != ''
-        run: |
+        run: | 
           echo "[DEBUG] Notebooks to convert:"
           echo "${{ steps.notebooks_changed.outputs.notebooks }}"
           
