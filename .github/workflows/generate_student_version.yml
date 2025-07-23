@@ -45,10 +45,8 @@ jobs:
             exit 1
           fi
 
-          # Install Ajv locally (not global)
           npm install ajv@8
 
-          # Validate JSON file structure/keys
           node - <<'EOF'
           const fs = require('fs');
           const Ajv = require('ajv').default;
@@ -58,7 +56,7 @@ jobs:
           const schema = {
             type: 'object',
             required: [
-              'solution_marker', 'placeholder', 'generate_zip', 
+              'solution_marker', 'placeholder', 'generate_zip',
               'notebooks_dir', 'student_postfix', 'tutor_postfix'
             ],
             properties: {
@@ -92,7 +90,7 @@ jobs:
               const lines = [];
               lines.push("## ❌ Error in JSON configuration file");
               lines.push("Config validation failed:");
-              lines.push("```");
+              lines.push("```
               validate.errors.forEach(err => {
                 lines.push(`- ${err.instancePath || '/'} ${err.message}`);
               });
@@ -104,7 +102,7 @@ jobs:
             const lines = [];
             lines.push("## ❌ Error in JSON configuration file");
             lines.push("Parsing or validation failed:");
-            lines.push("```");
+            lines.push("```
             lines.push(error.message);
             lines.push("```");
             fs.appendFileSync(summaryFile, lines.join('\n') + '\n');
@@ -144,13 +142,10 @@ jobs:
             ERROR_OUTPUT=$(echo "$PRE_PROCESSING" | bash -n 2>&1) || {
               printf "## ❌ Error: Pre-processing command syntax error\n" >> $SUMMARY_FILE
               printf "Please fix your pre-processing command syntax:\n" >> $SUMMARY_FILE
-              printf "```
               printf "%s\n" "$PRE_PROCESSING" >> $SUMMARY_FILE
-              printf "```\n\n" >> $SUMMARY_FILE
+              printf "\n" >> $SUMMARY_FILE
               printf "**Error details:**\n" >> $SUMMARY_FILE
-              printf "```
               printf "%s\n" "$ERROR_OUTPUT" >> $SUMMARY_FILE
-              printf "```\n" >> $SUMMARY_FILE
               exit 1
             }
           fi
@@ -158,13 +153,10 @@ jobs:
             ERROR_OUTPUT=$(echo "$POST_PROCESSING" | bash -n 2>&1) || {
               printf "## ❌ Error: Post-processing command syntax error\n" >> $SUMMARY_FILE
               printf "Please fix your post-processing command syntax:\n" >> $SUMMARY_FILE
-              printf "```
               printf "%s\n" "$POST_PROCESSING" >> $SUMMARY_FILE
-              printf "```\n\n" >> $SUMMARY_FILE
+              printf "\n" >> $SUMMARY_FILE
               printf "**Error details:**\n" >> $SUMMARY_FILE
-              printf "```
               printf "%s\n" "$ERROR_OUTPUT" >> $SUMMARY_FILE
-              printf "```\n" >> $SUMMARY_FILE
               exit 1
             }
           fi
@@ -197,9 +189,7 @@ jobs:
               if [ -n "$OUTPUT" ]; then
                   printf "\n" >> $SUMMARY_FILE
                   printf "Command output (including errors):\n" >> $SUMMARY_FILE
-                  printf "```
                   printf "%s\n" "$OUTPUT" >> $SUMMARY_FILE
-                  printf "```\n" >> $SUMMARY_FILE
               fi
           fi
 
@@ -210,7 +200,6 @@ jobs:
           git checkout Students || git checkout -b Students origin/Students || git checkout -b Students origin/main
           git merge origin/main --strategy-option=theirs --allow-unrelated-histories || true
           git push origin Students --force
-          # Detect if Students was freshly created and is identical to main
           if [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ]; then
             echo "STUDENTS_FRESHLY_CREATED=true" >> "$GITHUB_ENV"
           else
@@ -224,27 +213,42 @@ jobs:
           CONFIG_PATH=".github/conversion.json"
           DIRS=$(jq -r '.notebooks_dir[]' "$CONFIG_PATH")
 
-          # Pattern for target notebook files
+          # Build patterns for target notebook files
           PATTERNS=""
           for dir in $DIRS; do
             dir=$(echo "$dir" | sed 's:/*$::')
             if [ -n "$PATTERNS" ]; then
               PATTERNS+="|"
             fi
-            PATTERNS+="^${dir}/.*\\.ipynb$"
+            PATTERNS+="^${dir}/.*\.ipynb$"
           done
 
-          # Decide whether to process all or only changed notebooks
           REBUILD_ALL=$(jq -r '.rebuild_all // false' "$CONFIG_PATH")
           BEFORE=${{ github.event.before }}
           AFTER=${{ github.event.after }}
 
+          echo "===== DEBUG DETECT NOTEBOOKS STEP ====="
+          echo "STUDENTS_FRESHLY_CREATED=\"$STUDENTS_FRESHLY_CREATED\""
+          echo "REBUILD_ALL=\"$REBUILD_ALL\""
+          echo "BEFORE=$BEFORE"
+          echo "AFTER=$AFTER"
+          echo "PATTERNS=\"$PATTERNS\""
+          echo "---------------"
+
           if [[ "${STUDENTS_FRESHLY_CREATED}" == "true" || "$REBUILD_ALL" == "true" ]]; then
             NOTEBOOKS_ON_MAIN=$(git ls-tree -r --name-only "$AFTER" | grep -E "$PATTERNS" || true)
             echo "$NOTEBOOKS_ON_MAIN" > notebooks_to_convert.txt
+            echo "== FULL NOTEBOOKS LIST (FORCED)=="
+            echo "$NOTEBOOKS_ON_MAIN"
           else
             (git diff --name-only "$BEFORE" "$AFTER" | grep -E "$PATTERNS" || true) > notebooks_to_convert.txt
+            echo "== NOTEBOOKS FOUND BY DIFF =="
+            git diff --name-only "$BEFORE" "$AFTER" | grep -E "$PATTERNS" || true
           fi
+
+          echo "CONTENTS OF notebooks_to_convert.txt:"
+          cat notebooks_to_convert.txt
+          echo "--- END DEBUG ---"
 
           echo "notebooks<<EOF" >> $GITHUB_OUTPUT
           cat notebooks_to_convert.txt >> $GITHUB_OUTPUT
@@ -256,13 +260,21 @@ jobs:
           printf "| Notebook | Questions | Code Blocks |  ZIP |\n" >> $SUMMARY_FILE
           printf "|----------|-----------|-------------|------|\n" >> $SUMMARY_FILE
 
+          echo "===== DEBUG CONVERT STEP ====="
+          echo "RAW NOTEBOOKS INPUT:"
+          echo "${{ steps.detect_notebooks.outputs.notebooks }}" | cat -A
+          echo "--- Starting conversion loop ---"
+
           echo "${{ steps.detect_notebooks.outputs.notebooks }}" | while IFS= read -r nb; do
             [ -z "$nb" ] && continue
+            echo "[DEBUG] Converting notebook: '$nb'"
             git checkout origin/main -- "$nb"
             uv run .github/scripts/student_version.py "$nb" \
               --config "$CONFIG_PATH" \
               --hide-header >> $SUMMARY_FILE
           done
+
+          echo "--- END OF CONVERT STEP ---"
 
       - name: Execute post-processing command
         run: |
@@ -282,9 +294,7 @@ jobs:
                   if [ -n "$OUTPUT" ]; then
                       printf "\n" >> $SUMMARY_FILE
                       printf "Command output (including errors):\n" >> $SUMMARY_FILE
-                      printf "```
                       printf "%s\n" "$OUTPUT" >> $SUMMARY_FILE
-                      printf "```\n" >> $SUMMARY_FILE
                   fi
               fi
           fi
