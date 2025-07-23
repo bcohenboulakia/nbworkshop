@@ -236,6 +236,7 @@ jobs:
           else
             echo "STUDENTS_FRESHLY_CREATED=false" >> "$GITHUB_ENV"
           fi
+          
       - name: Detect changed notebooks since last Students update
         id: notebooks_changed
         shell: bash
@@ -275,25 +276,25 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
       
                                     
-            - name: Convert changed notebooks
-              if: steps.notebooks_changed.outputs.notebooks != ''
-              run: |
-                echo "[DEBUG] Notebooks to convert:"
-                echo "${{ steps.notebooks_changed.outputs.notebooks }}"
-                
-                printf "## Processing Report\n" >> $SUMMARY_FILE
-                printf "| Notebook | Questions | Code Blocks |  ZIP |\n" >> $SUMMARY_FILE
-                printf "|----------|-----------|-------------|------|\n" >> $SUMMARY_FILE
-      
-                echo "${{ steps.notebooks_changed.outputs.notebooks }}" | while IFS= read -r nb; do
-                  [ -z "$nb" ] && continue
-                  echo "[DEBUG] Converting notebook: '$nb'"
-                  git checkout origin/main -- "$nb"
-                  uv run .github/scripts/student_version.py "$nb" \
-                    --config "$CONFIG_PATH" \
-                    --hide-header >> $SUMMARY_FILE
-                  
-                done
+      - name: Convert changed notebooks
+        if: steps.notebooks_changed.outputs.notebooks != ''
+        run: |
+          echo "[DEBUG] Notebooks to convert:"
+          echo "${{ steps.notebooks_changed.outputs.notebooks }}"
+          
+          printf "## Processing Report\n" >> $SUMMARY_FILE
+          printf "| Notebook | Questions | Code Blocks |  ZIP |\n" >> $SUMMARY_FILE
+          printf "|----------|-----------|-------------|------|\n" >> $SUMMARY_FILE
+
+          echo "${{ steps.notebooks_changed.outputs.notebooks }}" | while IFS= read -r nb; do
+            [ -z "$nb" ] && continue
+            echo "[DEBUG] Converting notebook: '$nb'"
+            git checkout origin/main -- "$nb"
+            uv run .github/scripts/student_version.py "$nb" \
+              --config "$CONFIG_PATH" \
+              --hide-header >> $SUMMARY_FILE
+            
+          done
       
       - name: Execute post-processing command
         run: |
