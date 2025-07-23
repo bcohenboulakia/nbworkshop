@@ -195,16 +195,27 @@ jobs:
 
       - name: Prepare Students branch
         run: |
+          # Test if Students branch already exists locally or remotely before checkout
+          if git show-ref --verify --quiet refs/remotes/origin/Students; then
+            STUDENTS_BRANCH_PREEXISTED=true
+          else
+            STUDENTS_BRANCH_PREEXISTED=false
+          fi
+
           git fetch origin Students || true
-          # Create or update Students branch as needed
           git checkout Students || git checkout -b Students origin/Students || git checkout -b Students origin/main
           git merge origin/main --strategy-option=theirs --allow-unrelated-histories || true
           git push origin Students --force
-          if [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ]; then
+
+          # Only set freshly created to true if branch did not exist before
+          if [ "$STUDENTS_BRANCH_PREEXISTED" = false ]; then
             echo "STUDENTS_FRESHLY_CREATED=true" >> "$GITHUB_ENV"
+            echo "STUDENTS_FRESHLY_CREATED=true (first creation)"
           else
             echo "STUDENTS_FRESHLY_CREATED=false" >> "$GITHUB_ENV"
+            echo "STUDENTS_FRESHLY_CREATED=false (branch already existed)"
           fi
+
 
       - name: Detect changed notebooks
         id: detect_notebooks
