@@ -219,7 +219,6 @@ jobs:
               fi
           fi
 
-      # ---- PATCHED PREPARATION STEP START ----
       - name: Prepare Students branch
         run: |
           git fetch origin Students || true
@@ -237,26 +236,19 @@ jobs:
           else
             echo "STUDENTS_FRESHLY_CREATED=false" >> "$GITHUB_ENV"
           fi
-      # ---- PATCHED PREPARATION STEP END ----
-
-      # ---- PATCHED DETECTION STEP START ----
-      - name: Detect notebooks changed on main vs Students
+      - name: Detect changed notebooks since last Students update
         id: notebooks_changed
         shell: bash
         run: |
-          set -e
-
           CONFIG_PATH=".github/conversion.json"
-
-          echo "[DEBUG] HEAD (Students) is at $(git rev-parse HEAD)"
-          echo "[DEBUG] origin/main is at $(git rev-parse origin/main)"
-
-          # Get monitored notebooks directories from config
           DIRS=$(jq -r '.notebooks_dir[]' "$CONFIG_PATH")
-          echo "[DEBUG] Monitored directories:"
-          echo "$DIRS"
-
-          # Build regex for monitored directories
+          # Get latest commit on origin/Students and origin/main
+          STUDENTS_SHA=$(git rev-parse HEAD)
+          MAIN_SHA=$(git rev-parse origin/main)
+          echo "[DEBUG] HEAD (Students): $STUDENTS_SHA"
+          echo "[DEBUG] origin/main: $MAIN_SHA"
+      
+          # Build grep pattern for monitored dirs
           PATTERNS=""
           for dir in $DIRS; do
             dir=$(echo "$dir" | sed 's:/*$::')
@@ -265,64 +257,43 @@ jobs:
             fi
             PATTERNS+="^${dir}/.*\\.ipynb$"
           done
-          echo "[DEBUG] Regex pattern for grep: $PATTERNS"
-
-          # List all notebooks on main
-          NOTEBOOKS_ON_MAIN=$(git ls-tree -r --name-only origin/main | grep -E "$PATTERNS" || true)
-          echo "[DEBUG] Notebooks on main:"
-          echo "$NOTEBOOKS_ON_MAIN"
-
-          tmpfile=$(mktemp)
-          : > "$tmpfile"
-
-          # If the Students branch was just created (is equal to main), force processing all notebooks
-          if [[ "${STUDENTS_FRESHLY_CREATED}" == "true" ]]; then
-            echo "[INFO] Students is freshly created - force processing all notebooks."
-            echo "$NOTEBOOKS_ON_MAIN" > "$tmpfile"
+      
+          # If branch just created or if .rebuild_all == true, process all notebooks
+          REBUILD_ALL=$(jq -r '.rebuild_all // false' "$CONFIG_PATH")
+          if [[ "${STUDENTS_FRESHLY_CREATED}" == "true" || "$REBUILD_ALL" == "true" ]]; then
+            NOTEBOOKS_ON_MAIN=$(git ls-tree -r --name-only "$MAIN_SHA" | grep -E "$PATTERNS" || true)
+            echo "$NOTEBOOKS_ON_MAIN" > notebooks_to_convert.txt
           else
-            # Compare each notebook and add changed ones to processing list
-            echo "$NOTEBOOKS_ON_MAIN" | while IFS= read -r nb; do
-              [ -z "$nb" ] && continue
-              echo "[DEBUG] Checking notebook '$nb' ..."
-              if ! git diff --quiet HEAD...origin/main -- "$nb"; then
-                echo "[DEBUG] '$nb': MODIFIED on main"
-                echo "$nb" >> "$tmpfile"
-              else
-                echo "[DEBUG] '$nb': unchanged"
-              fi
-            done
+            git diff --name-only "$STUDENTS_SHA" "$MAIN_SHA" | grep -E "$PATTERNS" || true > notebooks_to_convert.txt
           fi
-
-          echo "[DEBUG] Notebooks to process:"
-          cat "$tmpfile"
-
-          # Export list for next step
+      
+          echo "Notebooks detected for conversion:"
+          cat notebooks_to_convert.txt
+      
           echo "notebooks<<EOF" >> $GITHUB_OUTPUT
-          cat "$tmpfile" >> $GITHUB_OUTPUT
+          cat notebooks_to_convert.txt >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-
-          rm "$tmpfile"
-      # ---- PATCHED DETECTION STEP END ----
-                              
-      - name: Convert changed notebooks
-        if: steps.notebooks_changed.outputs.notebooks != ''
-        run: |
-          echo "[DEBUG] Notebooks to convert:"
-          echo "${{ steps.notebooks_changed.outputs.notebooks }}"
-          
-          printf "## Processing Report\n" >> $SUMMARY_FILE
-          printf "| Notebook | Questions | Code Blocks |  ZIP |\n" >> $SUMMARY_FILE
-          printf "|----------|-----------|-------------|------|\n" >> $SUMMARY_FILE
-
-          echo "${{ steps.notebooks_changed.outputs.notebooks }}" | while IFS= read -r nb; do
-            [ -z "$nb" ] && continue
-            echo "[DEBUG] Converting notebook: '$nb'"
-            git checkout origin/main -- "$nb"
-            uv run .github/scripts/student_version.py "$nb" \
-              --config "$CONFIG_PATH" \
-              --hide-header >> $SUMMARY_FILE
-            
-          done
+      
+                                    
+            - name: Convert changed notebooks
+              if: steps.notebooks_changed.outputs.notebooks != ''
+              run: |
+                echo "[DEBUG] Notebooks to convert:"
+                echo "${{ steps.notebooks_changed.outputs.notebooks }}"
+                
+                printf "## Processing Report\n" >> $SUMMARY_FILE
+                printf "| Notebook | Questions | Code Blocks |  ZIP |\n" >> $SUMMARY_FILE
+                printf "|----------|-----------|-------------|------|\n" >> $SUMMARY_FILE
+      
+                echo "${{ steps.notebooks_changed.outputs.notebooks }}" | while IFS= read -r nb; do
+                  [ -z "$nb" ] && continue
+                  echo "[DEBUG] Converting notebook: '$nb'"
+                  git checkout origin/main -- "$nb"
+                  uv run .github/scripts/student_version.py "$nb" \
+                    --config "$CONFIG_PATH" \
+                    --hide-header >> $SUMMARY_FILE
+                  
+                done
       
       - name: Execute post-processing command
         run: |
