@@ -293,11 +293,24 @@ jobs:
           echo ""
           echo "notebooks_to_convert.txt content:"
           cat notebooks_to_convert.txt
-      
-                                    
+          
+      - name: Debug notebooks_changed output variable
+        run: |
+          echo "GH_OUTPUT notebooks var BEGIN"
+          echo "::set-output name=notebooks::${{ steps.notebooks_changed.outputs.notebooks }}"
+          echo "Direct print with debug char :"
+          echo "${{ steps.notebooks_changed.outputs.notebooks }}" | cat -A
+          echo "GH_OUTPUT notebooks var END"
+                     
       - name: Convert changed notebooks
-        if: steps.notebooks_changed.outputs.notebooks != ''
         run: | 
+        echo "STEP notebooks variable =>"
+        echo "${{ steps.notebooks_changed.outputs.notebooks }}" | cat -A
+        if [ -z "${{ steps.notebooks_changed.outputs.notebooks }}" ]; then
+          echo "VAR EVALUATED AS EMPTY"
+        else
+          echo "VAR NOT EMPTY"
+        fi
           echo "[DEBUG] Notebooks to convert:"
           echo "${{ steps.notebooks_changed.outputs.notebooks }}"
           
