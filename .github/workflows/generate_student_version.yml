@@ -35,7 +35,6 @@ jobs:
         with:
           fetch-depth: 0
 
-
       - name: Validate JSON config
         run: |
           # Syntax check with jq, output to summary if error
@@ -53,10 +52,10 @@ jobs:
           node - <<'EOF'
           const fs = require('fs');
           const Ajv = require('ajv').default;
-      
+
           const summaryFile = process.env.SUMMARY_FILE || '/tmp/README.md';
           const configPath = process.env.CONFIG_PATH || '.github/conversion.json';
-      
+
           const schema = {
             type: 'object',
             required: [
@@ -99,17 +98,17 @@ jobs:
               rebuild_all: {type: 'boolean'}
             }
           };
-      
+
           try {
             const config = JSON.parse(fs.readFileSync(configPath));
             const ajv = new Ajv({allErrors: true, strict: true});
             const validate = ajv.compile(schema);
-      
+
             if (!validate(config)) {
               const lines = [];
               lines.push("## ❌ Error in JSON configuration file");
               lines.push("Config validation failed:");
-              lines.push("```");
+              lines.push("```
               validate.errors.forEach(err => {
                 lines.push(`- ${err.instancePath || '/'} ${err.message}`);
               });
@@ -121,7 +120,7 @@ jobs:
             const lines = [];
             lines.push("## ❌ Error in JSON configuration file");
             lines.push("Parsing or validation failed:");
-            lines.push("```");
+            lines.push("```
             lines.push(error.message);
             lines.push("```");
             fs.appendFileSync(summaryFile, lines.join('\n') + '\n');
@@ -210,40 +209,54 @@ jobs:
               fi
           else
               printf "## Post-processing failed ❌\n" >> $SUMMARY_FILE
-              printf "Code de sortie: %d\n" "$EXIT_CODE" >> $SUMMARY_FILE
+              printf "Exit code: %d\n" "$EXIT_CODE" >> $SUMMARY_FILE
               if [ -n "$OUTPUT" ]; then
                   printf "\n" >> $SUMMARY_FILE
-                  printf "Sortie de commande (incluant les erreurs):\n" >> $SUMMARY_FILE
+                  printf "Command output (including errors):\n" >> $SUMMARY_FILE
                   printf "```
                   printf "%s\n" "$OUTPUT" >> $SUMMARY_FILE
                   printf "```\n" >> $SUMMARY_FILE
               fi
           fi
 
+      # ---- PATCHED PREPARATION STEP START ----
       - name: Prepare Students branch
         run: |
           git fetch origin Students || true
+          # Try to checkout Students or create it from origin/Students or origin/main
           git checkout Students || git checkout -b Students origin/Students || git checkout -b Students origin/main
+
+          # Merge main if necessary, favoring their changes, allow unrelated histories
           git merge origin/main --strategy-option=theirs --allow-unrelated-histories || true
           git push origin Students --force
-          
+
+          # Detect if Students has just been created and is identical to main
+          # In such case, force processing all notebooks in the next step
+          if [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ]; then
+            echo "STUDENTS_FRESHLY_CREATED=true" >> "$GITHUB_ENV"
+          else
+            echo "STUDENTS_FRESHLY_CREATED=false" >> "$GITHUB_ENV"
+          fi
+      # ---- PATCHED PREPARATION STEP END ----
+
+      # ---- PATCHED DETECTION STEP START ----
       - name: Detect notebooks changed on main vs Students
         id: notebooks_changed
         shell: bash
         run: |
           set -e
-      
+
           CONFIG_PATH=".github/conversion.json"
-      
+
           echo "[DEBUG] HEAD (Students) is at $(git rev-parse HEAD)"
           echo "[DEBUG] origin/main is at $(git rev-parse origin/main)"
-      
-          # Obtenir les dossiers de notebooks
+
+          # Get monitored notebooks directories from config
           DIRS=$(jq -r '.notebooks_dir[]' "$CONFIG_PATH")
-          echo "[DEBUG] Dossiers monitorés :"
+          echo "[DEBUG] Monitored directories:"
           echo "$DIRS"
-      
-          # Construire le pattern regex pour grep
+
+          # Build regex for monitored directories
           PATTERNS=""
           for dir in $DIRS; do
             dir=$(echo "$dir" | sed 's:/*$::')
@@ -252,44 +265,49 @@ jobs:
             fi
             PATTERNS+="^${dir}/.*\\.ipynb$"
           done
-          echo "[DEBUG] Pattern regex pour grep : $PATTERNS"
-      
-          # Liste tous les fichiers .ipynb sur main
+          echo "[DEBUG] Regex pattern for grep: $PATTERNS"
+
+          # List all notebooks on main
           NOTEBOOKS_ON_MAIN=$(git ls-tree -r --name-only origin/main | grep -E "$PATTERNS" || true)
-          echo "[DEBUG] Notebooks sur main :"
+          echo "[DEBUG] Notebooks on main:"
           echo "$NOTEBOOKS_ON_MAIN"
-      
-          # Fichier temporaire pour la liste finale
+
           tmpfile=$(mktemp)
           : > "$tmpfile"
-      
-          # Pour chaque notebook sur main, vérifier s'il diffère de la version sur Students
-          echo "$NOTEBOOKS_ON_MAIN" | while IFS= read -r nb; do
-            [ -z "$nb" ] && continue
-            echo "[DEBUG] Vérification du notebook '$nb' ..."
-            if ! git diff --quiet HEAD...origin/main -- "$nb"; then
-              echo "[DEBUG] '$nb' : MODIFIÉ sur main"
-              echo "$nb" >> "$tmpfile"
-            else
-              echo "[DEBUG] '$nb' : inchangé"
-            fi
-          done
-      
-          echo "[DEBUG] Notebooks à (re)générer :"
+
+          # If the Students branch was just created (is equal to main), force processing all notebooks
+          if [[ "${STUDENTS_FRESHLY_CREATED}" == "true" ]]; then
+            echo "[INFO] Students is freshly created - force processing all notebooks."
+            echo "$NOTEBOOKS_ON_MAIN" > "$tmpfile"
+          else
+            # Compare each notebook and add changed ones to processing list
+            echo "$NOTEBOOKS_ON_MAIN" | while IFS= read -r nb; do
+              [ -z "$nb" ] && continue
+              echo "[DEBUG] Checking notebook '$nb' ..."
+              if ! git diff --quiet HEAD...origin/main -- "$nb"; then
+                echo "[DEBUG] '$nb': MODIFIED on main"
+                echo "$nb" >> "$tmpfile"
+              else
+                echo "[DEBUG] '$nb': unchanged"
+              fi
+            done
+          fi
+
+          echo "[DEBUG] Notebooks to process:"
           cat "$tmpfile"
-      
-          # Export pour l'étape suivante
+
+          # Export list for next step
           echo "notebooks<<EOF" >> $GITHUB_OUTPUT
           cat "$tmpfile" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-      
+
           rm "$tmpfile"
-      
+      # ---- PATCHED DETECTION STEP END ----
                               
       - name: Convert changed notebooks
         if: steps.notebooks_changed.outputs.notebooks != ''
         run: |
-          echo "[DEBUG] Notebooks à convertir :"
+          echo "[DEBUG] Notebooks to convert:"
           echo "${{ steps.notebooks_changed.outputs.notebooks }}"
           
           printf "## Processing Report\n" >> $SUMMARY_FILE
@@ -298,15 +316,13 @@ jobs:
 
           echo "${{ steps.notebooks_changed.outputs.notebooks }}" | while IFS= read -r nb; do
             [ -z "$nb" ] && continue
-            echo "[DEBUG] Conversion du notebook : '$nb'"
+            echo "[DEBUG] Converting notebook: '$nb'"
             git checkout origin/main -- "$nb"
             uv run .github/scripts/student_version.py "$nb" \
               --config "$CONFIG_PATH" \
               --hide-header >> $SUMMARY_FILE
             
           done
-      
-      
       
       - name: Execute post-processing command
         run: |
@@ -322,10 +338,10 @@ jobs:
                   fi
               else
                   printf "## Post-processing failed ❌\n" >> $SUMMARY_FILE
-                  printf "Code de sortie: %d\n" "$EXIT_CODE" >> $SUMMARY_FILE
+                  printf "Exit code: %d\n" "$EXIT_CODE" >> $SUMMARY_FILE
                   if [ -n "$OUTPUT" ]; then
                       printf "\n" >> $SUMMARY_FILE
-                      printf "Sortie de commande (incluant les erreurs):\n" >> $SUMMARY_FILE
+                      printf "Command output (including errors):\n" >> $SUMMARY_FILE
                       printf "```
                       printf "%s\n" "$OUTPUT" >> $SUMMARY_FILE
                       printf "```\n" >> $SUMMARY_FILE
