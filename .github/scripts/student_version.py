@@ -1,35 +1,36 @@
 """
 This file is part of nbworkshop.
 
-nbworkshop is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3 as published by
-the Free Software Foundation.
+nbworkshop is free software: you can redistribute it and/or modify it under the
+terms of the GNU General Public License version 3 as published by the Free
+Software Foundation.
 
-nbworkshop is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU General Public License for more details.
+nbworkshop is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with nbworkshop. If not, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License along with
+nbworkshop. If not, see <https://www.gnu.org/licenses/>.
 """
 
 # /// script
 # requires-python = ">=3.12"
 # dependencies = [
 #   "beautifulsoup4>=4.9.0",  # For HTML processing in Markdown cells
+#   "chardet", # For Notebook charset detection
 # ]
 # ///
 
+import os
+from pathlib import Path
+import shutil
+import subprocess
 import argparse
 import json
-import os
 import zipfile
-from pathlib import Path
 from bs4 import BeautifulSoup
-import shutil
-from pathlib import Path
-import subprocess
+import chardet
+
 
 def load_config(config_path):
     """
@@ -88,7 +89,7 @@ def process_code_cell(cell, config):
     for line in cell["source"]:
         # beginning of a solution block
         if solution_marker in line:
-            if not in_solution:  # Nouveau bloc
+            if not in_solution:  # new block
                 stats["code_blocks"] += 1
                 in_solution = True
                 expanded_line = line.expandtabs(4)
@@ -110,6 +111,18 @@ def process_code_cell(cell, config):
     return cell, stats
 
 
+
+def load_json_autoencoding(filepath):
+    # Binary read for détection
+    with open(filepath, 'rb') as f:
+        raw = f.read()
+        result = chardet.detect(raw)
+        encoding = result['encoding'] or 'utf-8'
+
+    # Use detected encoding for reading
+    with open(filepath, 'r', encoding=encoding) as f:
+        return json.load(f)
+
 def process_notebook(input_path, config):
     """Convert a notebook to student version"""
 
@@ -120,8 +133,7 @@ def process_notebook(input_path, config):
     except ValueError:
         display_path = input_path
 
-    with open(input_path, "r", encoding="utf-8") as f:
-        notebook = json.load(f)
+    notebook = load_json_autoencoding(input_path)
     
     stats = {"questions": 0, "code_blocks": 0, "remarks": 0}
     attached_files = notebook.get("metadata", {}).get("attached_files", [])
@@ -149,7 +161,7 @@ def process_notebook(input_path, config):
     tutor_postfix = config["tutor_postfix"]
     student_postfix = config["student_postfix"]
 
-        # Replace tutor_postfix with student_postfix at the endZ
+    # Replace tutor_postfix with student_postfix at the endZ
     if stem.endswith(tutor_postfix):
         student_stem = stem[: -len(tutor_postfix)] + student_postfix
     else:
@@ -173,11 +185,13 @@ def process_notebook(input_path, config):
                 zipf.write(output_path, arcname=student_filename)
                 for fname in attached_files:
                     if os.path.isabs(fname):
-                        raise ValueError(f"Absolute path forbidden in embedded files: {fname}")
+                        raise ValueError(
+                            f"Absolute path forbidden in embedded files: {fname}")
                     
                     file_path = input_path.parent / fname
                     if not file_path.exists():
-                        raise FileNotFoundError(f"Missing embedded file: {file_path}")
+                        raise FileNotFoundError(
+                            f"Missing embedded file: {file_path}")
                     
                     zipf.write(file_path, arcname=fname)
 
@@ -189,9 +203,12 @@ def process_notebook(input_path, config):
     
 if __name__ == '__main__':
     """Main entry point for notebook conversion"""
-    parser = argparse.ArgumentParser(description="Convert Jupyter notebooks to student versions")
+    parser = argparse.ArgumentParser(
+        description="Convert Jupyter notebooks to student versions")
     parser.add_argument("inputs", nargs="+", help="Input notebook path(s)")
-    parser.add_argument("--config", default="conversion.json", help="Configuration file path")
+    parser.add_argument("--config",
+                        default="conversion.json",
+                        help="Configuration file path")
     parser.add_argument("--hide-header", action="store_true", 
                         help="Suppress summary header in output")
     args = parser.parse_args()
@@ -199,7 +216,8 @@ if __name__ == '__main__':
     config = load_config(args.config)
     results = []
 
-    # Print header if needed
+    # Print header if needed (not used when in batch mode (github workflow
+    # for example)
     if not args.hide_header:
         print("## Processing Report")
         print("| Notebook | Questions | Code Blocks |  ZIP |")
@@ -211,6 +229,8 @@ if __name__ == '__main__':
         results.append(result)
         
         # Print results line to stdout
-        print(f"| `{Path(result["display_path"])}` | {result["stats"]["questions"]} | "
-              f"{result["stats"]["code_blocks"]} | "
-              f"{"✅" if result["zip"] else "❌"} |")
+        print(
+            f"| `{Path(result["display_path"])}` "
+            f"| {result["stats"]["questions"]} "
+            f"| {result["stats"]["code_blocks"]} "
+            f"| {"✅" if result["zip"] else "❌"} |")
