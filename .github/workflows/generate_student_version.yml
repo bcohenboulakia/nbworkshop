@@ -210,10 +210,8 @@ jobs:
           # Only set freshly created to true if branch did not exist before
           if [ "$STUDENTS_BRANCH_PREEXISTED" = false ]; then
             echo "STUDENTS_FRESHLY_CREATED=true" >> "$GITHUB_ENV"
-            echo "STUDENTS_FRESHLY_CREATED=true (first creation)"
           else
             echo "STUDENTS_FRESHLY_CREATED=false" >> "$GITHUB_ENV"
-            echo "STUDENTS_FRESHLY_CREATED=false (branch already existed)"
           fi
 
 
@@ -238,28 +236,15 @@ jobs:
           BEFORE=${{ github.event.before }}
           AFTER=${{ github.event.after }}
 
-          echo "===== DEBUG DETECT NOTEBOOKS STEP ====="
-          echo "STUDENTS_FRESHLY_CREATED=\"$STUDENTS_FRESHLY_CREATED\""
-          echo "REBUILD_ALL=\"$REBUILD_ALL\""
-          echo "BEFORE=$BEFORE"
-          echo "AFTER=$AFTER"
-          echo "PATTERNS=\"$PATTERNS\""
-          echo "---------------"
-
+          # Check wether to rebuild all (either because of config or new branch
+          # or only changed files
           if [[ "${STUDENTS_FRESHLY_CREATED}" == "true" || "$REBUILD_ALL" == "true" ]]; then
             NOTEBOOKS_ON_MAIN=$(git ls-tree -r --name-only "$AFTER" | grep -E "$PATTERNS" || true)
             echo "$NOTEBOOKS_ON_MAIN" > notebooks_to_convert.txt
-            echo "== FULL NOTEBOOKS LIST (FORCED)=="
-            echo "$NOTEBOOKS_ON_MAIN"
           else
             (git diff --name-only "$BEFORE" "$AFTER" | grep -E "$PATTERNS" || true) > notebooks_to_convert.txt
-            echo "== NOTEBOOKS FOUND BY DIFF =="
             git diff --name-only "$BEFORE" "$AFTER" | grep -E "$PATTERNS" || true
           fi
-
-          echo "CONTENTS OF notebooks_to_convert.txt:"
-          cat notebooks_to_convert.txt
-          echo "--- END DEBUG ---"
 
           echo "notebooks<<EOF" >> $GITHUB_OUTPUT
           cat notebooks_to_convert.txt >> $GITHUB_OUTPUT
@@ -271,21 +256,13 @@ jobs:
           printf "| Notebook | Questions | Code Blocks |  ZIP |\n" >> $SUMMARY_FILE
           printf "|----------|-----------|-------------|------|\n" >> $SUMMARY_FILE
 
-          echo "===== DEBUG CONVERT STEP ====="
-          echo "RAW NOTEBOOKS INPUT:"
-          echo "${{ steps.detect_notebooks.outputs.notebooks }}" | cat -A
-          echo "--- Starting conversion loop ---"
-
           echo "${{ steps.detect_notebooks.outputs.notebooks }}" | while IFS= read -r nb; do
             [ -z "$nb" ] && continue
-            echo "[DEBUG] Converting notebook: '$nb'"
             git checkout origin/main -- "$nb"
             uv run .github/scripts/student_version.py "$nb" \
               --config "$CONFIG_PATH" \
               --hide-header >> $SUMMARY_FILE
           done
-
-          echo "--- END OF CONVERT STEP ---"
 
       - name: Execute post-processing command
         run: |
