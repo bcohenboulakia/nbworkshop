@@ -42,18 +42,18 @@ along with nbworkshop. If not, see <https://www.gnu.org/licenses/>.
 
 ## Presentation
 
-_nbworkshop_ is a streamlined tool designed for educators who use Jupyter Notebooks to teach Python and need to efficiently prepare and distribute exercise Notebooks with hidden solutions or instructor-only comments:
+_nbworkshop_ is a specialized tool to prepare and distribute Python exercise Notebooks with hidden solutions or instructor-only comments:
 ![Simple nbworkshop example](https://github.com/user-attachments/assets/be557bda-6294-432e-8739-4d19538a341e)
 
-Unlike more comprehensive systems such as _nbgrader_, _nbworkshop_ prioritizes simplicity and flexibility, allowing teachers to mark specific parts of any cell-whether code or markdown-focr removal in student versions, without imposing a rigid file structure or complex workflow. An archive (ZIP) containing these student versions, along with any necessary attachments, can also be created. This makes it easy to distribute up-to-date materials to students while keeping instructor content private and organized.
+Unlike more comprehensive systems such as _nbgrader_, _nbworkshop_ prioritizes simplicity and flexibility, allowing teachers to mark specific parts of any cell-whether code or markdown-focr removal in student versions, without imposing a rigid file structure or complex workflow. An archive (ZIP) containing these student versions, along with any necessary attachments, can also be created. This makes it easy to distribute up-to-date materials to students while keeping instructor content private and organized, and prevents discrepancies between tutor and student versions due to oversight or manipulation errors.
 
 For users working with GitHub, _nbworkshop_ also provides a workflow that monitors specific directories and, whenever a Notebook within these monitored directories is updated on the `main` branch, automatically generates Student versions of those Notebooks that is stored on a specific branch. If ZIP archives are to be created, they are stored in the same branch. Note that this workflow can be easily adapted to GitLab or BitBucket using their respective CD/CI tools.
 
 **Key features:**
-- **Targeted Solution and instructions Hiding**: Teachers can precisely mark individual lines or blocks in both code and markdown cells as solutions. They are removed and replaced with placeholders, clearly indicating where students need to provide their answers. Instructor notes can also be provided, they are removed in the student version. All other content remains unchanged.
+- **Solution and instructions Hiding**: Mark solutions in your code or markdown cells using dedicated comments or tags. When building the student version, these elements are replaced by placeholders—making it clear to students what they need to complete. Any instructor notes are also removed, ensuring that only the intended content appears in the student notebook.
 - **Automatic Batch Processing**: The conversion tool can process multiple Notebooks at once, generating student versions and optional ZIP archives containing all referenced attachments. 
-- **GitHub Integration**: A pre-configured GitHub Actions workflow automatically regenerates the student versions and archives whenever Notebooks are updated on the `main` branch ([manual trigger](https://docs.github.com/en/actions/managing-workflow-runs/manually-running-a-workflow) is also possible). All the generated material is stored in a specific branch.
-- **Automation-ready and extensible**: Offers complete adaptability, allowing to either extend the existing workflow with custom processing steps or integrate the conversion script to an entirely new workflow tailored to specific environment and requirements (using other CI/CD chains if needed).
+- **GitHub Integration**: A GitHub Actions workflow automatically regenerates the student versions and archives whenever Notebooks are updated on the `main` branch (a [manual trigger](https://docs.github.com/en/actions/managing-workflow-runs/manually-running-a-workflow) is also possible). All the generated material is stored in a specific branch.
+- **Automation-ready and extensible**: You can customize the standard workflow by specifying your own pre- or post-processing commands (for example to publish files to a LMS). Alternatively, the conversion script can be integrated into other CI/CD pipelines (e.g., GitLab CI/CD, Bitbucket Pipelines, or any custom-made workflow), making it suitable for both standard and fully bespoke automation environments.
 - **Flexible Configuration**: All markers, placeholders, and naming conventions are controlled via a simple JSON configuration file, making adaptation to different teaching styles and environments straightforward. One can for example use a code placeholder that raises a `NotImplementedError`.
 
 ## Installation and Prerequisites
@@ -86,7 +86,7 @@ In workflow mode, _nbworkshop_ is entirely hosted on GutHub and requires no prer
 
 The newly created `Students` branch contains the `Students` versions of the Notebooks (and ZIP archives), with solutions replaced by placeholders and all execution traces (including calculation results and cell execution counters) removed. Those converted Notebooks are updated on every push on the `main` branch.
 
-## Solution formatting
+## How to add solutions and notes addressed to tutors
 
 Note that _nbworkshop_ can use any replacement text/tags and placeholder the user defines (see [Configuration file](#configuration-file)). In the following explanations, default versions are used.
 
@@ -231,7 +231,7 @@ The configuration file includes options for both conversion and GitHub workflow.
 	
 The configuration file is located in different places depending on the mode of use:
 - **Using GitHub workflow**: `.github/conversion.json`
-- **Manual script use**: `./conversion.json` (in current directory), but can be changed through commandlin option (see [Conversion script](#conversion-script))
+- **Manual script use**: `./conversion.json` (in the script's directory), but can be changed through commandline option (see [Conversion script](#conversion-script))
 
 ## Conversion process
 
@@ -346,18 +346,18 @@ Also note that the `actions: write` permission has been enabled, allowing comman
 
 ## Présentation
 
-_nbworkshop_ est un outil simplifié conçu pour les enseignants utilisant des Notebooks Jupyter pour enseigner Python, qui ont besoin de préparer et distribuer efficacement des Notebooks d'exercices avec des solutions cachées ou des commentaires réservés aux instructeurs&nbsp;:
+_nbworkshop_ est un outil spécialisé dans la préparation et la distribution de Notebooks d'exercices Python avec des solutions cachées ou des commentaires réservés aux instructeurs&nbsp;:
 ![Exemple simple nbworkshop](https://github.com/user-attachments/assets/be557bda-6294-432e-8739-4d19538a341e)
 
-Contrairement à des systèmes plus complets comme _nbgrader_, _nbworkshop_ privilégie la simplicité et la flexibilité, permettant aux enseignants de marquer des parties spécifiques de n'importe quelle cellule - code ou markdown - pour suppression dans les versions étudiantes, sans imposer de structure de fichiers rigide ou de workflow complexe. Une archive (ZIP) contenant ces versions étudiantes, ainsi que toutes les pièces jointes nécessaires, peut également être créée. Cela facilite la distribution de matériel actualisé aux étudiants tout en gardant le contenu enseignant privé et organisé.
+Contrairement à des systèmes plus complets comme _nbgrader_, _nbworkshop_ privilégie la simplicité et la flexibilité, permettant aux enseignants de marquer des parties spécifiques de n'importe quelle cellule - code ou markdown - pour suppression dans les versions étudiantes, sans imposer de structure de fichiers rigide ou de workflow complexe. Une archive (ZIP) contenant ces versions étudiantes, ainsi que toutes les pièces jointes nécessaires, peut également être créée. Cela facilite la distribution de matériel actualisé aux étudiants tout en gardant le contenu enseignant privé et organisé, et évite les divergences entre les versions du tuteur et de l'étudiant dues à des oublis ou à des erreurs de manipulation.
 
 Pour les utilisateurs travaillant avec GitHub, _nbworkshop_ fournit également un workflow qui surveille des répertoires spécifiques et, à chaque mise à jour d'un Notebook dans ces répertoires surveillés sur la branche principale, génère automatiquement les versions étudiantes de ces Notebooks stockées sur une branche dédiée. Si des archives ZIP doivent être créées, elles sont stockées dans cette même branche. Notez que ce workflow peut être facilement adapté à GitLab ou BitBucket en utilisant leurs outils CD/CI respectifs.
 
 **Fonctionnalités clés&nbsp;:**
-- **Masquage ciblé des solutions et instructions**&nbsp;: Les enseignants peuvent marquer précisément des lignes ou blocs individuels dans les cellules de code et markdown comme solutions. Ils sont supprimés et remplacés par des espaces réservés, indiquant clairement où les étudiants doivent fournir leurs réponses. Des notes pour l'instructeur peuvent également être fournies, elles sont supprimées dans la version étudiante. Tout autre contenu reste inchangé.
+- **Masquage des solutions et instructions**&nbsp;: Marquez les solutions dans vos cellules code ou  Markdown à l'aide de commentaires ou de balises dédiés. Lors de la création de la version destinée aux étudiants, ces éléments sont remplacés par des espaces réservés, ce qui permet aux étudiants de savoir clairement ce qu'ils doivent faire. Les notes de l'enseignant sont également supprimées, afin que seul le contenu prévu apparaisse dans le notebook de l'étudiant.
 - **Traitement par lots automatique**&nbsp;: L'outil de conversion peut traiter plusieurs Notebooks simultanément, générant des versions étudiantes et des archives ZIP optionnelles contenant toutes les pièces jointes référencées.
-- **Intégration GitHub**&nbsp;: Un workflow GitHub Actions préconfiguré régénère automatiquement les versions étudiantes et archives à chaque mise à jour des Notebooks sur la branche principale ([déclenchement manuel](https://docs.github.com/en/actions/managing-workflow-runs/manually-running-a-workflow) également possible). Tout le matériel généré est stocké dans une branche spécifique.
-- **Prêt pour l'automatisation et extensible**&nbsp;: Offre une adaptabilité complète, permettant soit d'étendre le workflow existant avec des étapes de traitement personnalisées, soit d'intégrer le script de conversion dans un workflow entièrement nouveau adapté à des environnements et besoins spécifiques (utilisation d'autres chaînes CI/CD si nécessaire).
+- **Intégration GitHub**&nbsp;: Un workflow GitHub Actions préconfiguré régénère automatiquement les versions étudiantes et archives à chaque mise à jour des Notebooks sur la branche principale ([un déclenchement manuel](https://docs.github.com/en/actions/managing-workflow-runs/manually-running-a-workflow) est également possible). Tout le matériel généré est stocké dans une branche spécifique.
+- **Automatisable et adapté aux environnements personnalisés**&nbsp;: Vous pouvez personnaliser le flux de travail standard en spécifiant vos propres commandes de pré- ou post-traitement (par exemple pour publier des fichiers sur un LMS). Le script de conversion peut également être intégré à d'autres pipelines CI/CD (par exemple GitLab CI/CD, Bitbucket Pipelines ou tout autre flux de travail personnalisé), ce qui le rend adapté aux environnements d'automatisation standard et entièrement sur mesure.
 - **Configuration flexible**&nbsp;: Tous les marqueurs, espaces réservés et conventions de nommage sont contrôlés via un simple fichier de configuration JSON, rendant l'adaptation à différents styles d'enseignement et environnements directe. On peut par exemple utiliser un espace réservé de code qui lève une `NotImplementedError`.
 
 ## Installation et Prérequis
@@ -389,7 +389,7 @@ En mode workflow, _nbworkshop_ est entièrement hébergé sur GitHub et ne néce
 
 La nouvelle branche `Students` contient les versions étudiantes des Notebooks (et archives ZIP), avec les solutions remplacées par des espaces réservés et toutes les traces d'exécution (y compris les résultats de calcul et les compteurs d'exécution de cellules) supprimées. Ces Notebooks convertis sont mis à jour à chaque poussée sur la branche principale.
 
-## Formatage des solutions
+## Comment ajouter des solutions et des notes adressées au tuteur
 
 Notez que _nbworkshop_ peut utiliser n'importe quel texte de remplacement/balises et espace réservé défini par l'utilisateur (voir [Fichier de configuration](#fichier-de-configuration)). Dans les explications suivantes, les versions par défaut sont utilisées.
 
@@ -534,7 +534,7 @@ Le fichier de configuration inclut des options pour la conversion et le workflow
 	
 Le fichier de configuration se trouve à différents endroits selon le mode d'utilisation&nbsp;:
 - **Utilisation du workflow GitHub**&nbsp;: `.github/conversion.json`
-- **Utilisation manuelle du script**&nbsp;: `./conversion.json` (dans le répertoire courant), mais peut être changé via une option en ligne de commande (voir [Script de conversion](#script-de-conversion))
+- **Utilisation manuelle du script**&nbsp;: `./conversion.json` (dans le répertoire du script), mais peut être changé via une option en ligne de commande (voir [Script de conversion](#script-de-conversion))
 
 ## Processus de conversion
 
