@@ -211,8 +211,8 @@ The configuration file includes options for both conversion and GitHub workflow.
     },
     "tutor_postfix": "_Tutor",
     "student_postfix": "_Student",
-	"generate_zip": true,
-	"rebuild_all": false,
+    "generate_zip": true,
+    "rebuild_all": false,
     "post_processing": "echo 'Post-processing complété' || true",
     "pre_processing": "echo 'Pré-processing complété' || true"
 }
@@ -514,8 +514,8 @@ Le fichier de configuration inclut des options pour la conversion et le workflow
     },
     "tutor_postfix": "_Tutor",
     "student_postfix": "_Student",
-	"generate_zip": true,
-	"rebuild_all": false,
+    "generate_zip": true,
+    "rebuild_all": false,
     "post_processing": "echo 'Post-processing complété' || true",
     "pre_processing": "echo 'Pré-processing complété' || true"
 }
