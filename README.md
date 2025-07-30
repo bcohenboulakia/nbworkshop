@@ -45,7 +45,7 @@ along with nbworkshop. If not, see <https://www.gnu.org/licenses/>.
 _nbworkshop_ is a tool for preparing and distributing Python exercise Notebooks with hidden solutions or instructor-only comments:
 ![Simple nbworkshop example](https://github.com/user-attachments/assets/be557bda-6294-432e-8739-4d19538a341e)
 
-_nbworkshop_ deliberately does not include automated validation, grading, or advanced distribution features, offering a much simpler configuration than more comprehensive systems like nbgrader, with no rigid workflow or complicated directory structure: you only need to mark the parts to hide (in code or markdown cells) and generate student versions. This keeps tutor and students content perfectly synchronized, eliminating the risk of manual errors.
+_nbworkshop_ deliberately does not include automated validation, grading, or advanced distribution features, offering a much simpler configuration than more comprehensive systems like _nbgrader_, with no rigid workflow or complicated directory structure: you only need to mark the parts to hide (in code or markdown cells) and generate student versions. This keeps tutor and students content perfectly synchronized, eliminating the risk of manual errors.
 
 A GitHub Actions workflow automates generation and versioning: every time a notebook is updated on the main branch, synchronized student versions and optional ZIP archives are created and stored in a dedicated branch, ensuring a clear separation between instructor and student materials.
 
