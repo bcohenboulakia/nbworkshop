@@ -42,19 +42,19 @@ along with nbworkshop. If not, see <https://www.gnu.org/licenses/>.
 
 ## Presentation
 
-_nbworkshop_ is a specialized tool to prepare and distribute Python exercise Notebooks with hidden solutions or instructor-only comments:
+_nbworkshop_ is a specialized tool for preparing and distributing Python exercise Notebooks with hidden solutions or instructor-only comments:
 ![Simple nbworkshop example](https://github.com/user-attachments/assets/be557bda-6294-432e-8739-4d19538a341e)
 
-Unlike more comprehensive systems such as _nbgrader_, _nbworkshop_ prioritizes simplicity and flexibility, allowing teachers to mark specific parts of any cell-whether code or markdown-focr removal in student versions, without imposing a rigid file structure or complex workflow. An archive (ZIP) containing these student versions, along with any necessary attachments, can also be created. This makes it easy to distribute up-to-date materials to students while keeping instructor content private and organized, and prevents discrepancies between tutor and student versions due to oversight or manipulation errors.
+Unlike more comprehensive systems such as _nbgrader_, _nbworkshop_ allows you to precisely mark and remove specific parts of any cell, whether code or markdown, to automatically generate student versions containing only the intended content. This process requires no rigid file structure or complex workflow and keeps instructor and student versions synchronized, eliminating the risk of manual errors.
 
-For users working with GitHub, _nbworkshop_ also provides a workflow that monitors specific directories and, whenever a Notebook within these monitored directories is updated on the `main` branch, automatically generates Student versions of those Notebooks that is stored on a specific branch. If ZIP archives are to be created, they are stored in the same branch. Note that this workflow can be easily adapted to GitLab or BitBucket using their respective CD/CI tools.
+A GitHub Actions workflow automates generation and versioning: every time a notebook is updated on the main branch, synchronized student versions and optional ZIP archives are created and stored in a dedicated branch, ensuring a clear separation between instructor and student materials.
 
 **Key features:**
-- **Solution and instructions Hiding**: Mark solutions in your code or markdown cells using dedicated comments or tags. When building the student version, these elements are replaced by placeholders—making it clear to students what they need to complete. Any instructor notes are also removed, ensuring that only the intended content appears in the student notebook.
-- **Automatic Batch Processing**: The conversion tool can process multiple Notebooks at once, generating student versions and optional ZIP archives containing all referenced attachments. 
-- **GitHub Integration**: A GitHub Actions workflow automatically regenerates the student versions and archives whenever Notebooks are updated on the `main` branch (a [manual trigger](https://docs.github.com/en/actions/managing-workflow-runs/manually-running-a-workflow) is also possible). All the generated material is stored in a specific branch.
-- **Automation-ready and extensible**: You can customize the standard workflow by specifying your own pre- or post-processing commands (for example to publish files to a LMS). Alternatively, the conversion script can be integrated into other CI/CD pipelines (e.g., GitLab CI/CD, Bitbucket Pipelines, or any custom-made workflow), making it suitable for both standard and fully bespoke automation environments.
-- **Flexible Configuration**: All markers, placeholders, and naming conventions are controlled via a simple JSON configuration file, making adaptation to different teaching styles and environments straightforward. One can for example use a code placeholder that raises a `NotImplementedError`.
+- **Solution and instructions hiding**: Add special markers in code or markdown cells for lines or blocks to be hidden in the student version, instructor notes are also removed during conversion.
+- **Automatic batch processing**: Process multiple notebooks at once, generating student versions and, if enabled, ZIP files with all relevant attachments.
+- **Integrated automation**: A pre-configured GitHub Actions workflow regenerates student versions and archives whenever notebooks are updated on the main branch; it is also possible to [trigger the workflow manually](https://docs.github.com/en/actions/managing-workflow-runs/manually-running-a-workflow), and all generated material is stored in a separate branch.
+- **Extensibility and CI/CD compatibility**: Customize the workflow with your own pre or post-processing commands (for example, to send files to an LMS), or integrate the conversion script into alternative CI/CD pipelines like GitLab CI/CD, Bitbucket Pipelines, or other custom workflows.
+- **Flexible configuration**: All markers, placeholders and naming conventions are set via a simple JSON configuration file, making adaptation to different teaching styles straightforward; you can, for example, use a code placeholder that raises a `NotImplementedError`.
 
 ## Installation and Prerequisites
 
@@ -63,7 +63,7 @@ _nbworkshop_ can be used in two different ways:
  The project is entirely self-contained when used with the integrated GitHub workflow. In this case, no prerequisites or additional installation steps are required. Simply clone the repository to get started (see [Quick start](#quick-start)).
  * Direct use of the conversion script<br>
    If you want to run the conversion script directly on your machine, you will need:
-	* Python (version 3.12 or later)
+	* Python (version 3.12 or later, the script has not been tested against previous versions)
 	*  BeautifulSoup to process Markdown cells (the script has been tested against BeautifulSoup 4.9.0).
 	
    In this case, the script can be moved anywhere, provided that it can access the configuration file. Have a look at [Conversion script](#conversion-script) below for more details.
@@ -349,16 +349,16 @@ Also note that the `actions: write` permission has been enabled, allowing comman
 _nbworkshop_ est un outil spécialisé dans la préparation et la distribution de Notebooks d'exercices Python avec des solutions cachées ou des commentaires réservés aux instructeurs&nbsp;:
 ![Exemple simple nbworkshop](https://github.com/user-attachments/assets/be557bda-6294-432e-8739-4d19538a341e)
 
-Contrairement à des systèmes plus complets comme _nbgrader_, _nbworkshop_ privilégie la simplicité et la flexibilité, permettant aux enseignants de marquer des parties spécifiques de n'importe quelle cellule - code ou markdown - pour suppression dans les versions étudiantes, sans imposer de structure de fichiers rigide ou de workflow complexe. Une archive (ZIP) contenant ces versions étudiantes, ainsi que toutes les pièces jointes nécessaires, peut également être créée. Cela facilite la distribution de matériel actualisé aux étudiants tout en gardant le contenu enseignant privé et organisé, et évite les divergences entre les versions du tuteur et de l'étudiant dues à des oublis ou à des erreurs de manipulation.
+Contrairement à des systèmes plus complets comme _nbgrader_, _nbworkshop_ vous permet de marquer et retirer précisément certaines parties de n’importe quelle cellule, code ou Markdown, afin de générer automatiquement des versions étudiantes ne contenant que le contenu souhaité. Ce processus ne nécessite aucune structure de fichiers rigide ni de workflow complexe, et garantit la synchronisation des versions enseignants et étudiants, supprimant ainsi tout risque d’erreur manuelle.
 
-Pour les utilisateurs travaillant avec GitHub, _nbworkshop_ fournit également un workflow qui surveille des répertoires spécifiques et, à chaque mise à jour d'un Notebook dans ces répertoires surveillés sur la branche principale, génère automatiquement les versions étudiantes de ces Notebooks stockées sur une branche dédiée. Si des archives ZIP doivent être créées, elles sont stockées dans cette même branche. Notez que ce workflow peut être facilement adapté à GitLab ou BitBucket en utilisant leurs outils CD/CI respectifs.
+Un workflow GitHub Actions automatise la génération et le versioning&nbsp;: à chaque modification d’un notebook sur la branche `main`, des versions étudiantes synchronisées, ainsi que des archives ZIP si besoin, sont créées et stockées sur une branche dédiée, assurant ainsi une séparation claire entre les contenus enseignant et étudiant.
 
-**Fonctionnalités clés&nbsp;:**
-- **Masquage des solutions et instructions**&nbsp;: Marquez les solutions dans vos cellules code ou  Markdown à l'aide de commentaires ou de balises dédiés. Lors de la création de la version destinée aux étudiants, ces éléments sont remplacés par des espaces réservés, ce qui permet aux étudiants de savoir clairement ce qu'ils doivent faire. Les notes de l'enseignant sont également supprimées, afin que seul le contenu prévu apparaisse dans le notebook de l'étudiant.
-- **Traitement par lots automatique**&nbsp;: L'outil de conversion peut traiter plusieurs Notebooks simultanément, générant des versions étudiantes et des archives ZIP optionnelles contenant toutes les pièces jointes référencées.
-- **Intégration GitHub**&nbsp;: Un workflow GitHub Actions préconfiguré régénère automatiquement les versions étudiantes et archives à chaque mise à jour des Notebooks sur la branche principale ([un déclenchement manuel](https://docs.github.com/en/actions/managing-workflow-runs/manually-running-a-workflow) est également possible). Tout le matériel généré est stocké dans une branche spécifique.
-- **Automatisable et adapté aux environnements personnalisés**&nbsp;: Vous pouvez personnaliser le flux de travail standard en spécifiant vos propres commandes de pré- ou post-traitement (par exemple pour publier des fichiers sur un LMS). Le script de conversion peut également être intégré à d'autres pipelines CI/CD (par exemple GitLab CI/CD, Bitbucket Pipelines ou tout autre flux de travail personnalisé), ce qui le rend adapté aux environnements d'automatisation standard et entièrement sur mesure.
-- **Configuration flexible**&nbsp;: Tous les marqueurs, espaces réservés et conventions de nommage sont contrôlés via un simple fichier de configuration JSON, rendant l'adaptation à différents styles d'enseignement et environnements directe. On peut par exemple utiliser un espace réservé de code qui lève une `NotImplementedError`.
+**Fonctionnalités principales :**
+- **Masquage des solutions et instructions :** Ajoutez des marqueurs spéciaux dans les cellules de code ou de texte pour masquer certaines lignes ou blocs dans la version étudiante ; les notes destinées à l’enseignant sont également supprimées lors de la conversion.
+- **Traitement par lots automatique :** Traitez plusieurs notebooks en une seule fois, en générant les versions étudiantes et, si besoin, des archives ZIP contenant tous les fichiers associés.
+- **Automatisation intégrée :** Un workflow GitHub Actions préconfiguré régénère les versions étudiantes et les archives à chaque mise à jour d’un notebook sur la branche `main`&nbsp;; il est aussi possible de [déclencher manuellement le workflow](https://docs.github.com/en/actions/managing-workflow-runs/manually-running-a-workflow), et tous les fichiers générés sont stockés sur une branche séparée.
+- **Extensibilité et compatibilité CI/CD :** Personnalisez le workflow en ajoutant vos propres commandes de pré ou post-traitement (par exemple, pour envoyer des fichiers à un LMS), ou intégrez le script de conversion dans d’autres pipelines CI/CD tels que GitLab CI/CD, Bitbucket Pipelines, ou tout workflow sur mesure.
+- **Configuration flexible :** Tous les marqueurs, espaces réservés et conventions de nommage sont définis via un simple fichier de configuration JSON, ce qui facilite l’adaptation à différents styles d’enseignement ; vous pouvez par exemple utiliser un espace réservé de code qui lève une `NotImplementedError`.
 
 ## Installation et Prérequis
 
@@ -385,9 +385,9 @@ En mode workflow, _nbworkshop_ est entièrement hébergé sur GitHub et ne néce
 4. Modifiez les Notebooks (voir [Formatage des solutions](#formatage-des-solutions) pour des explications plus détaillées sur le formatage des solutions)&nbsp;:
 	- Dans les cellules de code, ajoutez `#SOLUTION` à chaque ligne des cellules de code que les étudiants doivent trouver par eux-mêmes.
 	- Dans les cellules Markdown, ajoutez les réponses aux questions entre des balises `<blockquote>`. Veillez à laisser les balises HTML seules sur leurs lignes.  
-5. Committez les Notebooks sur la branche principale et poussez-les vers le dépôt GitHub
+5. Committez les Notebooks sur la branche `main` et poussez-les vers le dépôt GitHub
 
-La nouvelle branche `Students` contient les versions étudiantes des Notebooks (et archives ZIP), avec les solutions remplacées par des espaces réservés et toutes les traces d'exécution (y compris les résultats de calcul et les compteurs d'exécution de cellules) supprimées. Ces Notebooks convertis sont mis à jour à chaque poussée sur la branche principale.
+La nouvelle branche `Students` contient les versions étudiantes des Notebooks (et archives ZIP), avec les solutions remplacées par des espaces réservés et toutes les traces d'exécution (y compris les résultats de calcul et les compteurs d'exécution de cellules) supprimées. Ces Notebooks convertis sont mis à jour à chaque poussée sur la branche `main`.
 
 ## Comment ajouter des solutions et des notes adressées au tuteur
 
@@ -562,8 +562,8 @@ Chaque marqueur de solution dans les Notebooks traités est remplacé par l'espa
 ## Workflow GitHub
 
 La conversion peut être automatisée par un workflow GitHub Actions appelé `Generate Students Notebooks branch` qui appelle le script de conversion à chaque mise à jour d'un Notebook dans un répertoire surveillé. Notez que le workflow GitHub utilise `.github/conversion.json` comme fichier de configuration (y compris pour appeler le script de conversion), et fournit un journal d'erreur détaillé dans le cas où ce fichier est invalide (ou manquant). Le comportement du workflow dépend de la valeur du paramètre `rebuild_all` :
-* S'il vaut `true`, le workflow efface la branche `Students` existante et la recrée à partir du dernier état de la branche principale, puis exécute le script de conversion sur chaque Notebook dans un répertoire surveillé. Si vous avez édité manuellement le contenu de la branche `Students`, que ces modifications manuelles - Notebooks et autres fichiers - seront complètement perdues, car la branche est entièrement réinitialisée et tout le contenu est régénéré à partir de zéro.
-* Si la valeur est `false`, le workflow fait un check out de la dernier `main`, met à jour la branche `Students`, et exécute le script de conversion sur chaque Notebook qui a été modifié depuis le dernier commit. Si vous avez édité manuellement un Notebook qui est détecté comme modifié et donc régénéré, vos modifications manuelles à ce Notebook seront écrasées par le workflow. Les modifications manuelles apportées à d'autres Notebooks ou fichiers seront conservées jusqu'à ce qu'un conflit de merge se produise. Pour les fichiers non-Notebook qui sont en conflit, le workflow résout automatiquement le conflit en conservant la version de la branche `Students` distante, ce qui signifie que vos modifications manuelles de ces fichiers seront préservées, alors que les modifications de la branche principale seront rejetées.
+* S'il vaut `true`, le workflow efface la branche `Students` existante et la recrée à partir du dernier état de la branche `main`, puis exécute le script de conversion sur chaque Notebook dans un répertoire surveillé. Si vous avez édité manuellement le contenu de la branche `Students`, que ces modifications manuelles - Notebooks et autres fichiers - seront complètement perdues, car la branche est entièrement réinitialisée et tout le contenu est régénéré à partir de zéro.
+* Si la valeur est `false`, le workflow fait un check out de la dernier `main`, met à jour la branche `Students`, et exécute le script de conversion sur chaque Notebook qui a été modifié depuis le dernier commit. Si vous avez édité manuellement un Notebook qui est détecté comme modifié et donc régénéré, vos modifications manuelles à ce Notebook seront écrasées par le workflow. Les modifications manuelles apportées à d'autres Notebooks ou fichiers seront conservées jusqu'à ce qu'un conflit de merge se produise. Pour les fichiers non-Notebook qui sont en conflit, le workflow résout automatiquement le conflit en conservant la version de la branche `Students` distante, ce qui signifie que vos modifications manuelles de ces fichiers seront préservées, alors que les modifications de la branche `main` seront rejetées.
 
 Il est donc préférable d'éviter d'éditer manuellement la branche `Students`.
 
@@ -607,7 +607,7 @@ Les options  `pre_processing` et `post_processing` dans `conversion.json` permet
  - La commande de post-traitement est exécutée après que la branche `Students` a été commitée et poussée
  
 Par défaut (mais cela peut être modifié, voir ci-dessous), ces commandes sont exécutées sur la branche `Students` avec principalement deux conséquences&nbsp;:
-* La commande de prétraitement peut modifier n'importe quel fichier sans que les changements impactent la branche principale. Cela permet, par exemple, de supprimer les changelogs ou d'ajouter des dates aux Notebooks avant la conversion.
+* La commande de prétraitement peut modifier n'importe quel fichier sans que les changements impactent la branche `main`. Cela permet, par exemple, de supprimer les changelogs ou d'ajouter des dates aux Notebooks avant la conversion.
 * La commande de post-traitement a accès aux fichiers générés par le workflow. Cela permet par exemple d'envoyer toutes les archives ZIP générées à un LMS en utilisant son API (ce qui pourrait être considéré comme du _TeachOps_...).
 
 Les sorties standard de l'exécution des commandes sont ajoutées au résumé du processus. Markdown peut être utilisé pour formater ces sorties. Si l'exécution a échoué, la sortie de l'erreur d'exécution est également affichée.
