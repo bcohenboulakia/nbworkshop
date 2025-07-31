@@ -42,8 +42,10 @@ along with nbworkshop. If not, see <https://www.gnu.org/licenses/>.
 
 ## Presentation
 
-_nbworkshop_ is a tool for preparing and distributing Python exercise Notebooks with hidden solutions or instructor-only comments:
+_nbworkshop_ is a tool for preparing and distributing Python exercise Jupyter Notebooks with hidden solutions or instructor-only comments:
 ![Simple nbworkshop example](https://github.com/user-attachments/assets/be557bda-6294-432e-8739-4d19538a341e)
+
+The tool is compatible with standard Jupyter notebooks (`.ipynb` files), which you can create or edit with Jupyter or JupyterLab.
 
 _nbworkshop_ deliberately does not include automated validation, grading, or advanced distribution features, offering a much simpler configuration than more comprehensive systems like _nbgrader_, with no complicated workflow or rigid directory structure: you only need to mark the parts to hide (in code or markdown cells) and generate student versions. This keeps tutor and students content perfectly synchronized, eliminating the risk of manual errors.
 
@@ -88,7 +90,7 @@ The newly created `Students` branch contains the `Students` versions of the Note
 
 ## How to add solutions and notes addressed to tutors
 
-Note that _nbworkshop_ can use any replacement text/tags and placeholder the user defines (see [Configuration file](#configuration-file)). In the following explanations, default versions are used.
+The script processes any standard Jupyter notebook and expects files in the `.ipynb` format. Note that _nbworkshop_ can use any replacement text/tags and placeholder the user defines (see [Configuration file](#configuration-file)). In the following explanations, default versions are used.
 
 ### solution in Code cells
 To create a line or block of solution, the comment `#SOLUTION` must be added at the end of each line of the block. The block is replaced by a single placeholder `#TO COMPLETE`. Example:
@@ -370,8 +372,10 @@ Also note that the `actions: write` permission has been enabled, allowing comman
 
 ## Présentation
 
-_nbworkshop_ est un outil spécialisé dans la préparation et la distribution de Notebooks d'exercices Python avec des solutions cachées ou des commentaires réservés aux instructeurs&nbsp;:
+_nbworkshop_ est un outil spécialisé dans la préparation et la distribution de Notebooks Jupyter d'exercices Python avec des solutions cachées ou des commentaires réservés aux instructeurs&nbsp;:
 ![Exemple simple nbworkshop](https://github.com/user-attachments/assets/be557bda-6294-432e-8739-4d19538a341e)
+
+Cet outil est compatible avec les notebooks Jupyter standards (fichiers `.ipynb`), que vous pouvez créer ou modifier avec Jupyter ou JupyterLab.
 
 _nbworkshop_ ne propose volontairement aucune fonctionnalité de validation automatique, de correction ou de distribution avancée, ce qui permet une configuration bien plus simple que celle de systèmes plus complets comme _nbgrader_, sans workflow compliqué ni structure de fichiers rigide&nbsp;: il suffit de marquer les parties à masquer (dans les cellules code ou markdow) puis de générer les versions étudiantes. Cela garantit une parfaite synchronisation entre les contenus du tuteur et des étudiants, supprimant tout risque d’erreur manuelle.
 
@@ -401,6 +405,8 @@ Tout le code de _nbworkshop_ se trouve dans le répertoire `.github`. Il contien
 * `.github/workflows/generate_student_version.yml`&nbsp;: Le workflow GitHub qui appelle le script Python susmentionné à chaque fois qu'un Notebook est poussé sur la branche `main` du dépôt.
 * `.github/conversion.json`&nbsp;: Le fichier de configuration. C'est ici que sont définis les paramètres tels que les répertoires des Notebooks, les remplacements de texte, les espaces réservés, etc.
 
+Jupyter n’est pas obligatoire pour utiliser le script, du moment que les notebook Jupyter sont accessibles
+
 ## Démarrage rapide
 En mode workflow, _nbworkshop_ est entièrement hébergé sur GitHub et ne nécessite aucun prérequis (à part un compte GitHub). Pour commencer à utiliser ce workflow&nbsp;:
 1. Clonez ce dépôt
@@ -415,7 +421,7 @@ La nouvelle branche `Students` contient les versions étudiantes des Notebooks (
 
 ## Comment ajouter des solutions et des notes adressées au tuteur
 
-Notez que _nbworkshop_ peut utiliser n'importe quel texte de remplacement/balises et espace réservé défini par l'utilisateur (voir [Fichier de configuration](#fichier-de-configuration)). Dans les explications suivantes, les versions par défaut sont utilisées.
+Le script traite tout notebook Jupyter standard et attend des fichiers au format `.ipynb`. Notez que _nbworkshop_ peut utiliser n'importe quel texte de remplacement/balises et espace réservé défini par l'utilisateur (voir [Fichier de configuration](#fichier-de-configuration)). Dans les explications suivantes, les versions par défaut sont utilisées.
 
 ### Solution dans les cellules de code
 Pour créer une ligne ou un bloc de solution, le commentaire `#SOLUTION` doit être ajouté à la fin de chaque ligne du bloc. Le bloc est remplacé par un seul espace réservé `#TO COMPLETE`. Exemple&nbsp;:
