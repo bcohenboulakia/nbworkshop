@@ -42,7 +42,7 @@ along with nbworkshop. If not, see <https://www.gnu.org/licenses/>.
 
 ## Presentation
 
-_nbworkshop_ is a tool for preparing and distributing Python exercise Jupyter Notebooks with hidden solutions or instructor-only comments:
+_nbworkshop_ is a tool for preparing and distributing Python exercise Jupyter notebooks with hidden solutions or instructor-only comments:
 ![Simple nbworkshop example](https://github.com/user-attachments/assets/be557bda-6294-432e-8739-4d19538a341e)
 
 The tool is compatible with standard Jupyter notebooks (`.ipynb` files), which you can create or edit with Jupyter or JupyterLab.
@@ -71,22 +71,22 @@ _nbworkshop_ can be used in two different ways:
    In this case, the script can be moved anywhere, provided that it can access the configuration file. Have a look at [Conversion script](#conversion-script) below for more details.
 
 All _nbworkshop_ code is in the `.github` directory. It contains:
-* `.github/scripts/student_version.py`: the Python script that converts Tutor Notebooks to `Students` Notebooks, and creates ZIP archives with all the attached files. If used alone, this script can be moved anywhere, provided it still has access to the configuration file
-* `.github/workflows/generate_student_version.yml`: The GitHub workflow that calls the aforementioned Python script every time a Notebook is pushed on the repository's `main` branch.
-* `.github/conversion.json`: The configuration file. This is where parameters such as Notebook directories, text replacement, placeholders etc. are defined.
+* `.github/scripts/student_version.py`: the Python script that converts Tutor notebooks to `Students` notebooks, and creates ZIP archives with all the attached files. If used alone, this script can be moved anywhere, provided it still has access to the configuration file
+* `.github/workflows/generate_student_version.yml`: The GitHub workflow that calls the aforementioned Python script every time a notebook is pushed on the repository's `main` branch.
+* `.github/conversion.json`: The configuration file. This is where parameters such as notebook directories, text replacement, placeholders etc. are defined.
 
 
 ## Quick start
-In workflow mode, _nbworkshop_ is entirely hosted on GutHub and requires no prerequisites (aside a GitHub account). To get started using this workflow:
+In workflow mode, _nbworkshop_ is entirely hosted on the GitHub repository hosting the notebooks, and requires no prerequisites (aside a GitHub account). To get started using this workflow:
 1. Clone this repository
-2. Add Notebooks to the clone repository
-3. Edit `.github/conversion.json` to insert in `"notebooks_dir"` the directory containing the Notebooks you created (see [Configuration file](#configuration-file) for a detailed explanation)
-4. Edit the Notebooks (see [Solution formatting](#solution-formatting) for more detailed explanation on formatting solutions):
+2. Add notebooks to the clone repository
+3. Edit `.github/conversion.json` to insert in `"notebooks_dir"` the directory containing the notebooks you created (see [Configuration file](#configuration-file) for a detailed explanation)
+4. Edit the notebooks (see [Solution formatting](#solution-formatting) for more detailed explanation on formatting solutions):
 	* In code cells, add `#SOLUTION` to each line of code cells that the students have to figure out by themselves.
 	* In Markdown cells, add answers to the questions inside `<blockquote>`tags. Be sure to leave the HTML tags alone on their lines.  
-5. Commit the  Notebooks on the `main` branch, and push them to the GitHub repository
+5. Commit the  notebooks on the `main` branch, and push them to the GitHub repository
 
-The newly created `Students` branch contains the `Students` versions of the Notebooks (and ZIP archives), with solutions replaced by placeholders and all execution traces (including calculation results and cell execution counters) removed. Those converted Notebooks are updated on every push on the `main` branch.
+The newly created `Students` branch contains the `Students` versions of the notebooks (and ZIP archives), with solutions replaced by placeholders and all execution traces (including calculation results and cell execution counters) removed. Those converted notebooks are updated on every push on the `main` branch.
 
 ## How to add solutions and notes addressed to tutors
 
@@ -161,7 +161,7 @@ Question?
 
 ### Note addressed to the tutor
 
-A note only addressed to the tutor can be added in the Notebook. This note is completely removed from the student Notebook. It must be placed in markdown cells, inside a <code>&lt;blockquote&gt;&lt;/blockquote&gt;</code>  block with the class <code>"comment"</code>. Example:
+A note only addressed to the tutor can be added in the notebook. This note is completely removed from the student notebook. It must be placed in markdown cells, inside a <code>&lt;blockquote&gt;&lt;/blockquote&gt;</code>  block with the class <code>"comment"</code>. Example:
 ```html
 WS text.
 
@@ -224,8 +224,8 @@ The configuration file includes options for both conversion and GitHub workflow.
 	* `solution_marker`: Dictionary of markers identifying solution content, containing only the core text, which is either wrapped as an HTML tag for Markdown or prefixed with a comment character for Python.
 	* `placeholder`: Dictionary of replacement text for removed solutions
 	* `generate_zip`: Boolean enabling ZIP archives to be generated.
-	* `tutor_postfix`: String replaced by the value of `student_postfix` for the Notebook filename.
-	* "student_postfix": String replacing the value of `tutor_postfix` for the Notebook filename.
+	* `tutor_postfix`: String replaced by the value of `student_postfix` for the notebook filename.
+	* "student_postfix": String replacing the value of `tutor_postfix` for the notebook filename.
 * Workflow options (ignored by the conversion script):
 	* `notebooks_dir` (mandatory): List of directories to process.
 	* `rebuild_all` (optional): Boolean determining whether all notebooks are rebuilt every time, or only the ones that have changed since the last commit (and the corresponding ZIP if generated)
@@ -239,7 +239,7 @@ The configuration file is located in different places depending on the mode of u
 
 ### Conversion script
 
-The Python script that generates student notebooks is located at `.github/scripts/student_version.py`.  If it's run through the GitHub workflow, there's no need to know anything about it. Everything (including paths of the generated files, and error management) is handled by the workflow, and through the configuration file. If manually run (that is, not through the GitHub workflow), the student version is created in the same directory as the original Notebook.
+The Python script that generates student notebooks is located at `.github/scripts/student_version.py`.  If it's run through the GitHub workflow, there's no need to know anything about it. Everything (including paths of the generated files, and error management) is handled by the workflow, and through the configuration file. If manually run (that is, not through the GitHub workflow), the student version is created in the same directory as the original notebook.
 
 There are two ways to run the conversion script locally:
 1. **With uv (recommended, zero setup)**: The script declares its required Python version and dependencies in its header, using the standard metadata format (PEP 723) supported by [uv](https://github.com/astral-sh/uv). If you have uv installed, simply run:
@@ -263,7 +263,7 @@ There are two ways to run the conversion script locally:
    ```
    
 The script accepts the following arguments:
-* `NOTEBOOK_PATHS`: Process specific Notebooks (supports glob patterns: `*.ipynb`, `**/exercises/*.ipynb`)
+* `NOTEBOOK_PATHS`: Process specific notebooks (supports glob patterns: `*.ipynb`, `**/exercises/*.ipynb`)
 * `--config` (optional): Specify alternative config path (default: `./conversion.json`)
 * `--hide-header` (optional): Suppress Markdown table headers for embedding in reports
 
@@ -275,19 +275,19 @@ and then:
 
 ### Notebooks filename
 
-Every solution marker in processed Notebooks is replaced by the corresponding placeholder (both can be set in the [Configuration file](#configuration-file)). If an original Notebook's filename ends with the configured `tutor_postfix` parameter (see [Configuration](#configuration)), this postfix is replaced by the `student_postfix` parameter in the converted Notebook's filename. If the original name does not end with `tutor_postfix`, the `student_postfix` value is simply appended to the base name. No additional characters (such as underscores or spaces) are inserted automatically; the exact format is entirely determined by the postfix values set in the configuration.
+Every solution marker in processed notebooks is replaced by the corresponding placeholder (both can be set in the [Configuration file](#configuration-file)). If an original notebook's filename ends with the configured `tutor_postfix` parameter (see [Configuration](#configuration)), this postfix is replaced by the `student_postfix` parameter in the converted notebook's filename. If the original name does not end with `tutor_postfix`, the `student_postfix` value is simply appended to the base name. No additional characters (such as underscores or spaces) are inserted automatically; the exact format is entirely determined by the postfix values set in the configuration.
 
 ## GitHub workflow
 
-The conversion can be automated by a GitHub Actions workflow called `Generate Students Notebooks branch` which calls the conversion script on every update of a Notebook in a monitored directory. Note that the GitHub workflow uses `.github/conversion.json` as configuration file (including for calling the conversion script), and provides detailed error log in case this file is invalid (or missing). The workflow's behavior depends on the value of the `rebuild_all` parameter:
-* If set to `true`, the workflow wipes out the existing `Students`branch and recreates it from the latest state of the main branch, then runs the conversion script on every Notebook in a monitored directory. If you have manually edited the content of the Students branch, be aware that these manual changes — including Notebooks and other files — will be completely lost, as the branch is fully reset and all content is regenerated from scratch.
-* If set to `false`, the workflow checks out the latest main branch, updates the Students branch, and runs the conversion script on every Notebook that has been modified since the last commit. If you have manually edited  a notebook that is detected as changed and thus regenerated, your manual changes to that notebook will be overwritten by the automated process. Manual changes to other Notebooks or files will remain until a merge conflict occurs. For non-Notebook files that are in conflict, the workflow automatically resolves the conflict by keeping the version from the remote Students branch, meaning your manual changes to those files will be preserved, while changes from the main branch are discarded.
+The conversion can be automated by a GitHub Actions workflow called `Generate Students notebooks branch` which calls the conversion script on every update of a notebook in a monitored directory. Note that the GitHub workflow uses `.github/conversion.json` as configuration file (including for calling the conversion script), and provides detailed error log in case this file is invalid (or missing). The workflow's behavior depends on the value of the `rebuild_all` parameter:
+* If set to `true`, the workflow wipes out the existing `Students`branch and recreates it from the latest state of the main branch, then runs the conversion script on every notebook in a monitored directory. If you have manually edited the content of the Students branch, be aware that these manual changes — including notebooks and other files — will be completely lost, as the branch is fully reset and all content is regenerated from scratch.
+* If set to `false`, the workflow checks out the latest main branch, updates the Students branch, and runs the conversion script on every notebook that has been modified since the last commit. If you have manually edited  a notebook that is detected as changed and thus regenerated, your manual changes to that notebook will be overwritten by the automated process. Manual changes to other notebooks or files will remain until a merge conflict occurs. For non-notebook files that are in conflict, the workflow automatically resolves the conflict by keeping the version from the remote Students branch, meaning your manual changes to those files will be preserved, while changes from the main branch are discarded.
 
 Thus, manually editing the `Students`branch should be avoided.
 
-Depending on the number of Notebooks to be converted, you might consider setting `rebuild_all` to `true` for smaller repositories, allowing simpler handling of merge conflicts, or `false` to handle many Notebooks, allowing a more targeted conversion process.
+Depending on the number of notebooks to be converted, you might consider setting `rebuild_all` to `true` for smaller repositories, allowing simpler handling of merge conflicts, or `false` to handle many notebooks, allowing a more targeted conversion process.
 
-The result of the workflow execution can be reviewed on the `README.md` of the `Students` branch which contains a short overview of the conversion process (including merge conflicts, whether on Notebooks or other files):
+The result of the workflow execution can be reviewed on the `README.md` of the `Students` branch which contains a short overview of the conversion process (including merge conflicts, whether on notebooks or other files):
 ![Student branch README](https://github.com/user-attachments/assets/bc132feb-5f43-40e7-aa64-962154bc15b1)
 
 A copy of this review appears on the workflow page in the `Action` tab on the GitHub repository web page:
@@ -298,7 +298,7 @@ The workflow can also be run manually from the same tab. For more information on
 
 ### Zip archive and attached files
 
-For each processed Notebook, if ZIP archives are to be generated (see the _Configuration_ section below), they are added in the `ZIP` subdirectory of each directory containing converted Notebooks. Each archive contains one Notebook and all embedded files. These files must be referenced directly in the global metadata of the Notebook, as a list associated with the key `"attached_files"`. Example:
+For each processed notebook, if ZIP archives are to be generated (see the _Configuration_ section below), they are added in the `ZIP` subdirectory of each directory containing converted notebooks. Each archive contains one notebook and all embedded files. These files must be referenced directly in the global metadata of the notebook, as a list associated with the key `"attached_files"`. Example:
 ```json
 "attached_files": [
 	"picture1.png",
@@ -306,21 +306,21 @@ For each processed Notebook, if ZIP archives are to be generated (see the _Confi
 ]
 ```
 
-Relative paths can be used, they are replicated in the ZIP archive. Absolute paths are forbidden and generate an error preventing the conversion to complete. If there is an error (embedded file missing or defined by an absolute path), the conversion is aborted. When used through the GitHub workflow (see below), subsequent Notebooks are generated, but the workflow execution status is set to failed, and the summary displays the faulty Notebook (see [GitHub workflow](#github-workflow)).
+Relative paths can be used, they are replicated in the ZIP archive. Absolute paths are forbidden and generate an error preventing the conversion to complete. If there is an error (embedded file missing or defined by an absolute path), the conversion is aborted. When used through the GitHub workflow (see below), subsequent notebooks are generated, but the workflow execution status is set to failed, and the summary displays the faulty notebook (see [GitHub workflow](#github-workflow)).
 
-Note: In Jupyter-based environnements, editing the metadata of a Notebook is done in the _ADVANCED TOOLS_ area, under _Notebook metadata_. In Jupyter, it can be accessed by enabling _View_ > _Right Sidebar_ > _Show Notebook tools_. In JupyterLab, it's located in the _Property Inspector_ (gear icon) in the right sidebar.
+Note: In Jupyter-based environnements, editing the metadata of a notebook is done in the _ADVANCED TOOLS_ area, under _Notebook metadata_. In Jupyter, it can be accessed by enabling _View_ > _Right Sidebar_ > _Show notebook tools_. In JupyterLab, it's located in the _Property Inspector_ (gear icon) in the right sidebar.
 
 ### Conversion triggering and branches
 
-This workflow uses two branches to generate student Notebooks (but as many branches as needed can be created, they will just be ignored):
-* The `main` branch contains the solution versions and the necessary resources (it can also contain other materials, which are ignored). Pushing a Notebook on this branch triggers its conversion, provided the pushed Notebook is in a monitored directory (as defined in the `notebooks_dir` section of the configuration file).
-* The `Students` branch is generated automatically. Its content must not be modified, as it is fully rewritten each time a conversion occurs. It contains the same content (including subdirectories structure) as the directories monitored in `main` branch, except that solutions and instructor notes are removed from the Notebooks, whether for code or for questions in the text.
+This workflow uses two branches to generate student notebooks (but as many branches as needed can be created, they will just be ignored):
+* The `main` branch contains the solution versions and the necessary resources (it can also contain other materials, which are ignored). Pushing a notebook on this branch triggers its conversion, provided the pushed notebook is in a monitored directory (as defined in the `notebooks_dir` section of the configuration file).
+* The `Students` branch is generated automatically. Its content must not be modified, as it is fully rewritten each time a conversion occurs. It contains the same content (including subdirectories structure) as the directories monitored in `main` branch, except that solutions and instructor notes are removed from the notebooks, whether for code or for questions in the text.
 
-Please note that conversion may take several dozens of seconds. This total delay includes both the time spent waiting for a GitHub Actions runner to become available (which can be long if no runners are free) and the time required to actually process the job. The execution time depends on how many Notebooks need to be converted and their length. Running other workflows in the repository at the same time may also increase the overall completion time. Moreover, in order to avoid useless conversions, `.ipynb_checkpoints` directories should be added to `.gitignore`.
+Please note that conversion may take several dozens of seconds. This total delay includes both the time spent waiting for a GitHub Actions runner to become available (which can be long if no runners are free) and the time required to actually process the job. The execution time depends on how many notebooks need to be converted and their length. Running other workflows in the repository at the same time may also increase the overall completion time. Moreover, in order to avoid useless conversions, `.ipynb_checkpoints` directories should be added to `.gitignore`.
 
 ### Pre and post-processing command
 
-The `pre_processing` and `post_processing` options in `conversion.json` allow executing a command before or after all Notebook conversions are completed:
+The `pre_processing` and `post_processing` options in `conversion.json` allow executing a command before or after all notebook conversions are completed:
 * The pre-processing command is run just after setting up the workflow and validating the configuration file
 * The post-processing command is run the `Students` branch has been commited and pushed
  
@@ -364,7 +364,7 @@ Also note that the `actions: write` permission has been enabled, allowing comman
 * [Fichier de configuration](#fichier-de-configuration)
 * [Processus de conversion](#processus-de-conversion)
    * [Script de conversion](#script-de-conversion)
-   * [Nom des fichiers des Notebooks](#nom-des-fichiers-des-notebooks)
+   * [Nom des fichiers des notebooks](#nom-des-fichiers-des-notebooks)
    * [Archive Zip et fichiers joints](#archive-zip-et-fichiers-joints)
 * [Workflow GitHub](#workflow-github)
    * [Déclenchement de la conversion et branches](#déclenchement-de-la-conversion-et-branches)
@@ -372,7 +372,7 @@ Also note that the `actions: write` permission has been enabled, allowing comman
 
 ## Présentation
 
-_nbworkshop_ est un outil spécialisé dans la préparation et la distribution de Notebooks Jupyter d'exercices Python avec des solutions cachées ou des commentaires réservés aux instructeurs&nbsp;:
+_nbworkshop_ est un outil spécialisé dans la préparation et la distribution de notebooks Jupyter d'exercices Python avec des solutions cachées ou des commentaires réservés aux instructeurs&nbsp;:
 ![Exemple simple nbworkshop](https://github.com/user-attachments/assets/be557bda-6294-432e-8739-4d19538a341e)
 
 Cet outil est compatible avec les notebooks Jupyter standards (fichiers `.ipynb`), que vous pouvez créer ou modifier avec Jupyter ou JupyterLab.
@@ -401,23 +401,23 @@ _nbworkshop_ peut être utilisé de deux manières différentes&nbsp;:
    Dans ce cas, le script peut être déplacé n'importe où, à condition qu'il puisse accéder au fichier de configuration. Consultez [Script de conversion](#script-de-conversion) ci-dessous pour plus de détails.
 
 Tout le code de _nbworkshop_ se trouve dans le répertoire `.github`. Il contient&nbsp;:
-* `.github/scripts/student_version.py`&nbsp;: le script Python qui convertit les Notebooks Tuteur en Notebooks Étudiants, et crée des archives ZIP avec tous les fichiers joints. S'il est utilisé seul, ce script peut être déplacé n'importe où, à condition d'avoir toujours accès au fichier de configuration
-* `.github/workflows/generate_student_version.yml`&nbsp;: Le workflow GitHub qui appelle le script Python susmentionné à chaque fois qu'un Notebook est poussé sur la branche `main` du dépôt.
-* `.github/conversion.json`&nbsp;: Le fichier de configuration. C'est ici que sont définis les paramètres tels que les répertoires des Notebooks, les remplacements de texte, les espaces réservés, etc.
+* `.github/scripts/student_version.py`&nbsp;: le script Python qui convertit les notebooks Tuteur en notebooks Étudiants, et crée des archives ZIP avec tous les fichiers joints. S'il est utilisé seul, ce script peut être déplacé n'importe où, à condition d'avoir toujours accès au fichier de configuration
+* `.github/workflows/generate_student_version.yml`&nbsp;: Le workflow GitHub qui appelle le script Python susmentionné à chaque fois qu'un notebook est poussé sur la branche `main` du dépôt.
+* `.github/conversion.json`&nbsp;: Le fichier de configuration. C'est ici que sont définis les paramètres tels que les répertoires des notebooks, les remplacements de texte, les espaces réservés, etc.
 
 Jupyter n’est pas obligatoire pour utiliser le script, du moment que les notebook Jupyter sont accessibles
 
 ## Démarrage rapide
-En mode workflow, _nbworkshop_ est entièrement hébergé sur GitHub et ne nécessite aucun prérequis (à part un compte GitHub). Pour commencer à utiliser ce workflow&nbsp;:
+En mode workflow, _nbworkshop_ est entièrement hébergé sur le dépôt GitHub hébergeant les notebooks, et ne nécessite aucun prérequis (à part un compte GitHub). Pour commencer à utiliser ce workflow&nbsp;:
 1. Clonez ce dépôt
-2. Ajoutez des Notebooks au dépôt cloné
-3. Modifiez `.github/conversion.json` pour insérer dans `"notebooks_dir"` le répertoire contenant les Notebooks que vous avez créés (voir [Fichier de configuration](#fichier-de-configuration) pour une explication détaillée)
-4. Modifiez les Notebooks (voir [Formatage des solutions](#formatage-des-solutions) pour des explications plus détaillées sur le formatage des solutions)&nbsp;:
+2. Ajoutez des notebooks au dépôt cloné
+3. Modifiez `.github/conversion.json` pour insérer dans `"notebooks_dir"` le répertoire contenant les notebooks que vous avez créés (voir [Fichier de configuration](#fichier-de-configuration) pour une explication détaillée)
+4. Modifiez les notebooks (voir [Formatage des solutions](#formatage-des-solutions) pour des explications plus détaillées sur le formatage des solutions)&nbsp;:
 	* Dans les cellules de code, ajoutez `#SOLUTION` à chaque ligne des cellules de code que les étudiants doivent trouver par eux-mêmes.
 	* Dans les cellules Markdown, ajoutez les réponses aux questions entre des balises `<blockquote>`. Veillez à laisser les balises HTML seules sur leurs lignes.  
-5. Committez les Notebooks sur la branche `main` et poussez-les vers le dépôt GitHub
+5. Committez les notebooks sur la branche `main` et poussez-les vers le dépôt GitHub
 
-La nouvelle branche `Students` contient les versions étudiantes des Notebooks (et archives ZIP), avec les solutions remplacées par des espaces réservés et toutes les traces d'exécution (y compris les résultats de calcul et les compteurs d'exécution de cellules) supprimées. Ces Notebooks convertis sont mis à jour à chaque poussée sur la branche `main`.
+La nouvelle branche `Students` contient les versions étudiantes des notebooks (et archives ZIP), avec les solutions remplacées par des espaces réservés et toutes les traces d'exécution (y compris les résultats de calcul et les compteurs d'exécution de cellules) supprimées. Ces notebooks convertis sont mis à jour à chaque poussée sur la branche `main`.
 
 ## Comment ajouter des solutions et des notes adressées au tuteur
 
@@ -493,7 +493,7 @@ Question?
 
 ### Note destinée au tuteur
 
-Une note uniquement destinée au tuteur peut être ajoutée dans le Notebook. Cette note est complètement supprimée du Notebook étudiant. Elle doit être placée dans des cellules markdown, à l'intérieur d'un bloc <code>&lt;blockquote&gt;&lt;/blockquote&gt;</code>avec la classe <code>"comment"</code>. Exemple&nbsp;:
+Une note uniquement destinée au tuteur peut être ajoutée dans le notebook. Cette note est complètement supprimée du notebook étudiant. Elle doit être placée dans des cellules markdown, à l'intérieur d'un bloc <code>&lt;blockquote&gt;&lt;/blockquote&gt;</code>avec la classe <code>"comment"</code>. Exemple&nbsp;:
 ```html
 Texte du WS.
 
@@ -555,8 +555,8 @@ Le fichier de configuration inclut des options pour la conversion et le workflow
 	* `solution_marker`&nbsp;: Dictionnaire des marqueurs identifiant le contenu solution, contenant uniquement le texte central, qui est soit encapsulé comme une balise HTML pour Markdown, soit préfixé par un caractère de commentaire pour Python.
 	* `placeholder`&nbsp;:  Dictionnaire du texte de remplacement pour les solutions supprimées
 	* `generate_zip`&nbsp;: Booléen activant la génération d'archives ZIP
-	* `tutor_postfix`&nbsp;: Chaîne remplacée par la valeur de `student_postfix` pour le nom de fichier du Notebook.
-	* `student_postfix`&nbsp;: Chaîne remplaçant la valeur de `tutor_postfix` pour le nom de fichier du Notebook.
+	* `tutor_postfix`&nbsp;: Chaîne remplacée par la valeur de `student_postfix` pour le nom de fichier du notebook.
+	* `student_postfix`&nbsp;: Chaîne remplaçant la valeur de `tutor_postfix` pour le nom de fichier du notebook.
 * Options de workflow (ignorées par le script de conversion)&nbsp;:
 	* `notebooks_dir` (obligatoire)&nbsp;: Liste des répertoires à traiter
 	* `rebuild_all` (optional): Booléen indiquant si tous les notebooks doivent être reconstruits à chaque fois, ou seulement ceux qui ont été modifiés depuis le dernier commit (et le fichier ZIP correspondant s'il a été généré).
@@ -611,21 +611,21 @@ Une fois lancé, le script :
 * **À noter concernant le fichier de configuration :** lors d’une exécution manuelle, le script utilise par défaut le fichier `./conversion.json` (modifiable via l’option `--config`). Le workflow GitHub, en revanche, utilise `.github/conversion.json`.
 
 
-### Nom des fichiers des Notebooks
+### Nom des fichiers des notebooks
 
-Chaque marqueur de solution dans les Notebooks traités est remplacé par l'espace réservé correspondant (tous deux peuvent être définis dans le [Fichier de configuration file](#fichier-de-configuration)).Si un nom de fichier de Notebook original se termine par le paramètre `tutor_postfix` configuré (voir [Configuration](#configuration)), ce suffixe est remplacé par le paramètre `student_postfix` dans le nom de fichier du Notebook converti. Si le nom original ne se termine pas par `tutor_postfix`, la valeur de  `student_postfix` est simplement ajoutée au nom de base. Aucun caractère supplémentaire (tel que des tirets bas ou des espaces) n'est inséré automatiquement&nbsp;; le format exact est entièrement déterminé par les valeurs de suffixe définies dans la configuration.
+Chaque marqueur de solution dans les notebooks traités est remplacé par l'espace réservé correspondant (tous deux peuvent être définis dans le [Fichier de configuration file](#fichier-de-configuration)).Si un nom de fichier de notebook original se termine par le paramètre `tutor_postfix` configuré (voir [Configuration](#configuration)), ce suffixe est remplacé par le paramètre `student_postfix` dans le nom de fichier du notebook converti. Si le nom original ne se termine pas par `tutor_postfix`, la valeur de  `student_postfix` est simplement ajoutée au nom de base. Aucun caractère supplémentaire (tel que des tirets bas ou des espaces) n'est inséré automatiquement&nbsp;; le format exact est entièrement déterminé par les valeurs de suffixe définies dans la configuration.
 
 ## Workflow GitHub
 
-La conversion peut être automatisée par un workflow GitHub Actions appelé `Generate Students Notebooks branch` qui appelle le script de conversion à chaque mise à jour d'un Notebook dans un répertoire surveillé. Notez que le workflow GitHub utilise `.github/conversion.json` comme fichier de configuration (y compris pour appeler le script de conversion), et fournit un journal d'erreur détaillé dans le cas où ce fichier est invalide (ou manquant). Le comportement du workflow dépend de la valeur du paramètre `rebuild_all` :
-* S'il vaut `true`, le workflow efface la branche `Students` existante et la recrée à partir du dernier état de la branche `main`, puis exécute le script de conversion sur chaque Notebook dans un répertoire surveillé. Si vous avez édité manuellement le contenu de la branche `Students`, que ces modifications manuelles - Notebooks et autres fichiers - seront complètement perdues, car la branche est entièrement réinitialisée et tout le contenu est régénéré à partir de zéro.
-* Si la valeur est `false`, le workflow fait un check out de la dernier `main`, met à jour la branche `Students`, et exécute le script de conversion sur chaque Notebook qui a été modifié depuis le dernier commit. Si vous avez édité manuellement un Notebook qui est détecté comme modifié et donc régénéré, vos modifications manuelles à ce Notebook seront écrasées par le workflow. Les modifications manuelles apportées à d'autres Notebooks ou fichiers seront conservées jusqu'à ce qu'un conflit de merge se produise. Pour les fichiers non-Notebook qui sont en conflit, le workflow résout automatiquement le conflit en conservant la version de la branche `Students` distante, ce qui signifie que vos modifications manuelles de ces fichiers seront préservées, alors que les modifications de la branche `main` seront rejetées.
+La conversion peut être automatisée par un workflow GitHub Actions appelé `Generate Students Notebooks branch` qui appelle le script de conversion à chaque mise à jour d'un notebook dans un répertoire surveillé. Notez que le workflow GitHub utilise `.github/conversion.json` comme fichier de configuration (y compris pour appeler le script de conversion), et fournit un journal d'erreur détaillé dans le cas où ce fichier est invalide (ou manquant). Le comportement du workflow dépend de la valeur du paramètre `rebuild_all` :
+* S'il vaut `true`, le workflow efface la branche `Students` existante et la recrée à partir du dernier état de la branche `main`, puis exécute le script de conversion sur chaque notebook dans un répertoire surveillé. Si vous avez édité manuellement le contenu de la branche `Students`, que ces modifications manuelles - notebooks et autres fichiers - seront complètement perdues, car la branche est entièrement réinitialisée et tout le contenu est régénéré à partir de zéro.
+* Si la valeur est `false`, le workflow fait un check out de la dernier `main`, met à jour la branche `Students`, et exécute le script de conversion sur chaque notebook qui a été modifié depuis le dernier commit. Si vous avez édité manuellement un notebook qui est détecté comme modifié et donc régénéré, vos modifications manuelles à ce notebook seront écrasées par le workflow. Les modifications manuelles apportées à d'autres notebooks ou fichiers seront conservées jusqu'à ce qu'un conflit de merge se produise. Pour les fichiers non-notebook qui sont en conflit, le workflow résout automatiquement le conflit en conservant la version de la branche `Students` distante, ce qui signifie que vos modifications manuelles de ces fichiers seront préservées, alors que les modifications de la branche `main` seront rejetées.
 
 Il est donc préférable d'éviter d'éditer manuellement la branche `Students`.
 
-En fonction du nombre de Notebooks à convertir, vous pouvez envisager de mettre `rebuild_all` à `true` pour les petits dépôts, permettant une gestion plus simple des conflits de fusion, ou `false` pour gérer de nombreux Notebooks, permettant un processus de conversion plus ciblé.
+En fonction du nombre de notebooks à convertir, vous pouvez envisager de mettre `rebuild_all` à `true` pour les petits dépôts, permettant une gestion plus simple des conflits de fusion, ou `false` pour gérer de nombreux notebooks, permettant un processus de conversion plus ciblé.
 
-Le résultat de l'exécution du workflow peut être consulté sur le `README.md` de la branche `Students` qui contient un bref aperçu du processus de conversion (y compris les conflits de merge, que ce soit sur les Notebook ou les autres fichiers)&nbsp;:
+Le résultat de l'exécution du workflow peut être consulté sur le `README.md` de la branche `Students` qui contient un bref aperçu du processus de conversion (y compris les conflits de merge, que ce soit sur les notebook ou les autres fichiers)&nbsp;:
 ![README de la branche `Students`](https://github.com/user-attachments/assets/bc132feb-5f43-40e7-aa64-962154bc15b1)
 
 Une copie de cette revue apparaît sur la page du workflow dans l'onglet Action de la page web du dépôt GitHub&nbsp;:
@@ -636,7 +636,7 @@ Le workflow peut également être exécuté manuellement depuis le même onglet.
 
 ### Archive Zip et fichiers joints
 
-Pour chaque Notebook traité, si des archives ZIP doivent être générées (voir la section Configuration ci-dessous), elles sont ajoutées dans le sous-répertoire ZIP de chaque répertoire contenant des Notebooks convertis. Chaque archive contient un Notebook et tous les fichiers intégrés. Ces fichiers doivent être référencés directement dans les métadonnées globales du Notebook, comme une liste associée à la clé `"attached_files"`. Exemple&nbsp;:
+Pour chaque notebook traité, si des archives ZIP doivent être générées (voir la section Configuration ci-dessous), elles sont ajoutées dans le sous-répertoire ZIP de chaque répertoire contenant des notebooks convertis. Chaque archive contient un notebook et tous les fichiers intégrés. Ces fichiers doivent être référencés directement dans les métadonnées globales du notebook, comme une liste associée à la clé `"attached_files"`. Exemple&nbsp;:
 ```json
 "attached_files": [
 	"picture1.png",
@@ -644,26 +644,26 @@ Pour chaque Notebook traité, si des archives ZIP doivent être générées (voi
 ]
 ```
 
-Les chemins relatifs peuvent être utilisés, ils sont répliqués dans l'archive ZIP. Les chemins absolus sont interdits et génèrent une erreur empêchant la conversion de se terminer. S'il y a une erreur (fichier intégré manquant ou défini par un chemin absolu), la conversion est abandonnée. Lorsqu'elle est utilisée via le workflow GitHub (voir ci-dessous), les Notebooks suivants sont générés, mais le statut d'exécution du workflow est défini sur échec, et le résumé affiche le Notebook défectueux (voir [Workflow GitHub](#workflow-gitHub)).
+Les chemins relatifs peuvent être utilisés, ils sont répliqués dans l'archive ZIP. Les chemins absolus sont interdits et génèrent une erreur empêchant la conversion de se terminer. S'il y a une erreur (fichier intégré manquant ou défini par un chemin absolu), la conversion est abandonnée. Lorsqu'elle est utilisée via le workflow GitHub (voir ci-dessous), les notebooks suivants sont générés, mais le statut d'exécution du workflow est défini sur échec, et le résumé affiche le notebook défectueux (voir [Workflow GitHub](#workflow-gitHub)).
 
-Remarque&nbsp;: Dans les environnements basés sur Jupyter, la modification des métadonnées d'un Notebook se fait dans la zone  _ADVANCED TOOLS_, sous  _Notebook metadata_. Dans Jupyter, on y accède en activant _View_ > _Right Sidebar_ > _Show Notebook tools_. Dans JupyterLab, il se trouve dans _Property Inspector_ (icône d'engrenage) dans la barre latérale droite.
+Remarque&nbsp;: Dans les environnements basés sur Jupyter, la modification des métadonnées d'un notebook se fait dans la zone  _ADVANCED TOOLS_, sous  _Notebook metadata_. Dans Jupyter, on y accède en activant _View_ > _Right Sidebar_ > _Show notebook tools_. Dans JupyterLab, il se trouve dans _Property Inspector_ (icône d'engrenage) dans la barre latérale droite.
 
 ### Déclenchement de la conversion et branches
 
-Ce workflow utilise deux branches pour générer les Notebooks étudiants (mais autant de branches que nécessaire peuvent être créées, elles seront simplement ignorées)&nbsp;:
-* La branche  `main` contient les versions solutions et les ressources nécessaires (elle peut également contenir d'autres matériaux, qui sont ignorés). Pousser un Notebook sur cette branche déclenche sa conversion, à condition que le Notebook poussé soit dans un répertoire surveillé (tel que défini dans la section `notebooks_dir` du fichier de configuration).
-* La branche `Students` est générée automatiquement. Son contenu ne doit pas être modifié, car il est entièrement réécrit à chaque conversion. Elle contient le même contenu (y compris la structure des sous-répertoires) que les répertoires surveillés dans la branche `main`, sauf que les solutions et notes d'instructeur sont supprimées des Notebooks, que ce soit pour le code ou pour les questions dans le texte.
+Ce workflow utilise deux branches pour générer les notebooks étudiants (mais autant de branches que nécessaire peuvent être créées, elles seront simplement ignorées)&nbsp;:
+* La branche  `main` contient les versions solutions et les ressources nécessaires (elle peut également contenir d'autres matériaux, qui sont ignorés). Pousser un notebook sur cette branche déclenche sa conversion, à condition que le notebook poussé soit dans un répertoire surveillé (tel que défini dans la section `notebooks_dir` du fichier de configuration).
+* La branche `Students` est générée automatiquement. Son contenu ne doit pas être modifié, car il est entièrement réécrit à chaque conversion. Elle contient le même contenu (y compris la structure des sous-répertoires) que les répertoires surveillés dans la branche `main`, sauf que les solutions et notes d'instructeur sont supprimées des notebooks, que ce soit pour le code ou pour les questions dans le texte.
 
-Veuillez noter que la conversion peut prendre plusieurs dizaines de secondes. Ce délai total comprend à la fois le temps d'attente pour qu'un runner GitHub Actions devienne disponible (ce qui peut être long si aucun runner n'est libre) et le temps nécessaire pour traiter réellement la tâche. Le temps d'exécution dépend du nombre de Notebooks à convertir et de leur longueur. L'exécution d'autres workflows dans le dépôt en même temps peut également augmenter le temps d'exécution global. De plus, pour éviter des conversions inutiles, les répertoires `.ipynb_checkpoints` peuvent être ajoutés à `.gitignore`.
+Veuillez noter que la conversion peut prendre plusieurs dizaines de secondes. Ce délai total comprend à la fois le temps d'attente pour qu'un runner GitHub Actions devienne disponible (ce qui peut être long si aucun runner n'est libre) et le temps nécessaire pour traiter réellement la tâche. Le temps d'exécution dépend du nombre de notebooks à convertir et de leur longueur. L'exécution d'autres workflows dans le dépôt en même temps peut également augmenter le temps d'exécution global. De plus, pour éviter des conversions inutiles, les répertoires `.ipynb_checkpoints` peuvent être ajoutés à `.gitignore`.
 
 ### Commandes de pré et post-traitement
 
-Les options  `pre_processing` et `post_processing` dans `conversion.json` permettent d'exécuter une commande avant ou après que toutes les conversions de Notebooks soient terminées&nbsp;:
+Les options  `pre_processing` et `post_processing` dans `conversion.json` permettent d'exécuter une commande avant ou après que toutes les conversions de notebooks soient terminées&nbsp;:
 * La commande de pré-traitement est exécutée juste après la configuration du workflow et la validation du fichier de configuration
 * La commande de post-traitement est exécutée après que la branche `Students` a été commitée et poussée
  
 Par défaut (mais cela peut être modifié, voir ci-dessous), ces commandes sont exécutées sur la branche `Students` avec principalement deux conséquences&nbsp;:
-* La commande de prétraitement peut modifier n'importe quel fichier sans que les changements impactent la branche `main`. Cela permet, par exemple, de supprimer les changelogs ou d'ajouter des dates aux Notebooks avant la conversion.
+* La commande de prétraitement peut modifier n'importe quel fichier sans que les changements impactent la branche `main`. Cela permet, par exemple, de supprimer les changelogs ou d'ajouter des dates aux notebooks avant la conversion.
 * La commande de post-traitement a accès aux fichiers générés par le workflow. Cela permet par exemple d'envoyer toutes les archives ZIP générées à un LMS en utilisant son API (ce qui pourrait être considéré comme du _TeachOps_...).
 
 Les sorties standard de l'exécution des commandes sont ajoutées au résumé du processus. Markdown peut être utilisé pour formater ces sorties. Si l'exécution a échoué, la sortie de l'erreur d'exécution est également affichée.
