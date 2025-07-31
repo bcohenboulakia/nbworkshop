@@ -214,7 +214,6 @@ jobs:
             echo "STUDENTS_FRESHLY_CREATED=false" >> "$GITHUB_ENV"
           fi
 
-
       - name: Detect changed notebooks
         id: detect_notebooks
         shell: bash
