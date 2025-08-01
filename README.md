@@ -15,7 +15,7 @@ along with nbworkshop. If not, see <https://www.gnu.org/licenses/>.
 -->
 
 <p align="center">
-<img width=400 alt="nbworkshop logo" src="https://github.com/user-attachments/assets/c7751cb9-9bd3-421b-83dd-1037dc782653">
+<img width=400 alt="nbworkshop logo" src="https://github.com/user-attachments/assets/9af0a222-afc6-4d5a-9529-a8d0daa29b18">
 </p>
 
 [🇫🇷 Aller à la version française 🇫🇷](#-version-française-)
