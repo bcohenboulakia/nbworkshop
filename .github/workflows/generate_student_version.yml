@@ -290,6 +290,7 @@ jobs:
         run: |
           cp -a $SUMMARY_FILE .
           cat README.md >> $GITHUB_STEP_SUMMARY
+          git add README.md
 
       - name: Set up Git identity
         run: |
