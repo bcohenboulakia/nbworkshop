@@ -31,7 +31,7 @@ Key strengths:
 - No local installation needed when using the GitHub workflow
 
 <details>
-  <summary>Show full documentation</summary>
+  <summary><strong>Show full documentation</strong></summary>
   
 ## Content:
 * [Presentation](#presentation)
@@ -370,7 +370,7 @@ Points forts&nbsp;:
 - Pas besoin d'installation locale quand le workflow GitHub est utilisé
 
 <details>
-  <summary>Afficher la documentation</summary>
+  <summary><strong>Afficher la documentation</strong></summary>
   
 
 ## Contenu&nbsp;:
