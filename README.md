@@ -18,7 +18,15 @@ along with nbworkshop. If not, see <https://www.gnu.org/licenses/>.
 <img width=400 alt="nbworkshop logo" src="https://github.com/user-attachments/assets/9af0a222-afc6-4d5a-9529-a8d0daa29b18">
 </p>
 
+
 [🇫🇷 Aller à la version française 🇫🇷](#-version-française-)
+
+_nbworkshop_ is a tool for preparing Python exercise Jupyter notebooks with hidden solutions or instructor-only comments:
+![Simple nbworkshop example](https://github.com/user-attachments/assets/be557bda-6294-432e-8739-4d19538a341e)
+
+- No server required
+- No rigid course file structure
+- Preconfigured GitHub workflow with automatic regeneration on each push to main
 
 ## Content:
 * [Presentation](#presentation)
@@ -42,12 +50,9 @@ along with nbworkshop. If not, see <https://www.gnu.org/licenses/>.
 
 ## Presentation
 
-_nbworkshop_ is a tool for preparing and distributing Python exercise Jupyter notebooks with hidden solutions or instructor-only comments:
-![Simple nbworkshop example](https://github.com/user-attachments/assets/be557bda-6294-432e-8739-4d19538a341e)
+_nbworkshop_ is compatible with standard Jupyter notebooks (`.ipynb` files), which you can create or edit with Jupyter or JupyterLab.
 
-The tool is compatible with standard Jupyter notebooks (`.ipynb` files), which you can create or edit with Jupyter or JupyterLab.
-
-_nbworkshop_ deliberately does not include automated validation, grading, or advanced distribution features, offering a much simpler configuration than more comprehensive systems like _nbgrader_, with no complicated workflow or rigid directory structure: you only need to mark the parts to hide (in code or markdown cells) and generate student versions. This keeps tutor and students content perfectly synchronized, eliminating the risk of manual errors.
+The tool deliberately does not include automated validation, grading, or advanced distribution features, offering a much simpler configuration than more comprehensive systems like _nbgrader_, with no complicated workflow or rigid directory structure: you only need to mark the parts to hide (in code or markdown cells) and generate student versions. This keeps tutor and students content perfectly synchronized, eliminating the risk of manual errors.
 
 A GitHub Actions workflow automates generation and versioning: every time a notebook is updated on the main branch, synchronized student versions and optional ZIP archives are created and stored in a dedicated branch, ensuring a clear separation between instructor and student materials.
 
@@ -348,6 +353,13 @@ Also note that the `actions: write` permission has been enabled, allowing comman
 
 ## 🇫🇷 Version française 🇫🇷
 
+_nbworkshop_ est un outil spécialisé dans la préparation de notebooks Jupyter d'exercices Python avec des solutions cachées ou des commentaires réservés aux instructeurs&nbsp;:
+![Exemple simple nbworkshop](https://github.com/user-attachments/assets/be557bda-6294-432e-8739-4d19538a341e)
+
+- Ne nécessite pas de serveur
+- Pas d’arborescence de fichiers rigide
+- Workflow GitHub déjà prêt, avec régénération automatique à chaque push sur main
+
 <details>
   <summary>Montrer/Cacher</summary>
   
@@ -372,12 +384,9 @@ Also note that the `actions: write` permission has been enabled, allowing comman
 
 ## Présentation
 
-_nbworkshop_ est un outil spécialisé dans la préparation et la distribution de notebooks Jupyter d'exercices Python avec des solutions cachées ou des commentaires réservés aux instructeurs&nbsp;:
-![Exemple simple nbworkshop](https://github.com/user-attachments/assets/be557bda-6294-432e-8739-4d19538a341e)
+_nbworkshop_ est compatible avec les notebooks Jupyter standards (fichiers `.ipynb`), que vous pouvez créer ou modifier avec Jupyter ou JupyterLab.
 
-Cet outil est compatible avec les notebooks Jupyter standards (fichiers `.ipynb`), que vous pouvez créer ou modifier avec Jupyter ou JupyterLab.
-
-_nbworkshop_ ne propose volontairement aucune fonctionnalité de validation automatique, de correction ou de distribution avancée, ce qui permet une configuration bien plus simple que celle de systèmes plus complets comme _nbgrader_, sans workflow compliqué ni structure de fichiers rigide&nbsp;: il suffit de marquer les parties à masquer (dans les cellules code ou markdow) puis de générer les versions étudiantes. Cela garantit une parfaite synchronisation entre les contenus du tuteur et des étudiants, supprimant tout risque d’erreur manuelle.
+Cet outil ne propose volontairement aucune fonctionnalité de validation automatique, de correction ou de distribution avancée, ce qui permet une configuration bien plus simple que celle de systèmes plus complets comme _nbgrader_, sans workflow compliqué ni structure de fichiers rigide&nbsp;: il suffit de marquer les parties à masquer (dans les cellules code ou markdow) puis de générer les versions étudiantes. Cela garantit une parfaite synchronisation entre les contenus du tuteur et des étudiants, supprimant tout risque d’erreur manuelle.
 
 Un workflow GitHub Actions automatise la génération et le versioning&nbsp;: à chaque modification d’un notebook sur la branche `main`, des versions étudiantes synchronisées, ainsi que des archives ZIP si besoin, sont créées et stockées sur une branche dédiée, assurant ainsi une séparation claire entre les contenus enseignant et étudiant.
 
