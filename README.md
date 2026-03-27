@@ -27,6 +27,7 @@ _nbworkshop_ is a tool for preparing Python exercise Jupyter notebooks with hidd
 - No server required
 - No rigid course file structure
 - Preconfigured GitHub workflow with automatic regeneration on each push to main
+- No local installation needed when using the GitHub workflow
 
 ## Content:
 * [Presentation](#presentation)
@@ -359,6 +360,7 @@ _nbworkshop_ est un outil spécialisé dans la préparation de notebooks Jupyter
 - Ne nécessite pas de serveur
 - Pas d’arborescence de fichiers rigide
 - Workflow GitHub déjà prêt, avec régénération automatique à chaque push sur main
+- Pas besoin d'installation locale quand le workflow GitHub est utilisé
 
 <details>
   <summary>Montrer/Cacher</summary>
