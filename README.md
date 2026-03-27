@@ -24,6 +24,7 @@ along with nbworkshop. If not, see <https://www.gnu.org/licenses/>.
 _nbworkshop_ is a tool for preparing Python exercise Jupyter notebooks with hidden solutions or instructor-only comments:
 ![Simple nbworkshop example](https://github.com/user-attachments/assets/be557bda-6294-432e-8739-4d19538a341e)
 
+Key strengths:
 - No server required
 - No rigid course file structure
 - Preconfigured GitHub workflow with automatic regeneration on each push to main
@@ -357,6 +358,7 @@ Also note that the `actions: write` permission has been enabled, allowing comman
 _nbworkshop_ est un outil spécialisé dans la préparation de notebooks Jupyter d'exercices Python avec des solutions cachées ou des commentaires réservés aux instructeurs&nbsp;:
 ![Exemple simple nbworkshop](https://github.com/user-attachments/assets/be557bda-6294-432e-8739-4d19538a341e)
 
+Points forts&nbsp;:
 - Ne nécessite pas de serveur
 - Pas d’arborescence de fichiers rigide
 - Workflow GitHub déjà prêt, avec régénération automatique à chaque push sur main
