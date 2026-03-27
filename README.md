@@ -51,7 +51,7 @@ _nbworkshop_ is a tool for preparing Python exercise Jupyter notebooks with hidd
 
 ## Presentation
 
-_nbworkshop_ is compatible with standard Jupyter notebooks (`.ipynb` files), which you can create or edit with Jupyter or JupyterLab.
+Starting from one or several tutor notebooks, _nbworkshop_ generates synchronized student versions in which marked solutions and instructor-only comments are automatically removed or replaced by placeholders. This makes it possible to maintain one reference notebook while publishing student-ready material. _nbworkshop_ is compatible with standard Jupyter notebooks (`.ipynb` files), which you can create or edit with Jupyter or JupyterLab.
 
 The tool deliberately does not include automated validation, grading, or advanced distribution features, offering a much simpler configuration than more comprehensive systems like _nbgrader_, with no complicated workflow or rigid directory structure: you only need to mark the parts to hide (in code or markdown cells) and generate student versions. This keeps tutor and students content perfectly synchronized, eliminating the risk of manual errors.
 
@@ -386,7 +386,7 @@ _nbworkshop_ est un outil spécialisé dans la préparation de notebooks Jupyter
 
 ## Présentation
 
-_nbworkshop_ est compatible avec les notebooks Jupyter standards (fichiers `.ipynb`), que vous pouvez créer ou modifier avec Jupyter ou JupyterLab.
+À partir d’un ou de plusieurs notebooks tuteur, nbworkshop génère des versions étudiantes synchronisées dans lesquelles les solutions marquées et les commentaires réservés à l’enseignant sont automatiquement supprimés ou remplacés par des espaces réservés. Cela permet de conserver un seul notebook de référence tout en publiant une version directement utilisable par les étudiants. _nbworkshop_ est compatible avec les notebooks Jupyter standards (fichiers `.ipynb`), que vous pouvez créer ou modifier avec Jupyter ou JupyterLab.
 
 Cet outil ne propose volontairement aucune fonctionnalité de validation automatique, de correction ou de distribution avancée, ce qui permet une configuration bien plus simple que celle de systèmes plus complets comme _nbgrader_, sans workflow compliqué ni structure de fichiers rigide&nbsp;: il suffit de marquer les parties à masquer (dans les cellules code ou markdow) puis de générer les versions étudiantes. Cela garantit une parfaite synchronisation entre les contenus du tuteur et des étudiants, supprimant tout risque d’erreur manuelle.
 
