@@ -30,6 +30,9 @@ Key strengths:
 - Preconfigured GitHub workflow with automatic regeneration on each push to main
 - No local installation needed when using the GitHub workflow
 
+<details>
+  <summary>Show full documentation</summary>
+  
 ## Content:
 * [Presentation](#presentation)
 * [Installation and Prerequisites](#installation-and-prerequisites)
@@ -353,6 +356,8 @@ It can also be done from the called program itself through external command exec
 
 Also note that the `actions: write` permission has been enabled, allowing commands to trigger other workflows using GitHub CLI (`gh workflow run`) without requiring additional personal access tokens. This requires target workflows to declare a `workflow_dispatch` trigger. Just be careful with trigger rules, as overlapping triggers can cause multiple executions.
 
+</details>
+	
 ## 🇫🇷 Version française 🇫🇷
 
 _nbworkshop_ est un outil spécialisé dans la préparation de notebooks Jupyter d'exercices Python avec des solutions cachées ou des commentaires réservés aux instructeurs&nbsp;:
@@ -365,7 +370,7 @@ Points forts&nbsp;:
 - Pas besoin d'installation locale quand le workflow GitHub est utilisé
 
 <details>
-  <summary>Montrer/Cacher</summary>
+  <summary>Afficher la documentation</summary>
   
 
 ## Contenu&nbsp;:
