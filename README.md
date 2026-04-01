@@ -98,6 +98,8 @@ In workflow mode, _nbworkshop_ is entirely hosted on the GitHub repository hosti
 
 The newly created `Students` branch contains the `Students` versions of the notebooks (and ZIP archives), with solutions replaced by placeholders and all execution traces (including calculation results and cell execution counters) removed. Those converted notebooks are updated on every push on the `main` branch.
 
+Manual use is described in the [script section](#conversion-script).
+
 ## How to add solutions and notes addressed to tutors
 
 The script processes any standard Jupyter notebook and expects files in the `.ipynb` format. Note that _nbworkshop_ can use any replacement text/tags and placeholder the user defines (see [Configuration file](#configuration-file)). In the following explanations, default versions are used.
