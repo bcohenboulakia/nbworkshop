@@ -98,7 +98,7 @@ In workflow mode, _nbworkshop_ is entirely hosted on the GitHub repository hosti
 
 The newly created `Students` branch contains the `Students` versions of the notebooks (and ZIP archives), with solutions replaced by placeholders and all execution traces (including calculation results and cell execution counters) removed. Those converted notebooks are updated on every push on the `main` branch.
 
-Manual use is described in the [script section](#conversion-script).
+Manual use is described in the [_Conversion script_ section](#conversion-script).
 
 ## How to add solutions and notes addressed to tutors
 
@@ -425,7 +425,7 @@ Tout le code de _nbworkshop_ se trouve dans le répertoire `.github`. Il contien
 * `.github/workflows/generate_student_version.yml`&nbsp;: Le workflow GitHub qui appelle le script Python susmentionné à chaque fois qu'un notebook est poussé sur la branche `main` du dépôt.
 * `.github/conversion.json`&nbsp;: Le fichier de configuration. C'est ici que sont définis les paramètres tels que les répertoires des notebooks, les remplacements de texte, les espaces réservés, etc.
 
-Jupyter n’est pas obligatoire pour utiliser le script, du moment que les notebook Jupyter sont accessibles
+Jupyter n’est pas obligatoire pour utiliser le script, du moment que les notebook Jupyter sont accessibles.
 
 ## Démarrage rapide
 En mode workflow, _nbworkshop_ est entièrement hébergé sur le dépôt GitHub hébergeant les notebooks, et ne nécessite aucun prérequis (à part un compte GitHub). Pour commencer à utiliser ce workflow&nbsp;:
@@ -438,6 +438,8 @@ En mode workflow, _nbworkshop_ est entièrement hébergé sur le dépôt GitHub 
 5. Committez les notebooks sur la branche `main` et poussez-les vers le dépôt GitHub
 
 La nouvelle branche `Students` contient les versions étudiantes des notebooks (et archives ZIP), avec les solutions remplacées par des espaces réservés et toutes les traces d'exécution (y compris les résultats de calcul et les compteurs d'exécution de cellules) supprimées. Ces notebooks convertis sont mis à jour à chaque poussée sur la branche `main`.
+
+L'utilisation manuelleest expliquée dans la [Section _Script de conversion_](#script-de-conversion).
 
 ## Comment ajouter des solutions et des notes adressées au tuteur
 
