@@ -237,7 +237,7 @@ The configuration file includes options for both conversion and GitHub workflow.
 	* `placeholder`: Dictionary of replacement text for removed solutions
 	* `generate_zip`: Boolean enabling ZIP archives to be generated.
 	* `tutor_postfix`: String replaced by the value of `student_postfix` for the notebook filename.
-	* "student_postfix": String replacing the value of `tutor_postfix` for the notebook filename.
+	* `student_postfix`: String replacing the value of `tutor_postfix` for the notebook filename.
 * Workflow options (ignored by the conversion script):
 	* `notebooks_dir` (mandatory): List of directories to process.
 	* `rebuild_all` (optional): Boolean determining whether all notebooks are rebuilt every time, or only the ones that have changed since the last commit (and the corresponding ZIP if generated)
