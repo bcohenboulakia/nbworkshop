@@ -52,7 +52,6 @@ Key strengths:
    * [Pre and post-processing command](#pre-and-post-processing-command)
 
 
-
 ## Presentation
 
 Starting from one or several tutor notebooks, _nbworkshop_ generates synchronized student versions in which marked solutions and instructor-only comments are automatically removed or replaced by placeholders. This makes it possible to maintain one reference notebook while publishing student-ready material. _nbworkshop_ is compatible with standard Jupyter notebooks (`.ipynb` files), which you can create or edit with Jupyter or JupyterLab.
@@ -81,16 +80,16 @@ _nbworkshop_ can be used in two different ways:
    In this case, the script can be moved anywhere, provided that it can access the configuration file. Have a look at [Conversion script](#conversion-script) below for more details.
 
 All _nbworkshop_ code is in the `.github` directory. It contains:
-* `.github/scripts/student_version.py`: the Python script that converts Tutor notebooks to `Students` notebooks, and creates ZIP archives with all the attached files. If used alone, this script can be moved anywhere, provided it still has access to the configuration file
-* `.github/workflows/generate_student_version.yml`: The GitHub workflow that calls the aforementioned Python script every time a notebook is pushed on the repository's `main` branch.
-* `.github/conversion.json`: The configuration file. This is where parameters such as notebook directories, text replacement, placeholders etc. are defined.
+* `.github/scripts/nbworkshop_convert.py`: the Python script that converts Tutor notebooks to `Students` notebooks, and creates ZIP archives with all the attached files. If used alone, this script can be moved anywhere, provided it still has access to the configuration file
+* `.github/workflows/.github/workflows/nbworkshop_convert_students.yml`: The GitHub workflow that calls the aforementioned Python script every time a notebook is pushed on the repository's `main` branch.
+* `.github/nbworkshop_convert.json`: The configuration file. This is where parameters such as notebook directories, text replacement, placeholders etc. are defined.
 
 
 ## Quick start
 In workflow mode, _nbworkshop_ is entirely hosted on the GitHub repository hosting the notebooks, and requires no prerequisites (except for a GitHub account). To get started using this workflow:
 1. Clone this repository
 2. Add notebooks to the clone repository
-3. Edit `.github/conversion.json` to insert in `"notebooks_dir"` the directory containing the notebooks you created (see [Configuration file](#configuration-file) for a detailed explanation)
+3. Edit `.github/nbworkshop_convert.json` to insert in `"notebooks_dir"` the directory containing the notebooks you created (see [Configuration file](#configuration-file) for a detailed explanation)
 4. Edit the notebooks (see [Solution formatting](#solution-formatting) for more detailed explanation on formatting solutions):
 	* In code cells, add `#SOLUTION` to each line of code cells that the students have to figure out by themselves.
 	* In Markdown cells, add answers to the questions inside `<blockquote>`tags. Be sure to leave the HTML tags alone on their lines.  
@@ -244,20 +243,20 @@ The configuration file includes options for both conversion and GitHub workflow.
 	* `pre_processing` and `post_processing` (optional): Pre and Post-processing shell commands to be executed by the workflow, allowing for example to modify the notebooks before conversion, and send the generated ZIP archives to a LMS.
 	
 The configuration file is located in different places depending on the mode of use:
-* **Using GitHub workflow**: `.github/conversion.json`
-* **Manual script use**: `./conversion.json` (in the script's directory), but can be changed through commandline option (see [Conversion script](#conversion-script))
+* **Using GitHub workflow**: `.github/nbworkshop_convert.json`
+* **Manual script use**: `./nbworkshop_convert.json` (in the script's directory), but can be changed through commandline option (see [Conversion script](#conversion-script))
 
 ## Conversion process
 
 ### Conversion script
 
-The Python script that generates student notebooks is located at `.github/scripts/student_version.py`.  If it's run through the GitHub workflow, there's no need to know anything about it. Everything (including paths of the generated files, and error management) is handled by the workflow, and through the configuration file. If manually run (that is, not through the GitHub workflow), the student version is created in the same directory as the original notebook.
+The Python script that generates student notebooks is located at `.github/scripts/nbworkshop_convert.py`.  If it's run through the GitHub workflow, there's no need to know anything about it. Everything (including paths of the generated files, and error management) is handled by the workflow, and through the configuration file. If manually run (that is, not through the GitHub workflow), the student version is created in the same directory as the original notebook.
 
 There are two ways to run the conversion script locally:
 1. **With uv (recommended, zero setup)**: The script declares its required Python version and dependencies in its header, using the standard metadata format (PEP 723) supported by [uv](https://github.com/astral-sh/uv). If you have uv installed, simply run:
    
    ```bash
-   uv run student_version.py NOTEBOOK_PATHS [--config PATH] [--hide-header]
+   uv run nbworkshop_convert.py NOTEBOOK_PATHS [--config PATH] [--hide-header]
    ```
    
    uv will automatically create an isolated environment, install Python (if needed) and all required packages (`beautifulsoup4` and `chardet`), then execute the script.
@@ -271,19 +270,19 @@ There are two ways to run the conversion script locally:
    You may then run the script with:
 
    ```bash
-   python student_version.py NOTEBOOK_PATHS [--config PATH] [--hide-header]
+   python nbworkshop_convert.py NOTEBOOK_PATHS [--config PATH] [--hide-header]
    ```
    
 The script accepts the following arguments:
 * `NOTEBOOK_PATHS`: Process specific notebooks (supports glob patterns: `*.ipynb`, `**/exercises/*.ipynb`)
-* `--config` (optional): Specify alternative config path (default: `./conversion.json`)
+* `--config` (optional): Specify alternative config path (default: `./nbworkshop_convert.json`)
 * `--hide-header` (optional): Suppress Markdown table headers for embedding in reports
 
 and then:
 * creates the converted student notebooks in the same directory as the originals.
 * prints a summary of the process (including the conversion report) to standard output. Notebooks are referenced with absolute paths if outside the current working directory.
 * when using `--hide-header`, outputs the summary table without headers, which is suitable for concatenating reports in batch or CI/CD pipelines.
-* **Configuration file note:** When run manually, the script expects `./conversion.json` by default (can be overridden with `--config`). The GitHub workflow, by contrast, uses `.github/conversion.json`.
+* **Configuration file note:** When run manually, the script expects `./nbworkshop_convert.json` by default (can be overridden with `--config`). The GitHub workflow, by contrast, uses `.github/nbworkshop_convert.json`.
 
 ### Notebooks filename
 
@@ -291,7 +290,7 @@ Every solution marker in processed notebooks is replaced by the corresponding pl
 
 ## GitHub workflow
 
-The conversion can be automated by a GitHub Actions workflow called `Generate Students notebooks branch` which calls the conversion script on every update of a notebook in a monitored directory. Note that the GitHub workflow uses `.github/conversion.json` as configuration file (including for calling the conversion script), and provides detailed error log in case this file is invalid (or missing). The workflow's behavior depends on the value of the `rebuild_all` parameter:
+The conversion can be automated by a GitHub Actions workflow called `Generate Students notebooks branch` which calls the conversion script on every update of a notebook in a monitored directory. Note that the GitHub workflow uses `.github/nbworkshop_convert.json` as configuration file (including for calling the conversion script), and provides detailed error log in case this file is invalid (or missing). The workflow's behavior depends on the value of the `rebuild_all` parameter:
 * If set to `true`, the workflow wipes out the existing `Students`branch and recreates it from the latest state of the main branch, then runs the conversion script on every notebook in a monitored directory. If you have manually edited the content of the Students branch, be aware that these manual changes — including notebooks and other files — will be completely lost, as the branch is fully reset and all content is regenerated from scratch.
 * If set to `false`, the workflow checks out the latest main branch, updates the Students branch, and runs the conversion script on every notebook that has been modified since the last commit. If you have manually edited  a notebook that is detected as changed and thus regenerated, your manual changes to that notebook will be overwritten by the automated process. Manual changes to other notebooks or files will remain until a merge conflict occurs. For non-notebook files that are in conflict, the workflow automatically resolves the conflict by keeping the version from the remote Students branch, meaning your manual changes to those files will be preserved, while changes from the main branch are discarded.
 
@@ -332,9 +331,9 @@ Please note that conversion may take several dozens of seconds. This total delay
 
 ### Pre and post-processing command
 
-The `pre_processing` and `post_processing` options in `conversion.json` allow executing a command before or after all notebook conversions are completed:
+The `pre_processing` and `post_processing` options in `nbworkshop_convert.json` allow executing a command before or after all notebook conversions are completed:
 * The pre-processing command is run just after setting up the workflow and validating the configuration file
-* The post-processing command is run the `Students` branch has been commited and pushed
+* The post-processing command is run after notebook conversion, before the generated files are committed and pushed to the `Students` branch.
  
 By default (but it can be changed, see below), these command are executed on the `Students` branch with mainly two consequences:
 * The pre-processing command can modify any file without the changes impacting the `main` branch. This allows for example to modify notebooks before conversion (removing changelogs or adding dates)
@@ -397,8 +396,7 @@ Points forts&nbsp;:
 
 À partir d’un ou de plusieurs notebooks tuteur, nbworkshop génère des versions étudiantes synchronisées dans lesquelles les solutions marquées et les commentaires réservés à l’enseignant sont automatiquement supprimés ou remplacés par des espaces réservés. Cela permet de conserver un seul notebook de référence tout en publiant une version directement utilisable par les étudiants. _nbworkshop_ est compatible avec les notebooks Jupyter standards (fichiers `.ipynb`), que vous pouvez créer ou modifier avec Jupyter ou JupyterLab.
 
-Cet outil ne propose volontairement aucune fonctionnalité de validation automatique, de correction ou de distribution avancée, ce qui permet une configuration bien plus simple que celle de systèmes plus complets comme _nbgrader_, sans workflow compliqué ni structure de fichiers rigide&nbsp;: il suffit de marquer les parties à masquer (dans les cellules code ou markdow) puis de générer les versions étudiantes. Cela garantit une parfaite synchronisation entre les contenus du tuteur et des étudiants, supprimant tout risque d’erreur manuelle.
-
+Cet outil ne propose volontairement aucune fonctionnalité de validation automatique, de correction ou de distribution avancée, ce qui permet une configuration bien plus simple que celle de systèmes plus complets comme _nbgrader_, sans workflow compliqué ni structure de fichiers rigide&nbsp;: il suffit de marquer les parties à masquer (dans les cellules code ou markdown) puis de générer les versions étudiantes. Cela garantit une parfaite synchronisation entre les contenus du tuteur et des étudiants, supprimant tout risque d’erreur manuelle.
 Un workflow GitHub Actions automatise la génération et le versioning&nbsp;: à chaque modification d’un notebook sur la branche `main`, des versions étudiantes synchronisées, ainsi que des archives ZIP si besoin, sont créées et stockées sur une branche dédiée, assurant ainsi une séparation claire entre les contenus enseignant et étudiant.
 
 **Fonctionnalités principales :**
@@ -421,9 +419,9 @@ _nbworkshop_ peut être utilisé de deux manières différentes&nbsp;:
    Dans ce cas, le script peut être déplacé n'importe où, à condition qu'il puisse accéder au fichier de configuration. Consultez [Script de conversion](#script-de-conversion) ci-dessous pour plus de détails.
 
 Tout le code de _nbworkshop_ se trouve dans le répertoire `.github`. Il contient&nbsp;:
-* `.github/scripts/student_version.py`&nbsp;: le script Python qui convertit les notebooks Tuteur en notebooks Étudiants, et crée des archives ZIP avec tous les fichiers joints. S'il est utilisé seul, ce script peut être déplacé n'importe où, à condition d'avoir toujours accès au fichier de configuration
-* `.github/workflows/generate_student_version.yml`&nbsp;: Le workflow GitHub qui appelle le script Python susmentionné à chaque fois qu'un notebook est poussé sur la branche `main` du dépôt.
-* `.github/conversion.json`&nbsp;: Le fichier de configuration. C'est ici que sont définis les paramètres tels que les répertoires des notebooks, les remplacements de texte, les espaces réservés, etc.
+* `.github/scripts/nbworkshop_convert.py`&nbsp;: le script Python qui convertit les notebooks Tuteur en notebooks Étudiants, et crée des archives ZIP avec tous les fichiers joints. S'il est utilisé seul, ce script peut être déplacé n'importe où, à condition d'avoir toujours accès au fichier de configuration
+* `.github/workflows/.github/workflows/nbworkshop_convert_students.yml`&nbsp;: Le workflow GitHub qui appelle le script Python susmentionné à chaque fois qu'un notebook est poussé sur la branche `main` du dépôt.
+* `.github/nbworkshop_convert.json`&nbsp;: Le fichier de configuration. C'est ici que sont définis les paramètres tels que les répertoires des notebooks, les remplacements de texte, les espaces réservés, etc.
 
 Jupyter n’est pas obligatoire pour utiliser le script, du moment que les notebook Jupyter sont accessibles.
 
@@ -431,7 +429,7 @@ Jupyter n’est pas obligatoire pour utiliser le script, du moment que les noteb
 En mode workflow, _nbworkshop_ est entièrement hébergé sur le dépôt GitHub hébergeant les notebooks, et ne nécessite aucun prérequis (à part un compte GitHub). Pour commencer à utiliser ce workflow&nbsp;:
 1. Clonez ce dépôt
 2. Ajoutez des notebooks au dépôt cloné
-3. Modifiez `.github/conversion.json` pour insérer dans `"notebooks_dir"` le répertoire contenant les notebooks que vous avez créés (voir [Fichier de configuration](#fichier-de-configuration) pour une explication détaillée)
+3. Modifiez `.github/nbworkshop_convert.json` pour insérer dans `"notebooks_dir"` le répertoire contenant les notebooks que vous avez créés (voir [Fichier de configuration](#fichier-de-configuration) pour une explication détaillée)
 4. Modifiez les notebooks (voir [Formatage des solutions](#formatage-des-solutions) pour des explications plus détaillées sur le formatage des solutions)&nbsp;:
 	* Dans les cellules de code, ajoutez `#SOLUTION` à chaque ligne des cellules de code que les étudiants doivent trouver par eux-mêmes.
 	* Dans les cellules Markdown, ajoutez les réponses aux questions entre des balises `<blockquote>`. Veillez à laisser les balises HTML seules sur leurs lignes.  
@@ -585,13 +583,13 @@ Le fichier de configuration inclut des options pour la conversion et le workflow
 	* `pre_processing` et `post_processing` (optionnel)&nbsp;: Commandes shell de pré et post-traitement à exécuter par le workflow, permettant par exemple de modifier les notebooks avant conversion et d'envoyer les archives ZIP générées à un LMS.
 	
 Le fichier de configuration se trouve à différents endroits selon le mode d'utilisation&nbsp;:
-* **Utilisation du workflow GitHub**&nbsp;: `.github/conversion.json`
-* **Utilisation manuelle du script**&nbsp;: `./conversion.json` (dans le répertoire du script), mais peut être changé via une option en ligne de commande (voir [Script de conversion](#script-de-conversion))
+* **Utilisation du workflow GitHub**&nbsp;: `.github/nbworkshop_convert.json`
+* **Utilisation manuelle du script**&nbsp;: `./nbworkshop_convert.json` (dans le répertoire du script), mais peut être changé via une option en ligne de commande (voir [Script de conversion](#script-de-conversion))
 
 ## Processus de conversion
 ### Script de conversion
 
-Le script Python qui génère les notebooks étudiants se trouve dans `.github/scripts/student_version.py`.  
+Le script Python qui génère les notebooks étudiants se trouve dans `.github/scripts/nbworkshop_convert.py`.  
 S'il est utilisé via le workflow GitHub, il n'est pas nécessaire de s'en occuper directement : tous les chemins, la génération des fichiers et la gestion des erreurs sont assurés automatiquement par le workflow et le fichier de configuration.  
 En exécution manuelle (c'est-à-dire en dehors du workflow GitHub), la version étudiante est créée dans le même répertoire que le notebook original.
 
@@ -602,7 +600,7 @@ Il existe deux façons d’exécuter le script localement :
    Si uv est installé, il suffit de lancer :
 
    ```bash
-   uv run student_version.py CHEMINS_NOTEBOOK [--config CHEMIN] [--hide-header]
+   uv run nbworkshop_convert.py CHEMINS_NOTEBOOK [--config CHEMIN] [--hide-header]
    ```
 
    uv crée alors automatiquement un environnement isolé, installe Python (si besoin) et toutes les bibliothèques nécessaires (`beautifulsoup4` et `chardet`), puis exécute le script.
@@ -618,19 +616,19 @@ Il existe deux façons d’exécuter le script localement :
    Le script peut alors être lancé:
    
    ```bash
-   python student_version.py NOTEBOOK_PATHS [--config PATH] [--hide-header]
+   python nbworkshop_convert.py NOTEBOOK_PATHS [--config PATH] [--hide-header]
    ```
 
 Le script accepte les arguments suivants :
 * `CHEMINS_NOTEBOOK` : traite un ou plusieurs notebooks spécifiques (motifs globaux acceptés : `*.ipynb`, `**/exercises/*.ipynb`)
-* `--config` (optionnel) : spécifie un chemin alternatif pour la configuration (par défaut : `./conversion.json`)
+* `--config` (optionnel) : spécifie un chemin alternatif pour la configuration (par défaut : `./nbworkshop_convert.json`)
 * `--hide-header` (optionnel) : supprime les en-têtes de tableau Markdown (pour intégration dans des rapports)
 
 Une fois lancé, le script :
 * crée les versions étudiantes des notebooks dans le même répertoire que les originaux ;
 * affiche un résumé du traitement (y compris le rapport de conversion) sur la sortie standard. Les notebooks sont référencés par leurs chemins absolus s’ils se trouvent hors du répertoire de travail courant ;
 * si l’option `--hide-header` est utilisée, le tableau récapitulatif est généré sans en-tête, ce qui facilite la concaténation de rapports lors d'un traitement par lots ou dans un pipeline CI/CD ;
-* **À noter concernant le fichier de configuration :** lors d’une exécution manuelle, le script utilise par défaut le fichier `./conversion.json` (modifiable via l’option `--config`). Le workflow GitHub, en revanche, utilise `.github/conversion.json`.
+* **À noter concernant le fichier de configuration :** lors d’une exécution manuelle, le script utilise par défaut le fichier `./nbworkshop_convert.json` (modifiable via l’option `--config`). Le workflow GitHub, en revanche, utilise `.github/nbworkshop_convert.json`.
 
 
 ### Nom des fichiers des notebooks
@@ -639,7 +637,7 @@ Chaque marqueur de solution dans les notebooks traités est remplacé par l'espa
 
 ## Workflow GitHub
 
-La conversion peut être automatisée par un workflow GitHub Actions appelé `Generate Students Notebooks branch` qui appelle le script de conversion à chaque mise à jour d'un notebook dans un répertoire surveillé. Notez que le workflow GitHub utilise `.github/conversion.json` comme fichier de configuration (y compris pour appeler le script de conversion), et fournit un journal d'erreur détaillé dans le cas où ce fichier est invalide (ou manquant). Le comportement du workflow dépend de la valeur du paramètre `rebuild_all` :
+La conversion peut être automatisée par un workflow GitHub Actions appelé `Generate Students Notebooks branch` qui appelle le script de conversion à chaque mise à jour d'un notebook dans un répertoire surveillé. Notez que le workflow GitHub utilise `.github/nbworkshop_convert.json` comme fichier de configuration (y compris pour appeler le script de conversion), et fournit un journal d'erreur détaillé dans le cas où ce fichier est invalide (ou manquant). Le comportement du workflow dépend de la valeur du paramètre `rebuild_all` :
 * S'il vaut `true`, le workflow efface la branche `Students` existante et la recrée à partir du dernier état de la branche `main`, puis exécute le script de conversion sur chaque notebook dans un répertoire surveillé. Si vous avez édité manuellement le contenu de la branche `Students`, que ces modifications manuelles - notebooks et autres fichiers - seront complètement perdues, car la branche est entièrement réinitialisée et tout le contenu est régénéré à partir de zéro.
 * Si la valeur est `false`, le workflow fait un check out de la dernier `main`, met à jour la branche `Students`, et exécute le script de conversion sur chaque notebook qui a été modifié depuis le dernier commit. Si vous avez édité manuellement un notebook qui est détecté comme modifié et donc régénéré, vos modifications manuelles à ce notebook seront écrasées par le workflow. Les modifications manuelles apportées à d'autres notebooks ou fichiers seront conservées jusqu'à ce qu'un conflit de merge se produise. Pour les fichiers non-notebook qui sont en conflit, le workflow résout automatiquement le conflit en conservant la version de la branche `Students` distante, ce qui signifie que vos modifications manuelles de ces fichiers seront préservées, alors que les modifications de la branche `main` seront rejetées.
 
@@ -680,9 +678,9 @@ Veuillez noter que la conversion peut prendre plusieurs dizaines de secondes. Ce
 
 ### Commandes de pré et post-traitement
 
-Les options  `pre_processing` et `post_processing` dans `conversion.json` permettent d'exécuter une commande avant ou après que toutes les conversions de notebooks soient terminées&nbsp;:
+Les options  `pre_processing` et `post_processing` dans `nbworkshop_convert.json` permettent d'exécuter une commande avant ou après que toutes les conversions de notebooks soient terminées&nbsp;:
 * La commande de pré-traitement est exécutée juste après la configuration du workflow et la validation du fichier de configuration
-* La commande de post-traitement est exécutée après que la branche `Students` a été commitée et poussée
+* La commande de post-traitement est exécutée après la conversion des notebooks, avant que les fichiers générés soient commités et poussés sur la branche `Students`
  
 Par défaut (mais cela peut être modifié, voir ci-dessous), ces commandes sont exécutées sur la branche `Students` avec principalement deux conséquences&nbsp;:
 * La commande de prétraitement peut modifier n'importe quel fichier sans que les changements impactent la branche `main`. Cela permet, par exemple, de supprimer les changelogs ou d'ajouter des dates aux notebooks avant la conversion.

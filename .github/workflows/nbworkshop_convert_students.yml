@@ -1,4 +1,4 @@
-name: Generate Students Notebooks branch
+name: Notebook conversion to Students branch
 
 on:
   push:
@@ -18,7 +18,7 @@ jobs:
   process:
     runs-on: ubuntu-latest
     env:
-      CONFIG_PATH: .github/conversion.json
+      CONFIG_PATH: .github/nbworkshop_convert.json
       SUMMARY_FILE: /tmp/README.md
 
     steps:
@@ -29,6 +29,7 @@ jobs:
         run: |
           rm -f "$SUMMARY_FILE"
           mkdir -p "$(dirname "$SUMMARY_FILE")"
+          printf "## Notebook conversion\n\n" >> "$SUMMARY_FILE"
 
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -39,7 +40,7 @@ jobs:
         run: |
           # JSON syntax validation with jq
           if ! jq empty "$CONFIG_PATH" >/dev/null 2>&1; then
-            printf "## ❌ Error in JSON configuration file\n" >> $SUMMARY_FILE
+            printf "### ❌ Error in JSON configuration file\n" >> $SUMMARY_FILE
             printf "Please fix $CONFIG_PATH error:\n" >> $SUMMARY_FILE
             jq empty "$CONFIG_PATH" 2>&1 | sed 's/^jq: //' >> $SUMMARY_FILE
             exit 1
@@ -51,7 +52,7 @@ jobs:
           const fs = require('fs');
           const Ajv = require('ajv').default;
           const summaryFile = process.env.SUMMARY_FILE || '/tmp/README.md';
-          const configPath = process.env.CONFIG_PATH || '.github/conversion.json';
+          const configPath = process.env.CONFIG_PATH || '.github/nbworkshop_convert.json';
 
           const schema = {
             type: 'object',
@@ -88,7 +89,7 @@ jobs:
             const validate = ajv.compile(schema);
             if (!validate(config)) {
               const lines = [];
-              lines.push("## ❌ Error in JSON configuration file");
+              lines.push("### ❌ Error in JSON configuration file");
               lines.push("Config validation failed:");
               lines.push("```");
               validate.errors.forEach(err => {
@@ -100,7 +101,7 @@ jobs:
             }
           } catch (error) {
             const lines = [];
-            lines.push("## ❌ Error in JSON configuration file");
+            lines.push("### ❌ Error in JSON configuration file");
             lines.push("Parsing or validation failed:");
             lines.push("```");
             lines.push(error.message);
@@ -117,7 +118,7 @@ jobs:
           while IFS= read -r dir; do
             if [ ! -d "$dir" ]; then
               if [ "$ERROR_HEADER_CREATED" = false ]; then
-                printf "## ❌ Error: Missing notebook directories\n" >> $SUMMARY_FILE
+                printf "### ❌ Error: Missing notebook directories\n" >> $SUMMARY_FILE
                 printf "The following directories specified in $CONFIG_PATH don't exist:\n" >> $SUMMARY_FILE
                 ERROR_HEADER_CREATED=true
               fi
@@ -140,7 +141,7 @@ jobs:
           # Use bash -n to check shell command syntax without execution
           if [ -n "$PRE_PROCESSING" ]; then
             ERROR_OUTPUT=$(echo "$PRE_PROCESSING" | bash -n 2>&1) || {
-              printf "## ❌ Error: Pre-processing command syntax error\n" >> $SUMMARY_FILE
+              printf "### ❌ Error: Pre-processing command syntax error\n" >> $SUMMARY_FILE
               printf "Please fix your pre-processing command syntax:\n" >> $SUMMARY_FILE
               printf "%s\n" "$PRE_PROCESSING" >> $SUMMARY_FILE
               printf "\n" >> $SUMMARY_FILE
@@ -151,7 +152,7 @@ jobs:
           fi
           if [ -n "$POST_PROCESSING" ]; then
             ERROR_OUTPUT=$(echo "$POST_PROCESSING" | bash -n 2>&1) || {
-              printf "## ❌ Error: Post-processing command syntax error\n" >> $SUMMARY_FILE
+              printf "### ❌ Error: Post-processing command syntax error\n" >> $SUMMARY_FILE
               printf "Please fix your post-processing command syntax:\n" >> $SUMMARY_FILE
               printf "%s\n" "$POST_PROCESSING" >> $SUMMARY_FILE
               printf "\n" >> $SUMMARY_FILE
@@ -170,26 +171,29 @@ jobs:
         uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
-          cache-dependency-glob: ".github/scripts/student_version.py"
+          cache-dependency-glob: ".github/scripts/nbworkshop_convert.py"
 
       - name: Execute pre-processing command
         run: |
-          OUTPUT=$(bash -c "$PRE_PROCESSING" 2>&1)
-          EXIT_CODE=$?
-          if [ $EXIT_CODE -eq 0 ]; then
-              printf "## Pre-processing executed successfully ✅\n" >> $SUMMARY_FILE
-              if [ -n "$OUTPUT" ]; then
-                  printf "%s\n" "$OUTPUT" >> $SUMMARY_FILE
+          if [ -n "$PRE_PROCESSING" ]; then
+              OUTPUT=$(bash -c "$PRE_PROCESSING" 2>&1)
+              EXIT_CODE=$?
+              if [ $EXIT_CODE -eq 0 ]; then
+                  printf "### Pre-processing executed successfully ✅\n" >> "$SUMMARY_FILE"
+                  if [ -n "$OUTPUT" ]; then
+                      printf "%s\n" "$OUTPUT" >> "$SUMMARY_FILE"
+                  else
+                      printf "\n" >> "$SUMMARY_FILE"
+                  fi
               else
-                  printf "\n" >> $SUMMARY_FILE
-              fi
-          else
-              printf "## Post-processing failed ❌\n" >> $SUMMARY_FILE
-              printf "Exit code: %d\n" "$EXIT_CODE" >> $SUMMARY_FILE
-              if [ -n "$OUTPUT" ]; then
-                  printf "\n" >> $SUMMARY_FILE
-                  printf "Command output (including errors):\n" >> $SUMMARY_FILE
-                  printf "%s\n" "$OUTPUT" >> $SUMMARY_FILE
+                  printf "### Pre-processing failed ❌\n" >> "$SUMMARY_FILE"
+                  printf "Exit code: %d\n" "$EXIT_CODE" >> "$SUMMARY_FILE"
+                  if [ -n "$OUTPUT" ]; then
+                      printf "\n" >> "$SUMMARY_FILE"
+                      printf "Command output (including errors):\n" >> "$SUMMARY_FILE"
+                      printf "%s\n" "$OUTPUT" >> "$SUMMARY_FILE"
+                  fi
+                  exit "$EXIT_CODE"
               fi
           fi
 
@@ -218,7 +222,6 @@ jobs:
         id: detect_notebooks
         shell: bash
         run: |
-          CONFIG_PATH=".github/conversion.json"
           DIRS=$(jq -r '.notebooks_dir[]' "$CONFIG_PATH")
 
           # Build patterns for target notebook files
@@ -251,14 +254,14 @@ jobs:
 
       - name: Convert changed notebooks
         run: |
-          printf "## Processing Report\n" >> $SUMMARY_FILE
+          printf "### Processing Report\n" >> $SUMMARY_FILE
           printf "| Notebook | Questions | Code Blocks |  ZIP |\n" >> $SUMMARY_FILE
           printf "|----------|-----------|-------------|------|\n" >> $SUMMARY_FILE
 
           echo "${{ steps.detect_notebooks.outputs.notebooks }}" | while IFS= read -r nb; do
             [ -z "$nb" ] && continue
             git checkout origin/main -- "$nb"
-            uv run .github/scripts/student_version.py "$nb" \
+            uv run .github/scripts/nbworkshop_convert.py "$nb" \
               --config "$CONFIG_PATH" \
               --hide-header >> $SUMMARY_FILE
           done
@@ -269,24 +272,25 @@ jobs:
               OUTPUT=$(bash -c "$POST_PROCESSING" 2>&1)
               EXIT_CODE=$?
               if [ $EXIT_CODE -eq 0 ]; then
-                  printf "## Post-processing executed successfully ✅\n" >> $SUMMARY_FILE
+                  printf "### Post-processing executed successfully ✅\n" >> "$SUMMARY_FILE"
                   if [ -n "$OUTPUT" ]; then
-                      printf "%s\n" "$OUTPUT" >> $SUMMARY_FILE
+                      printf "%s\n" "$OUTPUT" >> "$SUMMARY_FILE"
                   else
-                      printf "\n" >> $SUMMARY_FILE
+                      printf "\n" >> "$SUMMARY_FILE"
                   fi
               else
-                  printf "## Post-processing failed ❌\n" >> $SUMMARY_FILE
-                  printf "Exit code: %d\n" "$EXIT_CODE" >> $SUMMARY_FILE
+                  printf "### Post-processing failed ❌\n" >> "$SUMMARY_FILE"
+                  printf "Exit code: %d\n" "$EXIT_CODE" >> "$SUMMARY_FILE"
                   if [ -n "$OUTPUT" ]; then
-                      printf "\n" >> $SUMMARY_FILE
-                      printf "Command output (including errors):\n" >> $SUMMARY_FILE
-                      printf "%s\n" "$OUTPUT" >> $SUMMARY_FILE
+                      printf "\n" >> "$SUMMARY_FILE"
+                      printf "Command output (including errors):\n" >> "$SUMMARY_FILE"
+                      printf "%s\n" "$OUTPUT" >> "$SUMMARY_FILE"
                   fi
+                  exit "$EXIT_CODE"
               fi
           fi
 
-      - name: Manage summary
+      - name: Update summary
         run: |
           cp -a $SUMMARY_FILE .
           cat README.md >> $GITHUB_STEP_SUMMARY

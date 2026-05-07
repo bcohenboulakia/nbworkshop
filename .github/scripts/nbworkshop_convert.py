@@ -207,7 +207,7 @@ if __name__ == '__main__':
         description="Convert Jupyter notebooks to student versions")
     parser.add_argument("inputs", nargs="+", help="Input notebook path(s)")
     parser.add_argument("--config",
-                        default="conversion.json",
+                        default="nbworkshop_convert.json",
                         help="Configuration file path")
     parser.add_argument("--hide-header", action="store_true", 
                         help="Suppress summary header in output")
