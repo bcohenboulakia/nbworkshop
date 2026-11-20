@@ -226,13 +226,13 @@ jobs:
 
           # Build patterns for target notebook files
           PATTERNS=""
-          for dir in $DIRS; do
+          while IFS= read -r dir; do
             dir=$(echo "$dir" | sed 's:/*$::')
             if [ -n "$PATTERNS" ]; then
               PATTERNS+="|"
             fi
             PATTERNS+="^${dir}/.*\.ipynb$"
-          done
+          done <<< "$DIRS"
 
           REBUILD_ALL=$(jq -r '.rebuild_all // false' "$CONFIG_PATH")
           BEFORE=${{ github.event.before }}
