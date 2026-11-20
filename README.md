@@ -80,8 +80,9 @@ _nbworkshop_ can be used in two different ways:
    In this case, the script can be moved anywhere, provided that it can access the configuration file. Have a look at [Conversion script](#conversion-script) below for more details.
 
 All _nbworkshop_ code is in the `.github` directory. It contains:
+* `.github/scripts/nbworkshop_publish.py` and `.github/scripts/publish_outputs.py`: notebook selection and non-destructive publication helpers.
 * `.github/scripts/nbworkshop_convert.py`: the Python script that converts Tutor notebooks to `Students` notebooks, and creates ZIP archives with all the attached files. If used alone, this script can be moved anywhere, provided it still has access to the configuration file
-* `.github/workflows/.github/workflows/nbworkshop_convert_students.yml`: The GitHub workflow that calls the aforementioned Python script every time a notebook is pushed on the repository's `main` branch.
+* `.github/workflows/nbworkshop_convert_students.yml`: The GitHub workflow that calls the aforementioned Python script every time a notebook is pushed on the repository's `main` branch.
 * `.github/nbworkshop_convert.json`: The configuration file. This is where parameters such as notebook directories, text replacement, placeholders etc. are defined.
 
 
@@ -290,15 +291,17 @@ Every solution marker in processed notebooks is replaced by the corresponding pl
 
 ## GitHub workflow
 
-The conversion can be automated by a GitHub Actions workflow called `Generate Students notebooks branch` which calls the conversion script on every update of a notebook in a monitored directory. Note that the GitHub workflow uses `.github/nbworkshop_convert.json` as configuration file (including for calling the conversion script), and provides detailed error log in case this file is invalid (or missing). The workflow's behavior depends on the value of the `rebuild_all` parameter:
-* If set to `true`, the workflow wipes out the existing `Students`branch and recreates it from the latest state of the main branch, then runs the conversion script on every notebook in a monitored directory. If you have manually edited the content of the Students branch, be aware that these manual changes — including notebooks and other files — will be completely lost, as the branch is fully reset and all content is regenerated from scratch.
-* If set to `false`, the workflow checks out the latest main branch, updates the Students branch, and runs the conversion script on every notebook that has been modified since the last commit. If you have manually edited  a notebook that is detected as changed and thus regenerated, your manual changes to that notebook will be overwritten by the automated process. Manual changes to other notebooks or files will remain until a merge conflict occurs. For non-notebook files that are in conflict, the workflow automatically resolves the conflict by keeping the version from the remote Students branch, meaning your manual changes to those files will be preserved, while changes from the main branch are discarded.
+The `Notebook conversion to Students branch` workflow uses `.github/nbworkshop_convert.json` and runs when notebooks are pushed to `main`, or manually from Actions. It converts sources in the configured directories, then publishes only generated notebooks, optional ZIPs, explicitly declared `metadata.attached_files`, and the conversion report in `Students/README.md`.
 
-Thus, manually editing the `Students`branch should be avoided.
+* `rebuild_all: true` regenerates all current notebooks; it never resets the branch.
+* `rebuild_all: false` selects changed notebooks. A manual run always rebuilds all current notebooks.
+* Deleting or renaming a source removes only its corresponding generated notebook and ZIP.
 
-Depending on the number of notebooks to be converted, you might consider setting `rebuild_all` to `true` for smaller repositories, allowing simpler handling of merge conflicts, or `false` to handle many notebooks, allowing a more targeted conversion process.
+There is no merge of `main` into `Students` and no forced push. Files published by another tool, such as PPTAnim2PDF PDFs, are preserved. If another publication advances the branch during the push, nbworkshop retrieves the new state and retries without rerunning conversion or hooks. A concurrent change to the same destination path fails explicitly.
 
-The result of the workflow execution can be reviewed on the `README.md` of the `Students` branch which contains a short overview of the conversion process (including merge conflicts, whether on notebooks or other files):
+A newly created `Students` branch contains only published outputs. Instructor files already present on an older branch are retained; remove them separately before distributing the branch. Do not edit generated notebooks manually.
+
+The conversion report is available in `Students/README.md` and the Actions summary:
 ![Student branch README](https://github.com/user-attachments/assets/bc132feb-5f43-40e7-aa64-962154bc15b1)
 
 A copy of this review appears on the workflow page in the `Action` tab on the GitHub repository web page:
@@ -325,7 +328,7 @@ Note: In Jupyter-based environnements, editing the metadata of a notebook is don
 
 This workflow uses two branches to generate student notebooks (but as many branches as needed can be created, they will just be ignored):
 * The `main` branch contains the solution versions and the necessary resources (it can also contain other materials, which are ignored). Pushing a notebook on this branch triggers its conversion, provided the pushed notebook is in a monitored directory (as defined in the `notebooks_dir` section of the configuration file).
-* The `Students` branch is generated automatically. Its content must not be modified, as it is fully rewritten each time a conversion occurs. It contains the same content (including subdirectories structure) as the directories monitored in `main` branch, except that solutions and instructor notes are removed from the notebooks, whether for code or for questions in the text.
+* The `Students` branch receives only explicitly published outputs, at their original relative paths. Other files on that branch are preserved; unlisted source resources are not mirrored automatically.
 
 Please note that conversion may take several dozens of seconds. This total delay includes both the time spent waiting for a GitHub Actions runner to become available (which can be long if no runners are free) and the time required to actually process the job. The execution time depends on how many notebooks need to be converted and their length. Running other workflows in the repository at the same time may also increase the overall completion time. Moreover, in order to avoid useless conversions, `.ipynb_checkpoints` directories should be added to `.gitignore`.
 
@@ -335,25 +338,13 @@ The `pre_processing` and `post_processing` options in `nbworkshop_convert.json` 
 * The pre-processing command is run just after setting up the workflow and validating the configuration file
 * The post-processing command is run after notebook conversion, before the generated files are committed and pushed to the `Students` branch.
  
-By default (but it can be changed, see below), these command are executed on the `Students` branch with mainly two consequences:
-* The pre-processing command can modify any file without the changes impacting the `main` branch. This allows for example to modify notebooks before conversion (removing changelogs or adding dates)
-* The post-processing has access to the files generated by the workflow. This allows for example to send all the generated ZIP archives to a LMS using its API (which could be considered as _TeachOps_...).
+Both hooks run in the temporary checkout of `main`: pre-processing before conversion, post-processing after conversion and before Git publication. They can call scripts from the source repository. Their temporary changes do not update `main`. They must not switch branches: publication uses a separate worktree. Hook failures stop publication, and output is included in the Actions summary.
 
-The standard outputs of the commands execution are added to the process summary. Markdown can be used to format those output. If the execution failed, the execution error output is also displayed.
+Post-processing can use generated files, but it is not an after-successful-push hook. If an external deployment must wait for confirmed Git publication, keep it in a separate downstream step.
 
-The pre and post-processing commands can call user scripts hosted in the repository, since the whole `main` branch content is copied to the `Students` branch. Both can also execute any shell command that is available in the GitHub Actions runner environment (see [Adding scripts to your workflow](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/adding-scripts-to-your-workflow) and [Workflow commands for GitHub Actions](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/workflow-commands-for-github-actions)). Notably, It is possible to switch branches within the post-processing command using the standard Git checkout command:
+To install alongside PPTAnim2PDF, copy both workflows, their converter scripts and publication helpers under `.github/`, preserving paths. Both tools include the same neutral `.github/scripts/publish_outputs.py`. Keep `.github/nbworkshop_convert.json` unchanged; no shared JSON migration is required. Each workflow handles its own source types and output paths, so a mixed push can run both. PPTAnim2PDF must not overwrite the nbworkshop report in `Students/README.md`.
 
-```bash
-git checkout main
-```
-
-This branch-switching capability can be included at the beginning of your post-command string:
-
-```yaml
-"post_processing": "git checkout main && ./your-program"
-```
-
-It can also be done from the called program itself through external command execution.
+Publication tests: `python -m unittest discover -s tests -p 'test_nbworkshop_publish.py' -v`.
 
 Also note that the `actions: write` permission has been enabled, allowing commands to trigger other workflows using GitHub CLI (`gh workflow run`) without requiring additional personal access tokens. This requires target workflows to declare a `workflow_dispatch` trigger. Just be careful with trigger rules, as overlapping triggers can cause multiple executions.
 
@@ -419,8 +410,9 @@ _nbworkshop_ peut être utilisé de deux manières différentes&nbsp;:
    Dans ce cas, le script peut être déplacé n'importe où, à condition qu'il puisse accéder au fichier de configuration. Consultez [Script de conversion](#script-de-conversion) ci-dessous pour plus de détails.
 
 Tout le code de _nbworkshop_ se trouve dans le répertoire `.github`. Il contient&nbsp;:
+* `.github/scripts/nbworkshop_publish.py` et `.github/scripts/publish_outputs.py` : sélection des notebooks et publication sans réécriture de branche.
 * `.github/scripts/nbworkshop_convert.py`&nbsp;: le script Python qui convertit les notebooks Tuteur en notebooks Étudiants, et crée des archives ZIP avec tous les fichiers joints. S'il est utilisé seul, ce script peut être déplacé n'importe où, à condition d'avoir toujours accès au fichier de configuration
-* `.github/workflows/.github/workflows/nbworkshop_convert_students.yml`&nbsp;: Le workflow GitHub qui appelle le script Python susmentionné à chaque fois qu'un notebook est poussé sur la branche `main` du dépôt.
+* `.github/workflows/nbworkshop_convert_students.yml`&nbsp;: Le workflow GitHub qui appelle le script Python susmentionné à chaque fois qu'un notebook est poussé sur la branche `main` du dépôt.
 * `.github/nbworkshop_convert.json`&nbsp;: Le fichier de configuration. C'est ici que sont définis les paramètres tels que les répertoires des notebooks, les remplacements de texte, les espaces réservés, etc.
 
 Jupyter n’est pas obligatoire pour utiliser le script, du moment que les notebook Jupyter sont accessibles.
@@ -637,15 +629,17 @@ Chaque marqueur de solution dans les notebooks traités est remplacé par l'espa
 
 ## Workflow GitHub
 
-La conversion peut être automatisée par un workflow GitHub Actions appelé `Generate Students Notebooks branch` qui appelle le script de conversion à chaque mise à jour d'un notebook dans un répertoire surveillé. Notez que le workflow GitHub utilise `.github/nbworkshop_convert.json` comme fichier de configuration (y compris pour appeler le script de conversion), et fournit un journal d'erreur détaillé dans le cas où ce fichier est invalide (ou manquant). Le comportement du workflow dépend de la valeur du paramètre `rebuild_all` :
-* S'il vaut `true`, le workflow efface la branche `Students` existante et la recrée à partir du dernier état de la branche `main`, puis exécute le script de conversion sur chaque notebook dans un répertoire surveillé. Si vous avez édité manuellement le contenu de la branche `Students`, que ces modifications manuelles - notebooks et autres fichiers - seront complètement perdues, car la branche est entièrement réinitialisée et tout le contenu est régénéré à partir de zéro.
-* Si la valeur est `false`, le workflow fait un check out de la dernier `main`, met à jour la branche `Students`, et exécute le script de conversion sur chaque notebook qui a été modifié depuis le dernier commit. Si vous avez édité manuellement un notebook qui est détecté comme modifié et donc régénéré, vos modifications manuelles à ce notebook seront écrasées par le workflow. Les modifications manuelles apportées à d'autres notebooks ou fichiers seront conservées jusqu'à ce qu'un conflit de merge se produise. Pour les fichiers non-notebook qui sont en conflit, le workflow résout automatiquement le conflit en conservant la version de la branche `Students` distante, ce qui signifie que vos modifications manuelles de ces fichiers seront préservées, alors que les modifications de la branche `main` seront rejetées.
+Le workflow `Notebook conversion to Students branch` utilise `.github/nbworkshop_convert.json`. Il s’exécute après un push de notebooks sur `main`, ou manuellement depuis Actions. Il convertit les sources des dossiers configurés, puis publie uniquement les notebooks générés, les ZIP optionnels, les ressources déclarées dans `metadata.attached_files` et le rapport `Students/README.md`.
 
-Il est donc préférable d'éviter d'éditer manuellement la branche `Students`.
+* `rebuild_all: true` régénère tous les notebooks actuels ; il ne réinitialise jamais la branche.
+* `rebuild_all: false` sélectionne les notebooks modifiés. Un lancement manuel reconstruit toujours tous les notebooks actuels.
+* La suppression ou le renommage d’une source retire seulement son notebook généré et son ZIP.
 
-En fonction du nombre de notebooks à convertir, vous pouvez envisager de mettre `rebuild_all` à `true` pour les petits dépôts, permettant une gestion plus simple des conflits de fusion, ou `false` pour gérer de nombreux notebooks, permettant un processus de conversion plus ciblé.
+Il n’y a ni fusion de `main` dans `Students`, ni push forcé. Les fichiers produits par un autre outil, notamment les PDF de PPTAnim2PDF, sont préservés. Si une publication concurrente fait avancer la branche pendant le push, nbworkshop récupère le nouvel état et réessaie sans refaire la conversion ni les hooks. Une modification concurrente du même chemin provoque un échec explicite.
 
-Le résultat de l'exécution du workflow peut être consulté sur le `README.md` de la branche `Students` qui contient un bref aperçu du processus de conversion (y compris les conflits de merge, que ce soit sur les notebook ou les autres fichiers)&nbsp;:
+Une nouvelle branche `Students` contient seulement les sorties publiées. Les fichiers enseignants déjà présents dans une ancienne branche sont conservés : retirez-les séparément avant de diffuser la branche. Ne modifiez pas manuellement les notebooks générés.
+
+Le rapport est disponible dans `Students/README.md` et dans le résumé Actions :
 ![README de la branche `Students`](https://github.com/user-attachments/assets/bc132feb-5f43-40e7-aa64-962154bc15b1)
 
 Une copie de cette revue apparaît sur la page du workflow dans l'onglet Action de la page web du dépôt GitHub&nbsp;:
@@ -672,7 +666,7 @@ Remarque&nbsp;: Dans les environnements basés sur Jupyter, la modification des 
 
 Ce workflow utilise deux branches pour générer les notebooks étudiants (mais autant de branches que nécessaire peuvent être créées, elles seront simplement ignorées)&nbsp;:
 * La branche  `main` contient les versions solutions et les ressources nécessaires (elle peut également contenir d'autres matériaux, qui sont ignorés). Pousser un notebook sur cette branche déclenche sa conversion, à condition que le notebook poussé soit dans un répertoire surveillé (tel que défini dans la section `notebooks_dir` du fichier de configuration).
-* La branche `Students` est générée automatiquement. Son contenu ne doit pas être modifié, car il est entièrement réécrit à chaque conversion. Elle contient le même contenu (y compris la structure des sous-répertoires) que les répertoires surveillés dans la branche `main`, sauf que les solutions et notes d'instructeur sont supprimées des notebooks, que ce soit pour le code ou pour les questions dans le texte.
+* La branche `Students` reçoit seulement les sorties explicitement publiées, à leur emplacement relatif d’origine. Ses autres fichiers sont préservés ; les ressources sources non déclarées ne sont pas recopiées automatiquement.
 
 Veuillez noter que la conversion peut prendre plusieurs dizaines de secondes. Ce délai total comprend à la fois le temps d'attente pour qu'un runner GitHub Actions devienne disponible (ce qui peut être long si aucun runner n'est libre) et le temps nécessaire pour traiter réellement la tâche. Le temps d'exécution dépend du nombre de notebooks à convertir et de leur longueur. L'exécution d'autres workflows dans le dépôt en même temps peut également augmenter le temps d'exécution global. De plus, pour éviter des conversions inutiles, les répertoires `.ipynb_checkpoints` peuvent être ajoutés à `.gitignore`.
 
@@ -682,21 +676,13 @@ Les options  `pre_processing` et `post_processing` dans `nbworkshop_convert.json
 * La commande de pré-traitement est exécutée juste après la configuration du workflow et la validation du fichier de configuration
 * La commande de post-traitement est exécutée après la conversion des notebooks, avant que les fichiers générés soient commités et poussés sur la branche `Students`
  
-Par défaut (mais cela peut être modifié, voir ci-dessous), ces commandes sont exécutées sur la branche `Students` avec principalement deux conséquences&nbsp;:
-* La commande de prétraitement peut modifier n'importe quel fichier sans que les changements impactent la branche `main`. Cela permet, par exemple, de supprimer les changelogs ou d'ajouter des dates aux notebooks avant la conversion.
-* La commande de post-traitement a accès aux fichiers générés par le workflow. Cela permet par exemple d'envoyer toutes les archives ZIP générées à un LMS en utilisant son API (ce qui pourrait être considéré comme du _TeachOps_...).
+Les deux hooks s’exécutent dans le checkout temporaire de `main` : le prétraitement avant conversion, le post-traitement après conversion et avant publication Git. Ils peuvent appeler les scripts du dépôt source. Leurs modifications temporaires ne mettent pas à jour `main`. Ils ne doivent pas changer de branche : la publication utilise un worktree distinct. Un échec de hook arrête la publication ; ses sorties figurent dans le résumé Actions.
 
-Les sorties standard de l'exécution des commandes sont ajoutées au résumé du processus. Markdown peut être utilisé pour formater ces sorties. Si l'exécution a échoué, la sortie de l'erreur d'exécution est également affichée.
+Le post-traitement accède aux fichiers générés, mais ce n’est pas un hook après push confirmé. Un déploiement externe qui doit attendre cette confirmation doit rester dans une étape distincte en aval.
 
-Les commandes de pré et post-traitement peuvent appeler des scripts utilisateurs hébergés dans le repository, puisque tout le contenu de la branche `main` est copié dans la branche `Students`. Elles peuvent également exécuter n'importe quelle commande shell disponible dans l'environnement du runner GitHub Actions (voir [Adding scripts to your workflow](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/adding-scripts-to-your-workflow) et [Workflow commands for GitHub Actions](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/workflow-commands-for-github-actions)).  Notamment, il est possible de changer de branche dans la commande de post-traitement en utilisant la commande Git standard&nbsp;:
-```bash
-git checkout main
-```
-Cette capacité de changement de branche peut être incluse au début de votre chaîne de commande post&nbsp;:
-```yaml
-"post_processing": "git checkout main && ./your-program"
-```
-Elle peut également être faite depuis le programme appelé lui-même via l'exécution de commande externe.
+Pour installer aussi PPTAnim2PDF, copiez les deux workflows, leurs convertisseurs et leurs helpers de publication sous `.github/`, en conservant les chemins. Les deux outils fournissent le même fichier neutre `.github/scripts/publish_outputs.py`. Conservez `.github/nbworkshop_convert.json` : aucune migration vers un JSON commun n’est nécessaire. Chaque workflow traite ses types de sources et ses sorties ; un push mixte peut donc lancer les deux. PPTAnim2PDF ne doit pas écraser le rapport nbworkshop `Students/README.md`.
+
+Tests de publication : `python -m unittest discover -s tests -p 'test_nbworkshop_publish.py' -v`.
 
 Notez également que la permission `actions: write` a été activée, permettant aux commandes de déclencher d'autres workflows en utilisant GitHub CLI (`gh workflow run`)  sans nécessiter de jetons d'accès personnels supplémentaires. Cela nécessite que les workflows cibles déclarent un déclencheur workflow_dispatch. Faites simplement attention aux règles de déclenchement, car des déclencheurs qui se chevauchent peuvent provoquer plusieurs exécutions.
 
